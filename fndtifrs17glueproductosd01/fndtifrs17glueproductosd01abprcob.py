@@ -1,6 +1,4 @@
-
 def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
-
   L_ABPRCOB_INSUNIX = f'''
                             (
                               (SELECT 
@@ -52,12 +50,41 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               '' AS KACTPTARCB,    
                               '' AS DINDLIBTAR
                               FROM USINSUG01.GEN_COVER GC 
-                              LEFT JOIN USINSUG01.PRODUCT P ON GC.BRANCH = P.BRANCH  AND GC.PRODUCT  = P.PRODUCT
-                              JOIN USINSUG01.TABLE10B TB ON GC.BRANCH = TB.BRANCH AND TB.COMPANY = 1
+                              JOIN (SELECT	
+	                                  PRO.PRODUCT,
+	                                  PRO.BRANCH,
+                                    CASE WHEN PRO.NULLDATE IS NOT NULL THEN 1 ELSE 0 END FLAG_NULLDATE
+                                    FROM (	
+                                            SELECT	PRO.*,
+                                            CASE	
+                                            WHEN PRO.NULLDATE IS NULL THEN	PRO.CTID
+	                          	 	            ELSE	CASE	
+                                                  WHEN EXISTS
+	                          	 	        			    (	SELECT	1
+	                          	 	        			    	FROM	USINSUG01.PRODUCT PR1
+	                          	 	        			    	WHERE PR1.USERCOMP = PRO.USERCOMP
+	                          	 	        			    	AND 	PR1.COMPANY = PRO.COMPANY
+	                          	 	        			    	AND 	PR1.BRANCH = PRO.BRANCH
+	                          	 	        			    	AND 	PR1.PRODUCT = PRO.PRODUCT
+	                          	 	        			    	AND		PR1.NULLDATE IS NULL) THEN 	NULL
+	                          	 	        		ELSE  CASE	
+                                                  WHEN PRO.NULLDATE =  
+	                          	 	        			 		(	SELECT	MAX(PR1.NULLDATE)
+	                          	 	        			 			FROM	USINSUG01.PRODUCT PR1
+	                          	 	        			 			WHERE 	PR1.USERCOMP = PRO.USERCOMP
+	                          	 	        			 			AND 	PR1.COMPANY = PRO.COMPANY
+	                          	 	        			 			AND 	PR1.BRANCH = PRO.BRANCH
+	                          	 	        			 			AND 	PR1.PRODUCT = PRO.PRODUCT) THEN PRO.CTID
+	                          	 	        		      ELSE NULL 
+                                                  END 
+                                            END 
+                                    END PRO_ID
+	                          	      FROM	USINSUG01.PRODUCT PRO
+	                          	      WHERE	BRANCH IN (SELECT BRANCH FROM USINSUG01.TABLE10B WHERE COMPANY = 1)) PR0, USINSUG01.PRODUCT PRO
+	                                  WHERE PRO.CTID = PR0.PRO_ID) P
+                              ON GC.BRANCH = P.BRANCH  AND GC.PRODUCT  = P.PRODUCT   
                               WHERE GC.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
-
                               UNION ALL
-
                               (SELECT 
                               'D' INDDETREC,
                               'ABPRCOB' TABLAIFRS17,
@@ -106,16 +133,45 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               '' AS KACTPTARCB,    
                               '' AS DINDLIBTAR
                               FROM USINSUV01.LIFE_COVER LC  
-                              LEFT JOIN USINSUV01.PRODUCT P ON LC.BRANCH = P.BRANCH  AND LC.PRODUCT  = P.PRODUCT
-                              JOIN USINSUG01.TABLE10B TB ON LC.BRANCH = TB.BRANCH AND TB.COMPANY = 2
-                              WHERE LC.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
-                            ) AS TMP
-                            '''
-
+                              LEFT JOIN
+                              (
+                              	SELECT	
+                              	PRO.PRODUCT,
+                              	PRO.BRANCH,
+                                PRO.BRANCHT,
+                                CASE WHEN PRO.NULLDATE IS NOT NULL THEN 1 ELSE 0 END FLAG_NULLDATE
+                                FROM (	
+                                      SELECT	PRO.*,
+                                      CASE	
+                                      WHEN PRO.NULLDATE IS NULL THEN	PRO.CTID
+                              		 	  ELSE	CASE	
+                                            WHEN EXISTS (	SELECT	1
+                              		 				              	FROM	USINSUV01.PRODUCT PR1
+                              		 				              	WHERE 	PR1.USERCOMP = PRO.USERCOMP
+                              		 				              	AND 	PR1.COMPANY = PRO.COMPANY
+                              		 				              	AND 	PR1.BRANCH = PRO.BRANCH
+                              		 				              	AND 	PR1.PRODUCT = PRO.PRODUCT
+                              		 				              	AND		PR1.NULLDATE IS NULL) THEN 	NULL
+                              		 		      ELSE  CASE	
+                                                  WHEN PRO.NULLDATE = (	SELECT	MAX(PR1.NULLDATE)
+                              		 				 						                  FROM	USINSUV01.PRODUCT PR1
+                              		 				 						                  WHERE 	PR1.USERCOMP = PRO.USERCOMP
+                              		 				 						                  AND 	PR1.COMPANY = PRO.COMPANY
+                              		 				 						                  AND 	PR1.BRANCH = PRO.BRANCH
+                              		 				 						                  AND 	PR1.PRODUCT = PRO.PRODUCT) THEN PRO.CTID
+                              		 			          ELSE NULL 
+                                                  END 
+                                            END 
+                                      END PRO_ID
+                              		    FROM	USINSUV01.PRODUCT PRO
+                              		    WHERE	BRANCH IN (SELECT BRANCH FROM USINSUG01.TABLE10B WHERE COMPANY = 2)) PR0, USINSUV01.PRODUCT PRO
+                              	WHERE PRO.CTID = PR0.PRO_ID) P
+                                ON LC.BRANCH = P.BRANCH  AND LC.PRODUCT  = P.PRODUCT
+                                WHERE LC.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
+                              ) AS TMP
+                              '''
   #EJECUTAR CONSULTA
   L_DF_ABPRCOB_INSUNIX = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_ABPRCOB_INSUNIX).load()
-
-
   L_ABPRCOB_VTIME = f'''
                           (
                             (SELECT 
@@ -167,11 +223,36 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             '' AS KACTPTARCB,
                             '' AS DINDLIBTAR
                             FROM USVTIMG01."GEN_COVER" GC  
-                            LEFT JOIN USVTIMG01."PRODUCT" P ON GC."NBRANCH" = P."NBRANCH" AND GC."NPRODUCT"  = P."NPRODUCT"
+                            LEFT JOIN (
+                          	SELECT	
+                          	PRO."DEFFECDATE",
+                          	PRO."NPRODUCT",
+                          	PRO."NBRANCH",
+                          	PRO."DNULLDATE",
+                            CASE WHEN PRO."DNULLDATE" IS NOT NULL THEN 1 ELSE 0 END FLAG_NULLDATE
+                            FROM (	
+                                  SELECT	PRO.*,
+                                  CASE	
+                                  WHEN PRO."DNULLDATE" IS NULL THEN	PRO.CTID
+                          		 	  ELSE	CASE	
+                                        WHEN EXISTS (	SELECT	1
+                          		 				              	FROM	USVTIMG01."PRODUCT" PR1
+                          		 				              	WHERE PR1."NBRANCH"  = PRO."NBRANCH"
+                          		 				              	AND 	PR1."NPRODUCT" = PRO."NPRODUCT"
+                          		 				              	AND		PR1."DNULLDATE" IS NULL) THEN 	NULL
+                          		 		      ELSE  CASE	
+                                              WHEN PRO."DNULLDATE" = (	SELECT	MAX(PR1."DNULLDATE")
+                          		 				 						                  FROM	USVTIMG01."PRODUCT" PR1
+                          		 				 						                  WHERE PR1."NBRANCH"  = PRO."NBRANCH" 
+                          		 				 						                  AND 	PR1."NPRODUCT" = PRO."NPRODUCT") THEN PRO.CTID
+                          		 			          ELSE NULL 
+                                              END 
+                                        END 
+                                  END PRO_ID
+                          		    FROM	USVTIMG01."PRODUCT" PRO) PR0, USVTIMG01."PRODUCT" PRO
+                          	WHERE PRO.CTID = PR0.PRO_ID) P ON GC."NBRANCH" = P."NBRANCH" AND GC."NPRODUCT"  = P."NPRODUCT"
                             WHERE GC."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
-
                             UNION ALL
-
                             (SELECT 
                              'D' AS INDDETREC,
                              'ABPRCOB' AS TABLAIFRS17,
@@ -217,15 +298,40 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              '' AS KACTPTARCB,
                              '' AS DINDLIBTAR
                              FROM USVTIMV01."LIFE_COVER" LC  
-                             LEFT JOIN USVTIMV01."PRODUCT" P ON LC."NBRANCH" = P."NBRANCH" AND LC."NPRODUCT"  = P."NPRODUCT"
-                             WHERE LC."DCOMPDATE"  BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
+                             LEFT JOIN (
+                          	SELECT	
+                          	PRO."DEFFECDATE",
+                          	PRO."NPRODUCT",
+                          	PRO."NBRANCH",
+                          	PRO."DNULLDATE",
+                            CASE WHEN PRO."DNULLDATE" IS NOT NULL THEN 1 ELSE 0 END FLAG_NULLDATE
+                            FROM (	
+                                  SELECT	PRO.*,
+                                  CASE	
+                                  WHEN PRO."DNULLDATE" IS NULL THEN	PRO.CTID
+                          		 	  ELSE	CASE	
+                                        WHEN EXISTS (	SELECT	1
+                          		 				              	FROM	USVTIMV01."PRODUCT" PR1
+                          		 				              	WHERE PR1."NBRANCH"  = PRO."NBRANCH"
+                          		 				              	AND 	PR1."NPRODUCT" = PRO."NPRODUCT"
+                          		 				              	AND		PR1."DNULLDATE" IS NULL) THEN 	NULL
+                          		 		      ELSE  CASE	
+                                              WHEN PRO."DNULLDATE" = (	SELECT	MAX(PR1."DNULLDATE")
+                          		 				 						                  FROM	USVTIMV01."PRODUCT" PR1
+                          		 				 						                  WHERE PR1."NBRANCH"  = PRO."NBRANCH" 
+                          		 				 						                  AND 	PR1."NPRODUCT" = PRO."NPRODUCT") THEN PRO.CTID
+                          		 			          ELSE NULL 
+                                              END 
+                                        END 
+                                  END PRO_ID
+                          		    FROM	USVTIMV01."PRODUCT" PRO) PR0, USVTIMV01."PRODUCT" PRO
+                          	WHERE PRO.CTID = PR0.PRO_ID) P ON LC."NBRANCH" = P."NBRANCH" AND LC."NPRODUCT"  = P."NPRODUCT"
+                            WHERE LC."DCOMPDATE"  BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
                      ) AS TMP
                      '''
   
   #EJECUTAR CONSULTA
   L_DF_ABPRCOB_VTIME = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_ABPRCOB_VTIME).load()
-
-
   L_ABPRCOB_INSIS = f'''
                     (                      
                     SELECT
@@ -301,7 +407,6 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
   
   #EJECUTAR CONSULTA
   L_DF_ABPRCOB_INSIS = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_ABPRCOB_INSIS).load()
-
   #PERFORM THE UNION OPERATION
   L_DF_ABPRCOB = L_DF_ABPRCOB_INSUNIX.union(L_DF_ABPRCOB_VTIME).union(L_DF_ABPRCOB_INSIS)
   

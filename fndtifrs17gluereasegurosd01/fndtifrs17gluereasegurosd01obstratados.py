@@ -1,6 +1,4 @@
-
 def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
-
     L_OBSTRATADOS_INSUNIX = f'''
                              (
                              (select
@@ -12,14 +10,14 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              '' as TIOCFRM,
                              '' as TIOCTO,
                              'PIG' as KGIORIGM,
-                             cast(c."number" as varchar) ||'-'|| c.branch ||'-'|| c.currency ||'-'|| c."type" as DCDINTTRA,
-                             '' as DCDTRAT_SO,
+                             cast(c."number" as varchar) ||'-'|| c.branch  as DCDINTTRA,
+                             c.currency ||'-'|| c."type" as DCDTRAT_SO,
                              '' as DDESCDTRA,
                              '' as DDESABRTRA,
-                             cast(c.startdat as varchar) as TINICIO,
-                             cast(c.expirdat as varchar) as TTERMO,
-                             c.year_contr  as DANOTRAT,
-                             c."type" as KOCTPRESS,
+                             coalesce(cast(c.startdat as varchar),'') as TINICIO,
+                             coalesce(cast(c.expirdat as varchar),'') as TTERMO,
+                             coalesce(cast(c.year_contr as varchar),'') as DANOTRAT,
+                             coalesce(cast(c."type" as varchar),'') as KOCTPRESS,
                              '' as KOCTPFRC,
                              '' as KOCVLDFRC,
                              '' as KOCTPTRT,
@@ -41,12 +39,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              '' as KOCGRCBT,
                              '' as VMTPRUN,
                              '' as KGCRAMO_SAP
-                             from usinsug01.contrproc c
-                             --1995-08-01 - 2023-07-31
+                             from usinsug01.contrproc c --1995-08-01 - 2023-07-31
                              where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                              )
                              union all
-
                              (select
                              'D' as INDDETREC,
                              'OBTRATADOS' as TABLAIFRS17,
@@ -60,10 +56,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              '' as DCDTRAT_SO,
                              '' as DDESCDTRA,
                              '' as DDESABRTRA,
-                             cast(c.startdat as varchar) as TINICIO,
-                             cast(c.expirdat as varchar) as TTERMO,
-                             c.year_contr  as DANOTRAT,
-                             c."type" as KOCTPRESS,
+                             coalesce(cast(c.startdat as varchar),'') as TINICIO,
+                             coalesce(cast(c.expirdat as varchar),'') as TTERMO,
+                             coalesce(cast(c.year_contr as varchar),'') as DANOTRAT,
+                             coalesce(cast(c."type" as varchar),'') as KOCTPRESS,
                              '' as KOCTPFRC,
                              '' as KOCVLDFRC,
                              '' as KOCTPTRT,
@@ -93,9 +89,9 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              '''
     
     #EJECUTAR CONSULTA
-    print("1-TERMINO TABLA OBSTRATADOS_IX")
+    print("1-TERMINO TABLA OBSTRATADOS_INX")
     L_DF_OBSTRATADOS_INSUNIX = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_OBSTRATADOS_INSUNIX).load()
-    print("2-TERMINO TABLA OBSTRATADOS_IX")
+    print("2-TERMINO TABLA OBSTRATADOS_INX")
     
     L_OBSTRATADOS_VTIME = f'''
                             (
@@ -112,10 +108,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' as DCDTRAT_SO,
                             '' as DDESCDTRA,
                             '' as DDESABRTRA,
-                            cast( cast(c."DEFFECDATE" as date) as varchar) as TINICIO,
-                            cast( cast(c."DNULLDATE" as date) as varchar) as TTERMO,
-                            c."NYEAR_BEGIN"  as DANOTRAT,
-                            c."NTYPE"  as KOCTPRESS,
+                            cast(cast(c."DEFFECDATE" as date) as varchar) as TINICIO,
+                            coalesce(cast( cast(c."DNULLDATE" as date) as varchar),'') as TTERMO,
+                            coalesce(cast(c."NYEAR_BEGIN" as varchar),'')  as DANOTRAT,
+                            cast(c."NTYPE" as varchar)  as KOCTPRESS,
                             '' as KOCTPFRC,
                             '' as KOCVLDFRC,
                             '' as KOCTPTRT,
@@ -137,8 +133,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' as KOCGRCBT,
                             '' as VMTPRUN,
                             '' as KGCRAMO_SAP
-                            from usvtimv01."CONTRPROC" c 
-                            --2006-06-02 - 2017-08-14 
+                            from usvtimv01."CONTRPROC" c --2006-06-02 - 2017-08-14 
                             where c."DCOMPDATE" between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                             )
                             union all
@@ -157,9 +152,9 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' as DDESCDTRA,
                             '' as DDESABRTRA,
                             cast( cast(c."DEFFECDATE" as date) as varchar) as TINICIO,
-                            cast( cast(c."DNULLDATE" as date) as varchar) as TTERMO,
-                            c."NYEAR_BEGIN"  as DANOTRAT,
-                            c."NTYPE"  as KOCTPRESS,
+                            coalesce(cast( cast(c."DNULLDATE" as date) as varchar),'') as TTERMO,
+                            coalesce(cast(c."NYEAR_BEGIN" as varchar),'') as DANOTRAT,
+                            cast(c."NTYPE" as varchar)  as KOCTPRESS,
                             '' as KOCTPFRC,
                             '' as KOCVLDFRC,
                             '' as KOCTPTRT,
@@ -181,8 +176,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' as KOCGRCBT,
                             '' as VMTPRUN,
                             '' as KGCRAMO_SAP
-                            from usvtimg01."CONTRPROC" c 
-                            --2009-01-17 - 2023-03-30
+                            from usvtimg01."CONTRPROC" c --2009-01-17 - 2023-03-30
                             where c."DCOMPDATE" between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                             )
                             ) AS TMP
@@ -195,5 +189,4 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
     
     #PERFORM THE UNION OPERATION 
     L_DF_OBSTRATADOS = L_DF_OBSTRATADOS_INSUNIX.union(L_DF_OBTRATADOS_VTIME)
-
     return L_DF_OBSTRATADOS

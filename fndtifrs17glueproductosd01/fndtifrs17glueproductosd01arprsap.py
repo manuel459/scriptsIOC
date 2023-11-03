@@ -1,7 +1,4 @@
-#CODE-PRODUCTOS01-ARPRSAP
-
 def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
-
   L_ARPRSAP_INSUNIX = f'''
                         (
                          (SELECT
@@ -44,10 +41,41 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                           '' AS DPRODSAP,
                           '' AS KACCDFDO_PR
                           FROM USINSUG01.GEN_COVER GC 
-                          LEFT JOIN USINSUG01.PRODUCT P ON GC.BRANCH = P.BRANCH  AND GC.PRODUCT  = P.PRODUCT
-                          JOIN USINSUG01.TABLE10B TB ON GC.BRANCH = TB.BRANCH AND TB.COMPANY = 1
+                          LEFT JOIN
+                          (
+                          	SELECT	
+                          	PRO.PRODUCT,
+                          	PRO.BRANCH,
+                            PRO.BRANCHT,
+                            CASE WHEN PRO.NULLDATE IS NOT NULL THEN 1 ELSE 0 END FLAG_NULLDATE
+                            FROM (	
+                                  SELECT	PRO.*,
+                                  CASE	
+                                  WHEN PRO.NULLDATE IS NULL THEN	PRO.CTID
+                          		 	  ELSE	CASE	
+                                        WHEN EXISTS (	SELECT	1
+                          		 				              	FROM	USINSUG01.PRODUCT PR1
+                          		 				              	WHERE 	PR1.USERCOMP = PRO.USERCOMP
+                          		 				              	AND 	PR1.COMPANY = PRO.COMPANY
+                          		 				              	AND 	PR1.BRANCH = PRO.BRANCH
+                          		 				              	AND 	PR1.PRODUCT = PRO.PRODUCT
+                          		 				              	AND		PR1.NULLDATE IS NULL) THEN 	NULL
+                          		 		      ELSE  CASE	
+                                              WHEN PRO.NULLDATE = (	SELECT	MAX(PR1.NULLDATE)
+                          		 				 						                  FROM	USINSUG01.PRODUCT PR1
+                          		 				 						                  WHERE 	PR1.USERCOMP = PRO.USERCOMP
+                          		 				 						                  AND 	PR1.COMPANY = PRO.COMPANY
+                          		 				 						                  AND 	PR1.BRANCH = PRO.BRANCH
+                          		 				 						                  AND 	PR1.PRODUCT = PRO.PRODUCT) THEN PRO.CTID
+                          		 			          ELSE NULL 
+                                              END 
+                                        END 
+                                  END PRO_ID
+                          		    FROM	USINSUG01.PRODUCT PRO
+                          		    WHERE	BRANCH IN (SELECT BRANCH FROM USINSUG01.TABLE10B WHERE COMPANY = 1)) PR0, USINSUG01.PRODUCT PRO
+                          	WHERE PRO.CTID = PR0.PRO_ID) P 
+                          ON GC.BRANCH = P.BRANCH  AND GC.PRODUCT  = P.PRODUCT
                           WHERE GC.COMPDATE BETWEEN '{L_FECHA_INICIO}' AND '{L_FECHA_FIN}')
-
                           UNION ALL
                         
                           (SELECT
@@ -88,8 +116,40 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                           '' AS DPRODSAP,
                           '' AS KACCDFDO_PR
                           FROM USINSUV01.LIFE_COVER LC 
-                          LEFT JOIN USINSUV01.PRODUCT P ON LC.BRANCH = P.BRANCH  AND LC.PRODUCT  = P.PRODUCT
-                          JOIN USINSUG01.TABLE10B TB ON LC.BRANCH = TB.BRANCH AND TB.COMPANY = 2    
+                          LEFT JOIN
+                          (
+                          	SELECT	
+                          	PRO.PRODUCT,
+                          	PRO.BRANCH,
+                            PRO.BRANCHT,
+                            CASE WHEN PRO.NULLDATE IS NOT NULL THEN 1 ELSE 0 END FLAG_NULLDATE
+                            FROM (	
+                                  SELECT	PRO.*,
+                                  CASE	
+                                  WHEN PRO.NULLDATE IS NULL THEN	PRO.CTID
+                          		 	  ELSE	CASE	
+                                        WHEN EXISTS (	SELECT	1
+                          		 				              	FROM	USINSUV01.PRODUCT PR1
+                          		 				              	WHERE 	PR1.USERCOMP = PRO.USERCOMP
+                          		 				              	AND 	PR1.COMPANY = PRO.COMPANY
+                          		 				              	AND 	PR1.BRANCH = PRO.BRANCH
+                          		 				              	AND 	PR1.PRODUCT = PRO.PRODUCT
+                          		 				              	AND		PR1.NULLDATE IS NULL) THEN 	NULL
+                          		 		      ELSE  CASE	
+                                              WHEN PRO.NULLDATE = (	SELECT	MAX(PR1.NULLDATE)
+                          		 				 						                  FROM	USINSUV01.PRODUCT PR1
+                          		 				 						                  WHERE 	PR1.USERCOMP = PRO.USERCOMP
+                          		 				 						                  AND 	PR1.COMPANY = PRO.COMPANY
+                          		 				 						                  AND 	PR1.BRANCH = PRO.BRANCH
+                          		 				 						                  AND 	PR1.PRODUCT = PRO.PRODUCT) THEN PRO.CTID
+                          		 			          ELSE NULL 
+                                              END 
+                                        END 
+                                  END PRO_ID
+                          		    FROM	USINSUV01.PRODUCT PRO
+                          		    WHERE	BRANCH IN (SELECT BRANCH FROM USINSUG01.TABLE10B WHERE COMPANY = 2)) PR0, USINSUV01.PRODUCT PRO
+                          	WHERE PRO.CTID = PR0.PRO_ID) P
+                          ON LC.BRANCH = P.BRANCH  AND LC.PRODUCT  = P.PRODUCT
                           WHERE LC.COMPDATE BETWEEN '{L_FECHA_INICIO}' AND '{L_FECHA_FIN}')
                         ) AS TMP
                           '''
@@ -97,9 +157,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
     #EJECUTAR CONSULTA
   
   L_DF_ARPRSAP_INSUNIX = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ARPRSAP_INSUNIX).load()
-
   #--------------------------------------------------------------------------------------------------------------------------#
-
   L_ARPRSAP_VTIME = f'''
                           (
                            (SELECT 
@@ -129,9 +187,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             FROM USVTIMG01."GEN_COVER" GC 
                             LEFT JOIN USVTIMG01."PRODMASTER" PM  ON GC."NBRANCH" = PM."NBRANCH"  AND GC."NPRODUCT"  = PM."NPRODUCT"  
                             WHERE GC."DCOMPDATE" BETWEEN '{L_FECHA_INICIO}' AND '{L_FECHA_FIN}')
-
                            UNION ALL
-
                            (SELECT
                             'D' INDDETREC,
                             'ARPRSAP' TABLAIFRS17,
@@ -161,11 +217,9 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             WHERE LC."DCOMPDATE" BETWEEN '{L_FECHA_INICIO}' AND '{L_FECHA_FIN}')
                           ) AS TMP
                        '''
-
     #EJECUTAR CONSULTA
   
   L_DF_ARPRSAP_VTIME = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ARPRSAP_VTIME).load()
-
     #--------------------------------------------------------------------------------------------------------------------------#
     
   L_ARPRSAP_INSIS = f'''
@@ -203,7 +257,6 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
     
   
   #--------------------------------------------------------------------------------------------------------------------------#
-
   #UNION DATAFRAME POR COMPAÑIA
   L_DF_ARPRSAP = L_DF_ARPRSAP_INSUNIX.union(L_DF_ARPRSAP_VTIME).union(L_DF_ARPRSAP_INSIS)
     

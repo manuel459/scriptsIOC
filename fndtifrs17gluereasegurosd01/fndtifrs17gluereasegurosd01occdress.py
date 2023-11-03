@@ -1,6 +1,4 @@
-
 def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
-
     L_OCCDRESS_INSUNIX = f'''
                                    (
                                    (select
@@ -12,7 +10,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as TIOCFRM,
                                    '' as TIOCTO,
                                    'PIG' as KGIORIGM,
-                                   c.client as DCODIGO,
+                                   coalesce((
+                                             select evi.scod_vt  from usinsug01.equi_vt_inx evi
+                                             where c.client = evi.scod_inx 
+                                   ),'') as DCODIGO,
                                    '' as DDESC,
                                    '' as KOICDRESS
                                    from usinsug01.company c 
@@ -30,7 +31,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as TIOCFRM,
                                    '' as TIOCTO,
                                    'PIV' as KGIORIGM,
-                                   c.client as DCODIGO,
+                                   coalesce((
+                                             select evi.scod_vt  from usinsug01.equi_vt_inx evi
+                                             where c.client = evi.scod_inx 
+                                   ),'') as DCODIGO,
                                    '' as DDESC,
                                    '' as KOICDRESS
                                    from usinsug01.company c 
@@ -59,10 +63,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as TIOCFRM,
                                    '' as TIOCTO,
                                    'PVG' as KGIORIGM,
-                                   c."SCLIENT"  as DCODIGO,
+                                   coalesce(c."SCLIENT",'')  as DCODIGO,
                                    '' as DDESC,
                                    '' as KOICDRESS
-                                   from usvtimg01."COMPANY" c 
+                                   from usvtimg01."COMPANY" c
                                    where c."DCOMPDATE"  between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                                    )
                                    union all 
@@ -78,7 +82,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as TIOCFRM,
                                    '' as TIOCTO,
                                    'PVV' as KGIORIGM,
-                                   c."SCLIENT"  as DCODIGO,
+                                   coalesce(c."SCLIENT",'')  as DCODIGO,
                                    '' as DDESC,
                                    '' as KOICDRESS
                                    from usvtimg01."COMPANY" c
@@ -94,6 +98,4 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
     
     #PERFORM THE UNION OPERATION
     L_DF_OCCDRESS = L_DF_OCCDRESS_INSUNIX.union(L_DF_OCCDRESS_VTIME)
-
     return L_DF_OCCDRESS
-

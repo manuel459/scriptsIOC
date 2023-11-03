@@ -1,7 +1,4 @@
-#CODE-ENTIDADES01-EBENTID
-
 def getData(glueContext,connection,P_FECHA_INICIO, P_FECHA_FIN):
-
     L_EBENTID_INSIS = f'''
                           -------------------------
                           --        INSIS        --
@@ -42,5 +39,4 @@ def getData(glueContext,connection,P_FECHA_INICIO, P_FECHA_FIN):
                           ) as tmp
                        '''
     L_DF_EBENTID_INSIS = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_EBENTID_INSIS).load()
-
     return L_DF_EBENTID_INSIS
