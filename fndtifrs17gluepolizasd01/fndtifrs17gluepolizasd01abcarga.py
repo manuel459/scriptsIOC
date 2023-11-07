@@ -47,15 +47,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             AND DX."NPERCENT" IS NULL
                           ) THEN 'IMPORTE' ELSE 'PORCENTAJE' END KACTPVCG, 
                           '' DDURACAO, 
-                          '' KACTPCBB, --valor vacio
-                          'PVG' KGIORIGM
+                          '' KACTPCBB --valor vacio
                           FROM 
                             USVTIMG01."DISC_XPREM" dx
                           left join usvtimg01."DISCO_EXPR" de
                           on dx."NBRANCH" = de."NBRANCH"
                           and dx."NPRODUCT" = de."NPRODUCT"
                           and dx."NDISC_CODE" = de."NDISEXPRC"
-                          where dx."DCOMPDATE" between '{P_FECHA_INICIO}' and '{P_FECHA_FIN}'
+                          where dx."DCOMPDATE" between '{P_FECHA_INICIO}' and '{P_FECHA_FIN}' limit 100
                         )
                         /*
                         union all
@@ -101,15 +100,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             AND DX."NPERCENT" IS NULL
                           ) THEN 'IMPORTE' ELSE 'PORCENTAJE' END KACTPVCG, 
                           '' DDURACAO, --VALOR VACIO
-                          '' KACTPCBB, --valor vacio
-                          'PVV' KGIORIGM
+                          '' KACTPCBB --valor vacio
                          FROM 
                           USVTIMV01."DISC_XPREM" dx
                           left join usvtimv01."DISCO_EXPR" de
                           on dx."NBRANCH" = de."NBRANCH"
                           and dx."NPRODUCT" = de."NPRODUCT"
                           and dx."NDISC_CODE" = de."NDISEXPRC"
-                         WHERE dx."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' and '{P_FECHA_FIN}'
+                         WHERE dx."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' and '{P_FECHA_FIN}' limit 100
                         )*/
                        ) as tmp
                       '''
@@ -159,11 +157,10 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             	else 'PORCENTAJE'
                             end KACTPVCG,
                             '' DDURACAO,--valor vacio
-                            '' KACTPCBB,--valor vacio
-                            'PIG' KGIORIGM
+                            '' KACTPCBB--valor vacio
                             from
                             	USINSUG01.DISC_XPREM DX
-                            WHERE DX.compdate between '{P_FECHA_INICIO}' and '{P_FECHA_FIN}'
+                            WHERE DX.compdate between '{P_FECHA_INICIO}' and '{P_FECHA_FIN}' limit 100
                           )
                           UNION ALL
                           (
@@ -210,11 +207,10 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               AND DX.PERCENT IS NULL
                             ) THEN 'IMPORTE' ELSE 'PORCENTAJE' END KACTPVCG, 
                             '' DDURACAO, 
-                            '' KACTPCBB, --valor vacio
-                            'PIV' KGIORIGM
+                            '' KACTPCBB --valor vacio
                            FROM 
                            USINSUV01.DISC_XPREM DX
-                           WHERE DX.compdate between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                           WHERE DX.compdate between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
                           ) 
                         ) AS TMP
                         '''
@@ -228,41 +224,41 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
    L_POLIZAS_INSIS = f'''
                       (
                         select
-                            'D' INDDETREC,
-                            'ABCARGA' TABLAIFRS17,
-                            '' PK,
-                            '' DTPREG,
-                            '' TIOCPROC,
-                            GRD."EFFECTIVE_FROM" TIOCFRM,
-                            '' TIOCTO,
-                            case
-                                coalesce(PP."ENG_POL_TYPE",'')
-                                when 'DEPENDENT' then P."ATTR1" || '-' || P."ATTR2" || '-' || P."POLICY_NO" || '-' || PP."MASTER_POLICY_ID"
-                                else ''
-                            end KABAPOL,
-                            GRD."INSURED_OBJ_ID" as KABUNRIS,
-                            '' KGCTPCBT,--EN BLANCO
-                            '' KACCDFDO,--EN BLANCO
-                            GRD."DISCOUNT_TYPE" as KACTPCAG,
-                            GRD."DISCOUNT_ID" as KACCDCAG,
-                            GRD."DISCOUNT_VALUE" as VMTCARGA,
-                            '' TULTMALT,--EN BLANCO
-                            '' DUSRUPD,
-                            'LPG' DCOMPA,
-                            '' DMARCA,
-                            '' DINCPRM,--EN BLANCO
-                            '' KACTPVCG,--EN BLANCO
-                            '' DDURACAO,--EN BLANCO
-                            GRD."COVER_TYPE" as KACTPCBB,
-                            'PNV' KGIORIGM
+                          'D' INDDETREC,
+                          'ABCARGA' TABLAIFRS17,
+                          '' PK,
+                          '' DTPREG,
+                          '' TIOCPROC,
+                          coalesce(CAST(cast(GRD."EFFECTIVE_FROM" as DATE) as VARCHAR),'') TIOCFRM,
+                          '' TIOCTO,
+                          'PNV' KGIORIGM,
+                          case
+                            coalesce(PP."ENG_POL_TYPE",'')
+                            when 'DEPENDENT' then P."ATTR1" || '-' || P."ATTR2" || '-' || P."POLICY_NO" || '-' || PP."MASTER_POLICY_ID"
+                            else ''
+                          end KABAPOL,
+                          coalesce(cast(GRD."INSURED_OBJ_ID" as VARCHAR),'') as KABUNRIS,
+                          '' KGCTPCBT,--EN BLANCO
+                          '' KACCDFDO,--EN BLANCO
+                          coalesce(GRD."DISCOUNT_TYPE", '') as KACTPCAG,
+                          GRD."DISCOUNT_ID" as KACCDCAG,
+                          GRD."DISCOUNT_VALUE" as VMTCARGA,
+                          '' TULTMALT,--EN BLANCO
+                          '' DUSRUPD,
+                          'LPG' DCOMPA,
+                          '' DMARCA,
+                          '' DINCPRM,--EN BLANCO
+                          '' KACTPVCG,--EN BLANCO 
+                          '' DDURACAO,--EN BLANCO
+                          coalesce(GRD."COVER_TYPE",'') as KACTPCBB
                         from
-                            USINSIV01."POLICY" P
+                          USINSIV01."POLICY" P
                         left join USINSIV01."POLICY_ENG_POLICIES" PP 
                         on P."POLICY_ID" = PP."POLICY_ID"
                         left join usinsiv01."GEN_RISK_DISCOUNT" grd
                         on grd."POLICY_ID" = p."POLICY_ID"
-                        WHERE P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
-                      )
+                        WHERE P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
+                      ) as TMP
                       '''
 
    #Ejecutar consulta
