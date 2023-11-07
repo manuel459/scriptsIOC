@@ -91,7 +91,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' VMTPREMC,                                                    -- Comision de la prima
                               '' VMTBOMAT,                                                    -- Monto de bonificacion
                               '' VMTBOCOM,                                                    -- Monto de bonificacion comercial
-                              '' KACINDRE                                                     -- Indicador de Reaseguro
+                              '' KACINDRE,                                                    -- Indicador de Reaseguro
+                              'PIG' KGIORIGM
                               from usinsug01.roles rol
                               where rol.usercomp = 1
                               and rol.company = 1
@@ -190,7 +191,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' VMTPREMC,                                                    -- Comision de la prima
                               '' VMTBOMAT,                                                    -- Monto de bonificacion
                               '' VMTBOCOM,                                                    -- Monto de bonificacion comercial
-                              '' KACINDRE                                                     -- Indicador de Reaseguro
+                              '' KACINDRE,                                                    -- Indicador de Reaseguro
+                              'PIG' KGIORIGM
                               from usinsug01.roles rol
                               where rol.usercomp = 1
                               and rol.company = 1
@@ -223,7 +225,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' VMTPREMC,                                                    -- Comision de la prima
                               '' VMTBOMAT,                                                    -- Monto de bonificacion
                               '' VMTBOCOM,                                                    -- Monto de bonificacion comercial
-                              '' KACINDRE                                                     -- Indicador de Reaseguro
+                              '' KACINDRE,                                                    -- Indicador de Reaseguro
+                              'PIG' KGIORIGM
                               From usinsug01.auto_peru tnb
                               where tnb.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                               limit 100
@@ -325,7 +328,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              '' VMTPREMC,                                                    -- Comision de la prima
                              '' VMTBOMAT,                                                    -- Monto de bonificacion
                              '' VMTBOCOM,                                                    -- Monto de bonificacion comercial
-                             '' KACINDRE                                                     -- Indicador de Reaseguro
+                             '' KACINDRE,                                                    -- Indicador de Reaseguro
+                             'PIV' KGIORIGM
                              from usinsuv01.roles rol
                              where rol.usercomp = 1
                              and rol.company = 1
@@ -367,7 +371,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              '' VMTPREMC,                                                                                   -- Comision de la prima
                              '' VMTBOMAT,                                                                                   -- Monto de bonificacion
                              '' VMTBOCOM,                                                                                   -- Monto de bonificacion comercial
-                             '' KACINDRE                                                                                    -- Indicador de Reaseguro
+                             '' KACINDRE,                                                                                   -- Indicador de Reaseguro
+                             'PVG' KGIORIGM
                              from usvtimg01."ROLES" rol
                              where rol."SCERTYPE" = '2'
                              and rol."NBRANCH"  in  (select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usvtimg01' and  "RISKTYPEN" = 1 )
@@ -398,7 +403,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' VMTPREMC,                                                                                  -- Comision de la prima
                             '' VMTBOMAT,                                                                                  -- Monto de bonificacion
                             '' VMTBOCOM,                                                                                  -- Monto de bonificacion comercial
-                            '' KACINDRE                                                                                   -- Indicador de Reaseguro
+                            '' KACINDRE,                                                                                  -- Indicador de Reaseguro
+                            'PVG' KGIORIGM
                             from usvtimg01."ADDRESS" ad
                             join usvtimg01."POLICY" p on P."SCERTYPE"  = ad."SCERTYPE"
                                          and p."NBRANCH"  = ad."NBRANCH" 
@@ -436,7 +442,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' VMTPREMC,                                                                                  -- Comision de la prima
                             '' VMTBOMAT,                                                                                  -- Monto de bonificacion
                             '' VMTBOCOM,                                                                                  -- Monto de bonificacion comercial
-                            '' KACINDRE                                                                                   -- Indicador de Reaseguro
+                            '' KACINDRE,                                                                                  -- Indicador de Reaseguro
+                            'PVG' KGIORIGM
                             From usvtimg01."AUTO" aut
                             where cast(aut."DCOMPDATE" as date)  between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                             limit 100 
@@ -473,7 +480,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              '' VMTPREMC,                                                                                  -- Comision de la prima
                              '' VMTBOMAT,                                                                                  -- Monto de bonificacion
                              '' VMTBOCOM,                                                                                  -- Monto de bonificacion comercial
-                             '' KACINDRE                                                                                   -- Indicador de Reaseguro
+                             '' KACINDRE,                                                                                  -- Indicador de Reaseguro
+                             'PVV' KGIORIGM
                              from usvtimv01."ROLES" rol
                              where rol."SCERTYPE"  = '2'
                              and rol."NBRANCH"  in  (select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usvtimv01' and "RISKTYPEN" = 1 )
