@@ -753,6 +753,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 
    #Ejecutar consulta
    L_DF_POLIZAS_VTIME = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME).load()  
+
    print('USVTIMV01 exitoso')
    #------------------------------------------------------------------------------------------------------------------#
 
@@ -1054,7 +1055,6 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           '' AS DLOCRECB,    --NO
                           '' AS KACCLCLI,    --NO
                           COALESCE(CAST(P.NULLCODE AS VARCHAR), '') AS KACMTALT,
-                          /*
                           COALESCE((
                             SELECT CAST(COALESCE(PH.TYPE, 0) AS VARCHAR) FROM 
                               USINSUG01.POLICY_HIS PH
@@ -1065,7 +1065,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               AND   PH.EFFECDATE <= P.EFFECDATE
                               AND  (PH.NULLDATE IS NULL OR PH.NULLDATE > P.EFFECDATE)
                               AND   PH.TYPE = 1
-                          ), '0')*/'0' AS KACTPTRA,  
+                          ), '0') AS KACTPTRA,  
                           '' AS TEMICANC,    --NO
                           '' AS DENTIDSO,    --NO
                           '' AS DARQUIVO,    --NO
@@ -1434,8 +1434,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             (
                               SELECT CAST(PH.TYPE AS VARCHAR) FROM 
                               USINSUV01.POLICY_HIS PH
-                              WHERE PH.USERCOMP = PH.USERCOMP
-                              AND   PH.COMPANY  = PH.COMPANY
+                              WHERE PH.USERCOMP = P.USERCOMP
+                              AND   PH.COMPANY  = P.COMPANY
                               AND   PH.CERTYPE  = P.CERTYPE
                               AND   PH.BRANCH   = P.BRANCH
                               AND   PH.POLICY   = P.POLICY
