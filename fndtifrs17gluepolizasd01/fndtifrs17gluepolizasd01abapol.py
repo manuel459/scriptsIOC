@@ -499,7 +499,6 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           '' AS KACREGCB,  --NO
                           '' AS KCBMED_DRA,--NO
                           '' AS KCBMED_CB, --NO
-                          /*
                           COALESCE((SELECT COALESCE(DX."NPERCENT",0) FROM USVTIMV01."DISC_XPREM" DX
                           JOIN USVTIMV01."DISCO_EXPR" DE
                           ON DX."NBRANCH" = DE."NBRANCH"
@@ -513,7 +512,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           AND DX."DEFFECDATE" <= P."DSTARTDATE"
                           AND (DX."DNULLDATE" IS NULL
                           OR DX."DNULLDATE" > P."DSTARTDATE")
-                          AND DE."NBILL_ITEM" = 4), 0)*/ 0 AS VTXCOMCB, --ACLARAR
+                          AND DE."NBILL_ITEM" = 4), 0) AS VTXCOMCB, --ACLARAR
                           '' AS VMTCOMCB, --ACLARAR
                           '' AS KCBMED_PD,--NO
                           COALESCE(COALESCE(  --POR CERTIFICADO
@@ -835,7 +834,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             AND   CP.POLICY  = P.POLICY
                             AND   CP.CERTIF  = CERT.CERTIF 
                             AND   CP.EFFECDATE <= P.EFFECDATE 
-                            AND   ( CP.NULLDATE IS NULL OR CP.NULLDATE > P.EFFECDATE)
+                            AND   ( CP.NULLDATE IS NULL OR CP.NULLDATE > P.EFFECDATE) LIMIT 1
                           ), '0') AS KACMOEDA,
                           COALESCE((
                             SELECT COALESCE(E.EXCHANGE, 0)
@@ -860,19 +859,33 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           '' AS KCBMED_DRA,--NO
                           '' AS KCBMED_CB, --NO
                           COALESCE((
-                            SELECT COALESCE(DX.PERCENT, 0) FROM USINSUG01.DISC_XPREM DX 
-                            JOIN USINSUG01.DISCO_EXPR DE 
-                            ON  DX.USERCOMP = DE.USERCOMP 
-                            AND DX.COMPANY = DE.COMPANY
-                            AND DX.CERTYPE = '2' 
-                            AND DX.BRANCH    = DE.BRANCH 
-                            AND DE.PRODUCT   = P.PRODUCT
-                            AND DX.POLICY = P.POLICY
-                            AND DX.CODE = DE.DISEXPRC
-                            AND DX.CERTIF = CERT.CERTIF 
-                            AND DX.EFFECDATE <= P.EFFECDATE
-                            AND (DX.NULLDATE IS NULL OR DX.NULLDATE > P.EFFECDATE)
-                            AND DE.BILL_ITEM = 4
+                            SELECT COALESCE(TRUNC(DX.PERCENT, 4), 0) 
+                              FROM USINSUG01.DISC_XPREM DX 
+                              JOIN USINSUG01.DISCO_EXPR DE 
+                                ON  DX.USERCOMP = DE.USERCOMP 
+                                AND DX.COMPANY = DE.COMPANY
+                                AND DX.CERTYPE = dx.certype 
+                                AND DX.BRANCH    = DE.BRANCH
+                                AND DX.CODE = DE.DISEXPRC
+                              WHERE DX.usercomp = p.usercomp
+                                and dx.company = p.company
+                                and dx.branch  = p.branch
+                                and DE.PRODUCT = P.PRODUCT
+                                AND DX.POLICY  = P.POLICY
+                                AND DX.CERTIF  = CERT.CERTIF 
+                                AND DX.EFFECDATE <= P.EFFECDATE
+                                AND (DX.NULLDATE IS NULL OR DX.NULLDATE > P.EFFECDATE)
+                                AND DE.BILL_ITEM = 4
+                                and de.currency = (select cp.currency from USINSUG01.curren_pol cp
+                                                    where cp.usercomp = p.usercomp 
+                                                      and cp.company = p.company
+                                                      and cp.certype = p.certype
+                                                      and cp.branch = p.branch
+                                                      and cp."policy" = p."policy"
+                                                      and cp.certif = cert.certif
+                                                      and cp.effecdate <= p.effecdate
+                                                      and (cp.nulldate is null or cp.nulldate > p.effecdate) limit 1
+                                                  ) limit 1
                           ), 0) AS VTXCOMCB, 
                           '' AS VMTCOMCB,  --EN BLANCO
                           '' AS KCBMED_PD, --NO
