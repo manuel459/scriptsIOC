@@ -225,6 +225,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 
   L_DF_ABCOBAP_INSUNIX_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_INSUNIX_LPG).load()
 
+  print('INSUNIX LPG')
+
   L_ABCOBAP_INSUNIX_LPV = f'''
                           (SELECT 
                            'D' AS INDDETREC,
@@ -452,6 +454,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                  AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))) AS T) '''
  
   L_DF_ABCOBAP_INSUNIX_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_INSUNIX_LPV).load()
+
+  print('INSUNIX LPV')
 
   #------------------------------------------------------------------------------------------------------------------------#     
 
