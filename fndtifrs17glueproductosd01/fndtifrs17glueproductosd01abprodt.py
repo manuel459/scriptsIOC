@@ -250,7 +250,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                   END PRO_ID
                           		    FROM	USVTIMG01."PRODUCT" PRO) PR0, USVTIMG01."PRODUCT" PRO
                           	WHERE PRO.CTID = PR0.PRO_ID) P
-                          LEFT JOIN USVTIMG01."PRODMASTER" PM ON P."NBRANCH" = P."NBRANCH" AND P."NPRODUCT" = P."NPRODUCT")
+                          LEFT JOIN USVTIMG01."PRODMASTER" PM ON PM."NBRANCH" = P."NBRANCH" AND PM."NPRODUCT" = P."NPRODUCT")
 
                           UNION ALL
 
@@ -328,7 +328,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                   END PRO_ID
                           		    FROM	USVTIMV01."PRODUCT" PRO) PR0, USVTIMV01."PRODUCT" PRO
                           	WHERE PRO.CTID = PR0.PRO_ID) P
-                          LEFT JOIN USVTIMV01."PRODMASTER" PM ON P."NBRANCH" = P."NBRANCH" AND P."NPRODUCT" = P."NPRODUCT")
+                          LEFT JOIN USVTIMV01."PRODMASTER" PM ON PM."NBRANCH" = P."NBRANCH" AND PM."NPRODUCT" = P."NPRODUCT")
                           ) AS TMP
                        '''
   
