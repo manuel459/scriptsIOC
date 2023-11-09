@@ -95,6 +95,37 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
     print("1-TERMINO TABLA OCCDRESS_VT")
     L_DF_OCCDRESS_VTIME = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_OCCDRESS_VTIME).load()
     print("2-TERMINO TABLA OCCDRESS_VT")
+
+    L_OCCDRESS_INSIS = f'''
+                                   (
+                                   (select
+                                   'D' as INDDETREC,
+                                   'OCCDRESS' as TABLAIFRS17,
+                                   '' as PK,
+                                   '' as DTPREG,
+                                   '' as TIOCPROC,
+                                   '' as TIOCFRM,
+                                   '' as TIOCTO,
+                                   'PNV' as KGIORIGM,
+                                   pin."MAN_ID" as DCODIGO,
+                                   '' as DDESC,
+                                   '' as KOICDRESS
+                                   from usinsiv01."P_INSURERS" pin --2023-11-06 - 2023-11-06 
+                                   where cast(pin.fecha_replicacion_positiva  as date)  between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}' --LA TABLA ORIGINAL NO TIENE FECHAS 
+                                   )
+                                   ) AS TMP
+                        '''
+    #EJECUTAR CONSULTA
+    print("1-TERMINO TABLA OCCDRESS_INS")
+    L_DF_OCCDRESS_INSIS = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_OCCDRESS_INSIS).load()
+    print("2-TERMINO TABLA OCCDRESS_INS")
+    
+    #PERFORM THE UNION OPERATION
+    L_DF_OCCDRESS = L_DF_OCCDRESS_INSUNIX.union(L_DF_OCCDRESS_VTIME).union(L_DF_OCCDRESS_INSIS)
+
+    return L_DF_OCCDRESS
+
+
     
     #PERFORM THE UNION OPERATION
     L_DF_OCCDRESS = L_DF_OCCDRESS_INSUNIX.union(L_DF_OCCDRESS_VTIME)
