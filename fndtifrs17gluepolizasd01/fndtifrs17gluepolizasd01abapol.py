@@ -1,3 +1,6 @@
+from pyspark.sql.types import *
+from pyspark.sql.functions import col
+
 def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):         
 
    #Declara consulta VTIME
@@ -408,7 +411,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                         AND CERT."NBRANCH" = P."NBRANCH" 
                         AND CERT."NPRODUCT" = P."NPRODUCT" 
                         AND CERT."NPOLICY" = P."NPOLICY"
-                        WHERE P."SCERTYPE" = '2' AND P."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
+                        WHERE P."SCERTYPE" = '2' AND CAST(P."DCOMPDATE" AS DATE) BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
                         )
                         
                         UNION ALL
@@ -1775,5 +1778,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 
    #Perform the union operation
    L_DF_POLIZAS = L_DF_POLIZAS_VTIME.union(L_DF_POLIZAS_INSIS).union(L_DF_POLIZAS_INSUNIX)
+
+   L_DF_POLIZAS = L_DF_POLIZAS.withColumn("VCAMBIO", col("VCAMBIO").cast(DecimalType(7, 4))).withColumn("VTXCOMCB", col("VTXCOMCB").cast(DecimalType(7, 4))).withColumn("VMTCOMCB", col("VMTCOMCB").cast(DecimalType(12, 2))).withColumn("VTXCOMMD", col("VTXCOMMD").cast(DecimalType(7, 4))).withColumn("VMTCOMMD", col("VMTCOMMD").cast(DecimalType(12, 2))).withColumn("VCAPITAL", col("VCAPITAL").cast(DecimalType(14, 2))).withColumn("VMTCOMR", col("VMTCOMR").cast(DecimalType(12, 2))).withColumn("VMTCMNQP", col("VMTCMNQP").cast(DecimalType(12, 2))).withColumn("VMTPRMBR", col("VMTPRMBR").cast(DecimalType(12, 2))).withColumn("VTXCOSSG", col("VTXCOSSG").cast(DecimalType(7, 4))).withColumn("VTXRETEN", col("VTXRETEN").cast(DecimalType(7, 4))).withColumn("VMTCAPRE", col("VMTCAPRE").cast(DecimalType(12, 2))).withColumn("DQTDPART", col("DQTDPART").cast(DecimalType(5, 0)))
 
    return L_DF_POLIZAS
