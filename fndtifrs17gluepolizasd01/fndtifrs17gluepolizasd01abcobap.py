@@ -220,15 +220,13 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     (POL.POLITYPE <> '1' -- COLECTIVAS 
                                       AND CERT.EXPIRDAT >= '2021-12-31' 
                                       AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
-                               AND POL.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}') T) 
+                               AND POL.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}') T) AS TMP
                           '''
 
   L_DF_ABCOBAP_INSUNIX_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_INSUNIX_LPG).load()
 
-  print('INSUNIX LPG')
-
   L_ABCOBAP_INSUNIX_LPV = f'''
-                          (SELECT 
+                          ( SELECT 
                            'D' AS INDDETREC,
                            'ABCOBAP' AS TABLAIFRS17,
                            '' AS PK,
@@ -322,7 +320,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                            FROM(
                                  SELECT 
                                  COALESCE (CAST(C.EFFECDATE AS VARCHAR),'')  AS TIOCFRM,
-                                 COALESCE(C.BRANCH, 0) || '-'||( POL.PRODUCT
+                                 COALESCE(C.BRANCH, 0) || '-'|| POL.PRODUCT
                                                                 /*SELECT  P.PRODUCT 
                                                                 FROM  USINSUV01.POLICY P
                                                                 WHERE P.USERCOMP = C.USERCOMP
@@ -330,7 +328,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                                 AND P.CERTYPE = C.CERTYPE
                                                                 AND P.BRANCH = C.BRANCH
                                                                 AND P.POLICY = C.POLICY*/
-                                 ) || '-' ||  COALESCE(C.POLICY, 0)|| '-' || COALESCE(C.CERTIF, 0)  AS KABAPOL,
+                                 || '-' ||  COALESCE(C.POLICY, 0)|| '-' || COALESCE(C.CERTIF, 0)  AS KABAPOL,
                                  '' AS KABUNRIS,
                                  COALESCE((SELECT COALESCE(CAST(GC.COVERGEN AS VARCHAR), '0') FROM USINSUV01.GEN_COVER GC 
                                            WHERE GC.USERCOMP = C.USERCOMP 
@@ -451,16 +449,15 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                        OR 
                                      (POL.POLITYPE <> '1' -- COLECTIVAS 
                                        AND CERT.EXPIRDAT >= '2021-12-31' 
-                                 AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))) AS T) '''
+                                 AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
+                                 AND POL.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')T ) AS TMP '''
  
   L_DF_ABCOBAP_INSUNIX_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_INSUNIX_LPV).load()
-
-  print('INSUNIX LPV')
-
-  #------------------------------------------------------------------------------------------------------------------------#     
+  
+  #-------------------------------------------------------------------------------------------------------------------------------#
 
   L_ABCOBAP_VTIME_LPG = f'''
-                      ( SELECT 
+                        ( SELECT 
                         'D' AS INDDETREC,
                         'ABCOBAP' AS TABLAIFRS17,
                         '' AS PK,
@@ -626,7 +623,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                   (POL."SPOLITYPE" <> '1' -- COLECTIVAS 
                                   AND CERT."DEXPIRDAT" >= '2021-12-31' 
                                   AND (CERT."DNULLDATE" IS NULL OR CERT."DNULLDATE" > '2021-12-31')))
-                                  AND POL."DSTARTDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}') COV_CERT))'''
+                                  AND POL."DSTARTDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}') COV_CERT) AS TMP'''
 
   L_DF_ABCOBAP_VTIME_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_VTIME_LPG).load()
 
@@ -795,119 +792,10 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                (POL."SPOLITYPE" <> '1' -- COLECTIVAS 
                                AND CERT."DEXPIRDAT" >= '2021-12-31' 
                                AND (CERT."DNULLDATE" IS NULL OR CERT."DNULLDATE" > '2021-12-31')))
-                               AND POL."DSTARTDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')T 
-                          )
+                               AND POL."DSTARTDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')T ) AS TMP
                           '''
 
   L_DF_ABCOBAP_VTIME_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_VTIME_LPV).load()
- 
-  #------------------------------------------------------------------------------------------------------------------------#  
-
-  '''
-  L_ABCOBAP_INSIS = f
-                    (
-                      SELECT 
-                      'D' AS INDDETREC,
-                      'ABCOBAP' AS TABLAIFRS17,
-                      '' AS PK,
-                      '' AS DTPREG,  --NO
-                      '' AS TIOCPROC,--NO
-                      CAST(CAST(GRC."INSR_BEGIN" AS DATE)AS VARCHAR) AS TIOCFRM, --BEGIN OF INSURING.
-                      '' AS TIOCTO,
-                      'PNV' AS KGIORIGM,
-                        (
-                      	SELECT P."POLICY_NAME" FROM USINSIV01."POLICY" P
-                      	WHERE P."POLICY_ID" = GRC."POLICY_ID"
-                      ) AS KABAPOL,
-                      GRC."INSURED_OBJ_ID" ||'-'|| GRC."ANNEX_ID"  AS KABUNRIS,
-                      GRC."COVER_TYPE"  AS KGCTPCBT,
-                      CAST(CAST(GRC."INSR_BEGIN" AS DATE) AS VARCHAR) AS TINICIO,
-                      CAST(CAST(GRC."INSR_END" AS DATE)AS VARCHAR)  AS TTERMO,
-                      '' AS TSITCOB,
-                      '' AS KACSITCB,
-                      '' AS VMTPRMSP,
-                      TRUNC(GRC."PREMIUM", 2) AS VMTCOMR,
-                      '' AS VMTBOMAT,
-                      '' AS VTXBOMAT,
-                      '' AS VMTBOCOM,
-                      '' AS VTXBOCOM,
-                      '' AS VMTDECOM,
-                      '' AS VTXDECOM,
-                      '' AS VMTDETEC,
-                      '' AS VTXDETEC,
-                      '' AS VMTAGRAV,
-                      '' AS VTXAGRAV,
-                      '' AS VMTPRMTR,
-                      '' AS VMTPRLIQ,
-                      TRUNC(GRC."PREMIUM", 2) AS VMTPRMBR,
-                      TRUNC(GRC."TARIFF_PERCENT", 9) AS VTXCOB,
-                      CAST(TRUNC(GRC."INSURED_VALUE", 2) AS VARCHAR) AS VCAPITAL,
-                      '' AS VTXCAPIT, --EN BLANCO
-                      '' AS KACTPIDX, --NO
-                      '' AS VTXINDX,  --EN BLANCO
-                      'LPV' AS DCOMPA,
-                      '' AS DMARCA,   --NO  
-                      '' AS TDACECOB, --NO
-                      '' AS TDCANCOB, --NO
-                      '' AS TDCRICOB, --NO
-                      CAST(CAST(GRC."INSR_BEGIN" AS DATE)AS VARCHAR) AS TDRENOVA,
-                      '' AS TDVENTRA, --NO
-                      '' AS DHORAINI, --NO
-                      '' AS VMTPREMC, --PENDIENTE
-                      '' AS VMIBOMAT, --NO
-                      '' AS VMIBOCOM, --NO
-                      '' AS VMIDECOM, --NO
-                      '' AS VMIDETEC, --NO
-                      '' AS VMIRPMSP, --NO
-                      '' AS VMIPRMBR, --NO
-                      '' AS VMICOMR,  --NO
-                      '' AS VMIPRLIQ, --NO
-                      '' AS VMICMNQP, --NO
-                      '' AS VMIPRMTR, --NO
-                      '' AS VMIAGRAV, --NO
-                      '' AS KACTIPCB, --EN BLANCO
-                      '' AS VMTCAPLI, --EN BLANCO
-                      '' AS KACTRARE, --EN BLANCO
-                      '' AS KACFMCAL, --EN BLANCO
-                      '' AS DFACMULT, --NO
-                      TRUNC(GRC."INSURED_VALUE", 0)  AS VMTCAPIN,
-                      TRUNC(GRC."ANNUAL_PREMIUM", 0) AS VMTPREIN,
-                      '' AS DINDESES,    --NO
-                      '' AS DINDMOTO,    --NO
-                      '' AS KACSALIN,    --NO
-                      '' AS VMTSALMD,    --NO
-                      '' AS VTXLMRES,    --EN BLANCO
-                      '' AS VTXEQUIP,    --NO
-                      '' AS VTXPRIOR,    --NO
-                      '' AS VTXCONTR,    --NO
-                      '' AS VTXESPEC,    --NO
-                      '' AS DCAPMORT,    --NO
-                      0 AS VMTPRRES,    --PENDIENTE
-                      '' AS DIDADETAR,   --EN BLANCO
-                      '' AS DIDADLIMCOBA,--EN BLANCO
-                      '' AS KACTPDUR,    --EN BLANCO
-                      '' AS KGCRAMO_SAP, --NO
-                      '' AS KACTCOMP,    --NO
-                      '' AS KACINDTX,    --EN BLANCO
-                      '' AS KACCALIDA,   --EN BLANCO
-                      '' AS DNCABCALP,   --EN BLANCO
-                      '' AS DINDNIVEL,   --NO
-                      '' AS DURCOB,      --EN BLANCO
-                      '' AS DURPAGCOB,   --EN BLANCO
-                      '' AS KACTPDURCB,  --NO
-                      '' AS DINCOBINDX,  --NO
-                      '' AS KACGRCBT,    --NO
-                      '' AS KABTRTAB_2,  --NO
-                      '' AS VTXAJTBUA,   --NO
-                      '' AS VMTCAPREM    --NO
-                      FROM USINSIV01."GEN_RISK_COVERED" GRC
-                      WHERE GRC."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
-                    ) AS TMP
-    
-    #EJECUTAR CONSULTA
-  L_DF_ABCOBAP_INSIS = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_ABCOBAP_INSIS).load()
-  '''
-  
 
   #PERFORM THE UNION OPERATION
   L_DF_ABCOBAP = L_DF_ABCOBAP_INSUNIX_LPG.union(L_DF_ABCOBAP_INSUNIX_LPV).union(L_DF_ABCOBAP_VTIME_LPG).union(L_DF_ABCOBAP_VTIME_LPV)
