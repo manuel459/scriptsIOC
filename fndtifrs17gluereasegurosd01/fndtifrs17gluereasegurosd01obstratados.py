@@ -1,4 +1,5 @@
 def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
+    
     L_OBSTRATADOS_INSUNIX = f'''
                              (
                              (select
@@ -43,6 +44,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                              )
                              union all
+
                              (select
                              'D' as INDDETREC,
                              'OBTRATADOS' as TABLAIFRS17,
@@ -134,7 +136,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' as VMTPRUN,
                             '' as KGCRAMO_SAP
                             from usvtimv01."CONTRPROC" c --2006-06-02 - 2017-08-14 
-                            where c."DCOMPDATE" between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                            where cast(c."DCOMPDATE" as date) between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                             )
                             union all
                             
@@ -177,7 +179,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' as VMTPRUN,
                             '' as KGCRAMO_SAP
                             from usvtimg01."CONTRPROC" c --2009-01-17 - 2023-03-30
-                            where c."DCOMPDATE" between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                            where cast(c."DCOMPDATE" as date) between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                             )
                             ) AS TMP
                            '''
@@ -187,6 +189,57 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
     L_DF_OBTRATADOS_VTIME = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_OBSTRATADOS_VTIME).load()
     print("2-TERMINO TABLA OBSTRATADOS_VT")
     
+    L_OBSTRATADOS_INSIS = f'''
+                            (
+                            ( select 
+                            'D' as INDDETREC,
+                            'OBTRATADOS' as TABLAIFRS17,
+                            '' as PK,
+                            '' as DTPREG,
+                            '' as TIOCPROC,
+                            cast(RT."START_DATE" as DATE) as TIOCFRM,
+                            '' as TIOCTO,
+                            'PNV' as KGIORIGM,
+                            RT."TREATY_ID"  as DCDINTTRA,
+                            '' as DCDTRAT_SO,
+                            '' as DDESCDTRA,
+                            '' as DDESABRTRA,
+                            cast(RT."START_DATE" as DATE) as TINICIO,
+                            cast(RT."END_DATE"   as DATE) as TTERMO,
+                            '' as DANOTRAT,
+                            RT."TREATY_SUBTYPE" as KOCTPRESS,
+                            '' as KOCTPFRC,
+                            '' as KOCVLDFRC,
+                            '' as KOCTPTRT,
+                            '' as KOCTPDUR,
+                            '' as KOCTPOBJ,
+                            '' as KOCSIT,
+                            '' as DCDTRAT,
+                            'LPV' as DCOMPA,
+                            '' as DMARCA,
+                            '' as KOCSCOPE,
+                            '' as KOCIDFAC,
+                            '' as KOCTPRNP,
+                            '' as KACSEGM,
+                            '' as KOCMOEDA,
+                            '' as DINDPMAX,
+                            '' as VMTMAXTR,
+                            '' as VMTPLENO,
+                            '' as VMTPDEDT,
+                            '' as KOCGRCBT,
+                            '' as VMTPRUN,
+                            '' as KGCRAMO_SAP
+                            from usinsiv01."RI_TREATY" rt --1995-01-01 - 2021-01-01
+                            where cast(RT."START_DATE" as DATE) BETWEEN '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                            )
+                            ) AS TMP
+                           '''
+    
+    #EJECUTAR CONSULTA
+    print("1-TERMINO TABLA OBSTRATADOS_INS")
+    L_DF_OBTRATADOS_INSIS = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_OBSTRATADOS_INSIS).load()
+    print("2-TERMINO TABLA OBSTRATADOS_INS")
     #PERFORM THE UNION OPERATION 
-    L_DF_OBSTRATADOS = L_DF_OBSTRATADOS_INSUNIX.union(L_DF_OBTRATADOS_VTIME)
+    L_DF_OBSTRATADOS = L_DF_OBSTRATADOS_INSUNIX.union(L_DF_OBTRATADOS_VTIME).union(L_DF_OBTRATADOS_INSIS)
+
     return L_DF_OBSTRATADOS
