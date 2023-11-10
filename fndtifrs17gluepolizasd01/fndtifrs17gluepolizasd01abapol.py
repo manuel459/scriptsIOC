@@ -1074,10 +1074,12 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           COALESCE((
                             SELECT CAST(COALESCE(PH.TYPE, 0) AS VARCHAR) FROM 
                               USINSUG01.POLICY_HIS PH
-                              WHERE PH.CERTYPE = P.CERTYPE
-                              AND   PH.BRANCH  = P.BRANCH
-                              AND   PH.POLICY = P.POLICY
-                              AND   PH.CERTIF  = CERT.CERTIF
+                              WHERE PH.USERCOMP = P.USERCOMP
+                              AND   PH.COMPANY  = P.COMPANY
+                              AND   PH.CERTYPE  = P.CERTYPE
+                              AND   PH.BRANCH   = P.BRANCH
+                              AND   PH.POLICY   = P.POLICY
+                              AND   PH.CERTIF   = CERT.CERTIF
                               AND   PH.EFFECDATE <= P.EFFECDATE
                               AND  (PH.NULLDATE IS NULL OR PH.NULLDATE > P.EFFECDATE)
                               AND   PH.TYPE = 1
