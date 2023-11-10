@@ -797,7 +797,115 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 
   L_DF_ABCOBAP_VTIME_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_VTIME_LPV).load()
 
+  #-------------------------------------------------------------------------------------------------------------------------------#
+
+  L_ABCOBAP_INSIS = f'''
+                    (
+                      SELECT 
+                      'D' AS INDDETREC,
+                      'ABCOBAP' AS TABLAIFRS17,
+                      '' AS PK,
+                      '' AS DTPREG,  --NO
+                      '' AS TIOCPROC,--NO
+                      CAST(CAST(GRC."INSR_BEGIN" AS DATE)AS VARCHAR) AS TIOCFRM, --BEGIN OF INSURING.
+                      '' AS TIOCTO,
+                      'PNV' AS KGIORIGM,
+                        (
+                      	SELECT P."POLICY_NAME" FROM USINSIV01."POLICY" P
+                      	WHERE P."POLICY_ID" = GRC."POLICY_ID"
+                      ) AS KABAPOL,
+                      GRC."INSURED_OBJ_ID" ||'-'|| GRC."ANNEX_ID"  AS KABUNRIS,
+                      GRC."COVER_TYPE"  AS KGCTPCBT,
+                      CAST(CAST(GRC."INSR_BEGIN" AS DATE) AS VARCHAR) AS TINICIO,
+                      CAST(CAST(GRC."INSR_END" AS DATE)AS VARCHAR)  AS TTERMO,
+                      '' AS TSITCOB,
+                      '' AS KACSITCB,
+                      '' AS VMTPRMSP,
+                      TRUNC(GRC."PREMIUM", 2) AS VMTCOMR,
+                      '' AS VMTBOMAT,
+                      '' AS VTXBOMAT,
+                      '' AS VMTBOCOM,
+                      '' AS VTXBOCOM,
+                      '' AS VMTDECOM,
+                      '' AS VTXDECOM,
+                      '' AS VMTDETEC,
+                      '' AS VTXDETEC,
+                      '' AS VMTAGRAV,
+                      '' AS VTXAGRAV,
+                      '' AS VMTPRMTR,
+                      '' AS VMTPRLIQ,
+                      TRUNC(GRC."PREMIUM", 2) AS VMTPRMBR,
+                      TRUNC(GRC."TARIFF_PERCENT", 9) AS VTXCOB,
+                      CAST(TRUNC(GRC."INSURED_VALUE", 2) AS VARCHAR) AS VCAPITAL,
+                      '' AS VTXCAPIT, --EN BLANCO
+                      '' AS KACTPIDX, --NO
+                      '' AS VTXINDX,  --EN BLANCO
+                      'LPV' AS DCOMPA,
+                      '' AS DMARCA,   --NO  
+                      '' AS TDACECOB, --NO
+                      '' AS TDCANCOB, --NO
+                      '' AS TDCRICOB, --NO
+                      CAST(CAST(GRC."INSR_BEGIN" AS DATE)AS VARCHAR) AS TDRENOVA,
+                      '' AS TDVENTRA, --NO
+                      '' AS DHORAINI, --NO
+                      '' AS VMTPREMC, --PENDIENTE
+                      '' AS VMIBOMAT, --NO
+                      '' AS VMIBOCOM, --NO
+                      '' AS VMIDECOM, --NO
+                      '' AS VMIDETEC, --NO
+                      '' AS VMIRPMSP, --NO
+                      '' AS VMIPRMBR, --NO
+                      '' AS VMICOMR,  --NO
+                      '' AS VMIPRLIQ, --NO
+                      '' AS VMICMNQP, --NO
+                      '' AS VMIPRMTR, --NO
+                      '' AS VMIAGRAV, --NO
+                      '' AS KACTIPCB, --EN BLANCO
+                      '' AS VMTCAPLI, --EN BLANCO
+                      '' AS KACTRARE, --EN BLANCO
+                      '' AS KACFMCAL, --EN BLANCO
+                      '' AS DFACMULT, --NO
+                      TRUNC(GRC."INSURED_VALUE", 0)  AS VMTCAPIN,
+                      TRUNC(GRC."ANNUAL_PREMIUM", 0) AS VMTPREIN,
+                      '' AS DINDESES,    --NO
+                      '' AS DINDMOTO,    --NO
+                      '' AS KACSALIN,    --NO
+                      '' AS VMTSALMD,    --NO
+                      '' AS VTXLMRES,    --EN BLANCO
+                      '' AS VTXEQUIP,    --NO
+                      '' AS VTXPRIOR,    --NO
+                      '' AS VTXCONTR,    --NO
+                      '' AS VTXESPEC,    --NO
+                      '' AS DCAPMORT,    --NO
+                      0 AS VMTPRRES,    --PENDIENTE
+                      '' AS DIDADETAR,   --EN BLANCO
+                      '' AS DIDADLIMCOBA,--EN BLANCO
+                      '' AS KACTPDUR,    --EN BLANCO
+                      '' AS KGCRAMO_SAP, --NO
+                      '' AS KACTCOMP,    --NO
+                      '' AS KACINDTX,    --EN BLANCO
+                      '' AS KACCALIDA,   --EN BLANCO
+                      '' AS DNCABCALP,   --EN BLANCO
+                      '' AS DINDNIVEL,   --NO
+                      '' AS DURCOB,      --EN BLANCO
+                      '' AS DURPAGCOB,   --EN BLANCO
+                      '' AS KACTPDURCB,  --NO
+                      '' AS DINCOBINDX,  --NO
+                      '' AS KACGRCBT,    --NO
+                      '' AS KABTRTAB_2,  --NO
+                      '' AS VTXAJTBUA,   --NO
+                      '' AS VMTCAPREM    --NO
+                      FROM USINSIV01."GEN_RISK_COVERED" GRC
+                      JOIN USINSIV01."POLICY" POL on POL."POLICY_ID" = GRC."POLICY_ID"
+                      WHERE POL."INSR_END" >= '2021-12-31'
+                      AND POL."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                    ) AS TMP
+                    '''
+    
+    #EJECUTAR CONSULTA
+  L_DF_ABCOBAP_INSIS = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_ABCOBAP_INSIS).load()
+
   #PERFORM THE UNION OPERATION
-  L_DF_ABCOBAP = L_DF_ABCOBAP_INSUNIX_LPG.union(L_DF_ABCOBAP_INSUNIX_LPV).union(L_DF_ABCOBAP_VTIME_LPG).union(L_DF_ABCOBAP_VTIME_LPV)
+  L_DF_ABCOBAP = L_DF_ABCOBAP_INSUNIX_LPG.union(L_DF_ABCOBAP_INSUNIX_LPV).union(L_DF_ABCOBAP_VTIME_LPG).union(L_DF_ABCOBAP_VTIME_LPV).union(L_DF_ABCOBAP_INSIS)
 
   return L_DF_ABCOBAP
