@@ -82,11 +82,11 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           FROM USVTIMG01."EXCHANGE" E 
                           WHERE E."NCURRENCY" = ( SELECT CP."NCURRENCY" 
                                                   FROM USVTIMG01."CURREN_POL" CP
-                                                  WHERE "SCERTYPE" = '2'
-                                                  AND "NBRANCH"    = P."NBRANCH"
-                                                  AND "NPRODUCT"   = P."NPRODUCT"
-                                                  AND "NPOLICY"    = P."NPOLICY"
-                                                  AND "NCERTIF"    = 0
+                                                  WHERE CP."SCERTYPE" = '2'
+                                                  AND CP."NBRANCH"    = P."NBRANCH"
+                                                  AND CP."NPRODUCT"   = P."NPRODUCT"
+                                                  AND CP."NPOLICY"    = P."NPOLICY"
+                                                  AND CP."NCERTIF"    = 0
                                                   AND CP."DEFFECDATE" <= P."DSTARTDATE"
                                                   AND (CP."DNULLDATE" IS NULL OR CP."DNULLDATE" > P."DSTARTDATE") limit 1)
                             AND E."DEFFECDATE" <= P."DSTARTDATE"
@@ -119,7 +119,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                         '' AS VMTCOMCB,   --EN BLANCO
                         '' AS KCBMED_PD,  --NO
                         COALESCE(COALESCE(  --POR CERTIFICADO
-                                (SELECT COALESCE("NPERCENT",0) FROM  USVTIMG01."COMMISSION" CO 
+                                (SELECT COALESCE(CO."NPERCENT",0) FROM  USVTIMG01."COMMISSION" CO 
                                     WHERE  CO."SCERTYPE" = '2'
                                     AND    CO."NBRANCH"  = P."NBRANCH"
                                     AND	   CO."NPRODUCT" = P."NPRODUCT" 	
@@ -130,7 +130,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     AND    CO."NINTERTYP" <> 1
                                     LIMIT 1),
                                     --POR POLIZA
-                                  (SELECT COALESCE("NPERCENT",0) FROM  USVTIMG01."COMMISSION" CO 
+                                  (SELECT COALESCE(CO."NPERCENT",0) FROM  USVTIMG01."COMMISSION" CO 
                                     WHERE  CO."SCERTYPE" = '2'
                                     AND    CO."NBRANCH"  = P."NBRANCH"
                                     AND	CO."NPRODUCT" = P."NPRODUCT" 	
@@ -153,7 +153,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     AND    CO."NINTERTYP" <> 1
                                     LIMIT 1),
                                     --POR POLIZA
-                                  (SELECT COALESCE("NAMOUNT", 0) FROM  USVTIMG01."COMMISSION" CO 
+                                  (SELECT COALESCE(CO."NAMOUNT", 0) FROM  USVTIMG01."COMMISSION" CO 
                                     WHERE CO."SCERTYPE" = '2'
                                     AND   CO."NBRANCH"  = P."NBRANCH"
                                     AND	 CO."NPRODUCT" = P."NPRODUCT"
