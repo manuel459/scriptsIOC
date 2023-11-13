@@ -411,7 +411,18 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                         AND CERT."NBRANCH" = P."NBRANCH" 
                         AND CERT."NPRODUCT" = P."NPRODUCT" 
                         AND CERT."NPOLICY" = P."NPOLICY"
-                        WHERE P."SCERTYPE" = '2' AND CAST(P."DCOMPDATE" AS DATE) BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
+                        where P."SCERTYPE" = '2' 
+                        and p."SSTATUS_POL" not in ('2','3') 
+                        and ( (p."SPOLITYPE" = '1' -- INDIVIDUAL 
+                              and P."DEXPIRDAT" >= '2021-12-31' 
+                              and (p."DNULLDATE" is null or p."DNULLDATE" > '2021-12-31') )
+                              or 
+                              (p."SPOLITYPE" <> '1' -- COLECTIVAS
+                              and CERT."DEXPIRDAT" >= '2021-12-31' 
+                              and (CERT."DNULLDATE" is null or CERT."DNULLDATE" > '2021-12-31'))
+                            )
+                        and p."DSTARTDATE" between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                        /*WHERE P."SCERTYPE" = '2' AND CAST(P."DCOMPDATE" AS DATE) BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/
                         )
                         
                         UNION ALL
@@ -748,7 +759,18 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           AND CERT."NBRANCH" = P."NBRANCH" 
                           AND CERT."NPRODUCT" = P."NPRODUCT" 
                           AND CERT."NPOLICY" = P."NPOLICY"
-                        WHERE P."SCERTYPE" = '2' AND P."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
+                          where P."SCERTYPE" = '2' 
+                          and p."SSTATUS_POL" not in ('2','3') 
+                          and ( (p."SPOLITYPE" = '1' -- INDIVIDUAL 
+                                and P."DEXPIRDAT" >= '2021-12-31' 
+                                and (p."DNULLDATE" is null or p."DNULLDATE" > '2021-12-31') )
+                                or 
+                                (p."SPOLITYPE" <> '1' -- COLECTIVAS
+                                and CERT."DEXPIRDAT" >= '2021-12-31' 
+                                and (CERT."DNULLDATE" is null or CERT."DNULLDATE" > '2021-12-31'))
+                              )
+                          and p."DSTARTDATE" between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                        /*WHERE P."SCERTYPE" = '2' AND P."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/
                          )
                   ) AS TMP           
                   '''
@@ -1144,7 +1166,17 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           AND CERT.BRANCH  = P.BRANCH
                           AND CERT.POLICY  = P.POLICY 
                           AND CERT.PRODUCT = P.PRODUCT
-                          WHERE P.CERTYPE = '2' AND P.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100)
+                          WHERE P.CERTYPE  = '2'
+                          AND P.STATUS_POL NOT IN ('2','3') 
+                          AND ((P.POLITYPE = '1' -- INDIVIDUAL 
+                                AND P.EXPIRDAT >= '2021-12-31' 
+                                AND (P.NULLDATE IS NULL OR P.NULLDATE > '2021-12-31'))
+                                OR 
+                              (P.POLITYPE <> '1' -- COLECTIVAS 
+                                AND CERT.EXPIRDAT >= '2021-12-31' 
+                          AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
+                          AND P.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                          /*WHERE P.CERTYPE = '2' AND P.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/)
 
                           UNION ALL
 
@@ -1518,11 +1550,21 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             LEFT JOIN USINSUV01.CERTIFICAT CERT 
                             ON  CERT.USERCOMP = P.USERCOMP 
                             AND CERT.COMPANY = P.COMPANY   
-                            AND CERT.CERTYPE = P.CERTYPE 
+                            AND CERT.CERTYPE = P.CERTYPE
                             AND CERT.BRANCH  = P.BRANCH
                             AND CERT.POLICY  = P.POLICY
                             AND CERT.PRODUCT = P.PRODUCT
-                          WHERE P.CERTYPE = '2' AND P.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100)
+                            WHERE P.CERTYPE  = '2'
+                            AND P.STATUS_POL NOT IN ('2','3') 
+                            AND ((P.POLITYPE = '1' -- INDIVIDUAL 
+                                  AND P.EXPIRDAT >= '2021-12-31' 
+                                  AND (P.NULLDATE IS NULL OR P.NULLDATE > '2021-12-31'))
+                                  OR 
+                                (P.POLITYPE <> '1' -- COLECTIVAS 
+                                  AND CERT.EXPIRDAT >= '2021-12-31' 
+                            AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
+                            AND P.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                          /*WHERE P.CERTYPE = '2' AND P.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/)
                           ) as TMP
                           '''
    #Ejecutar consulta
@@ -1770,7 +1812,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       FROM USINSIV01."POLICY" P 
                       LEFT JOIN USINSIV01."P_CLIENTS" PC ON P."CLIENT_ID" = PC."CLIENT_ID"
                       LEFT JOIN USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID"
-                        WHERE P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100) AS TMP 
+                      WHERE P."INSR_END" >= '2021-12-31' AND P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100) AS TMP 
                      '''
 
    #Ejecutar consulta
