@@ -421,7 +421,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               and CERT."DEXPIRDAT" >= '2021-12-31' 
                               and (CERT."DNULLDATE" is null or CERT."DNULLDATE" > '2021-12-31'))
                             )
-                        and p."DSTARTDATE" between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                        and p."DSTARTDATE" between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
                         /*WHERE P."SCERTYPE" = '2' AND CAST(P."DCOMPDATE" AS DATE) BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/
                         )
                         
@@ -769,7 +769,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                 and CERT."DEXPIRDAT" >= '2021-12-31' 
                                 and (CERT."DNULLDATE" is null or CERT."DNULLDATE" > '2021-12-31'))
                               )
-                          and p."DSTARTDATE" between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                          and p."DSTARTDATE" between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
                         /*WHERE P."SCERTYPE" = '2' AND P."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/
                          )
                   ) AS TMP           
@@ -1175,7 +1175,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               (P.POLITYPE <> '1' -- COLECTIVAS 
                                 AND CERT.EXPIRDAT >= '2021-12-31' 
                           AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
-                          AND P.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                          AND P.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
                           /*WHERE P.CERTYPE = '2' AND P.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/)
 
                           UNION ALL
@@ -1563,7 +1563,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                 (P.POLITYPE <> '1' -- COLECTIVAS 
                                   AND CERT.EXPIRDAT >= '2021-12-31' 
                             AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
-                            AND P.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                            AND P.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
                           /*WHERE P.CERTYPE = '2' AND P.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/)
                           ) as TMP
                           '''
