@@ -208,3 +208,307 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              '''
     
     L_DF_ABCLRISP_INSUNIX_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCLRISP_INSUNIX_LPG).load()
+
+    L_ABCLRISP_VTIME_LPV = f'''
+                           (SELECT
+                           '' AS PK,
+                           '' AS DTPREG,
+                           '' AS TIOCPROC,
+                           '' AS TIOCFRM, --PENDIENTE
+                           '' AS TIOCTO,
+                           '' AS KGIORIGM,
+                           PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" AS KABAPOL,
+                           PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" || '-' || R."SCLIENT"  AS KABUNRIS,
+                           COALESCE(( SELECT COALESCE(GC."NCOVERGEN", 0)           
+                                      FROM USVTIMV01."GEN_COVER" GC 
+                                      JOIN USVTIMV01."COVER" C  
+                                      ON  GC."NBRANCH"   = C."NBRANCH"
+                                      AND GC."NPRODUCT"  = PC."NPRODUCT"
+                                      AND GC."NCURRENCY" = C."NCURRENCY"
+                                      AND GC."NMODULEC" =  C."NMODULEC"
+                                      AND GC."NCOVER"   =  C."NCOVER"
+                                      AND GC."DEFFECDATE" <= PC."DSTARTDATE"
+                           		   AND (GC."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE")		       		   
+                                      WHERE C."SCERTYPE"    = PC."SCERTYPE" 
+                                      AND   C."NBRANCH"     = PC."NBRANCH"
+                                      AND   C."NPRODUCT"    = PC."NPRODUCT"
+                                      AND   C."NPOLICY"     = PC."NPOLICY"
+                                      AND   C."NCERTIF"     = PC."NCERTIF"
+                                      AND   C."DEFFECDATE" <= PC."DSTARTDATE"
+                                      AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE")
+                                      AND  C."NCOVER" = 1
+                           ) ,'0') AS KGCTPCBT,
+                           ROW_NUMBER () OVER (PARTITION  BY PC."NBRANCH", PC."NPRODUCT", PC."NPOLICY", PC."NCERTIF" ORDER BY R."SCLIENT") AS DNPESEG,
+                           R."SCLIENT" AS KEBENTID_PS,
+                           (SELECT DATE_PART('YEAR', AGE(CURRENT_DATE, CLI."DBIRTHDAT")) FROM USVTIMG01."CLIENT" CLI WHERE CLI."SCLIENT" = R."SCLIENT") AS DIDADEAC,
+                           '' AS DANOREF, --EN BLANCO
+                           '' AS KACEMPR,
+                           '' AS VMTSALAR,
+                           '' AS KACTPSAL,
+                           '' AS TADMEMP,
+                           '' AS TADMGRP,
+                           '' AS TSAIDGRP,
+                           'LPG' AS DCOMPA,
+                           '' AS DMARCA,
+                           '' AS TDNASCIM,
+                           '' AS DQDIASUB,
+                           '' AS DQESPING,
+                           '' AS KACSEXO,
+                           '' AS KACCAE,
+                           '' AS DQTRABAL,
+                           '' AS DINAPMEN,
+                           '' AS DQCOEFEQ,
+                           '' AS DQHORSEM, --EN BLANCO
+                           '' AS DQMESES,
+                           '' AS VMTALIME, --EN BLANCO
+                           '' AS DQMESALI, --EN BLANCO
+                           '' AS VMTALOJA,
+                           '' AS DQMESALO,
+                           '' AS VMTRENUM, --EN BLANCO
+                           '' AS DQMESREN,
+                           '' AS DQDIATRA,
+                           '' AS DQCOPRE,
+                           '' AS DITINER,
+                           '' AS DNOMES,
+                           '' AS KACUTILIZ,
+                           '' AS VMTDESCO, --EN BLANCO
+                           '' AS DFRANQU,  --EN BLANCO
+                           '' AS DTARIFA,
+                           '' AS DINTIPEXP,
+                           '' AS KACESPAN,
+                           '' AS DQANIMAL,
+                           '' AS KACTIPSG,
+                           '' AS DAPROESC,
+                           '' AS DCMUDESC,
+                           '' AS DQCAPITA,
+                           '' AS VTXCOMPA,
+                           '' AS DQCAES,
+                           '' AS DINEXTTE,
+                           '' AS KACCLTARI,
+                           '' AS KACTIPVEI,
+                           '' AS KACCATRIS,
+                           '' AS DINDCOL,
+                           '' AS DACONSTR,
+                           '' AS DQPESSO1,
+                           '' AS DQPESSO2,
+                           '' AS DQVIAS,
+                           '' AS KACAGRAV,
+                           '' AS KACPARTI,
+                           '' AS KACSERMD,
+                           '' AS KACMRISC,
+                           '' AS DINDCON,
+                           '' AS DQPRAZO,
+                           R."NROLE" AS KACTPPES,
+                           '' AS KACESPES, --EN BLANCO
+                           '' AS KACMEPES,
+                           '' AS TDESPES,  --EN BLANCO
+                           '' AS KACTPPRA,
+                           '' AS DEMPREST,
+                           '' AS VMTPREST,
+                           '' AS VMTEMPRE,
+                           '' AS VMTPRCRD,
+                           '' AS DCONTCGD,
+                           '' AS DNCLICGD,
+                           '' AS DCERTIFC,
+                           R."DEFFECDATE" AS TINICIO,
+                           R."DNULLDATE"  AS TTERMO,
+                           '' AS DNOMEPAR,
+                           '' AS KACPROF,
+                           '' AS KACACTIV,
+                           '' AS KACSACTIV,
+                           '' AS VMTSALMD,
+                           '' AS DCODSUB,
+                           '' AS KACTPCON,
+                           '' AS DAREACCV,
+                           '' AS DAREACUL,
+                           '' AS KACZONAG,
+                           '' AS KACTPIDX,
+                           '' AS TDTINDEX,
+                           '' AS VMTPRMIN,
+                           '' AS DCDREGIM,
+                           '' AS DQHORTRA,
+                           '' AS DQSEMTRA,  --EN BLANCO
+                           '' AS DCAMPANH,
+                           '' AS KACMODAL,
+                           '' AS DENTIDSO,
+                           '' AS DLOCREF,
+                           '' AS KACINTNI,
+                           '' AS KACCLRIS,
+                           '' AS KACAMBCB,
+                           '' AS KACTRAIN,
+                           '' AS DINDCIRS,
+                           '' AS DINCERPA,
+                           '' AS DINDMOTO,
+                           '' AS DMATRIC,
+                           '' AS DINDMARK,
+                           '' AS KACOPCBT,
+                           '' AS VTXINDX,
+                           '' AS DAGRIDAD,   --EN BLANCO
+                           '' AS KACPAIS_DT, --NO
+                           '' AS KACMDAC,    --EN BLANCO
+                           '' AS DIDADECOM,  --PENDIENTE
+                           '' AS VTXPERINDC,
+                           '' AS TPGMYBENEF
+                           FROM USVTIMV01."ROLES" R
+                           JOIN ( SELECT P."SCERTYPE", P."NBRANCH", P."NPRODUCT", P."NPOLICY", CERT."NCERTIF", P."SCLIENT", P."DSTARTDATE"  
+                                  FROM USVTIMV01."POLICY" P 
+                           	   LEFT JOIN USVTIMV01."CERTIFICAT" CERT 
+                           	   ON  P."SCERTYPE" = CERT."SCERTYPE" 
+                           	   AND P."NBRANCH"  = CERT."NBRANCH"
+                           	   AND P."NPRODUCT" = CERT."NPRODUCT"
+                           	   AND P."NPOLICY"  = CERT."NPOLICY"
+                           	   JOIN USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" RTR ON RTR."BRANCHCOM" = P."NBRANCH" AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usvtimv01'
+                           	   WHERE P."SCERTYPE" = '2' 
+                                  AND P."SSTATUS_POL" NOT IN ('2','3') 
+                                  AND ( (P."SPOLITYPE" = '1' -- INDIVIDUAL 
+                                      AND P."DEXPIRDAT" >= '2021-12-31' 
+                                      AND (P."DNULLDATE" IS NULL OR P."DNULLDATE" > '2021-12-31') )
+                                      OR 
+                                      (P."SPOLITYPE" <> '1' -- COLECTIVAS 
+                                      AND CERT."DEXPIRDAT" >= '2021-12-31' 
+                                      AND (CERT."DNULLDATE" IS NULL OR CERT."DNULLDATE" > '2021-12-31'))
+                                 )) AS PC	
+                           ON  R."SCERTYPE"  = PC."SCERTYPE"
+                           AND R."NBRANCH"   = PC."NBRANCH" 
+                           AND R."NPRODUCT"  = PC."NPRODUCT"
+                           AND R."NPOLICY"   = PC."NPOLICY" 
+                           AND R."NCERTIF"   = PC."NCERTIF"  
+                           AND R."DEFFECDATE" <= PC."DSTARTDATE" 
+                           AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > PC."DSTARTDATE")
+                           WHERE R."NROLE" IN (2,8)) AS
+                           '''
+    
+    L_ABCLRISP_INSIS_LPV = f'''
+                           (SELECT
+                           '' AS PK,
+                           '' AS DTPREG,
+                           '' AS TIOCPROC,
+                           IO."INSR_BEGIN" AS TIOCFRM,
+                           '' AS TIOCTO,
+                           '' AS KGIORIGM,
+                           '' AS KABAPOL,
+                             AS KABUNRIS,
+                           '' AS KGCTPCBT, --EN BLANCO
+                           ROW_NUMBER () OVER (PARTITION  BY P."ATTR1", P."INSR_TYPE", P."NPOLICY", P."NCERTIF" /*ORDER BY R."SCLIENT"*/) AS DNPESEG,
+                           (
+                            SELECT ILPI."LEGACY_ID" 
+                            FROM USINSIV01."INTRF_LPV_PEOPLE_IDS" ILPI
+                            WHERE ILPI."MAN_ID" = OA."MAN_ID"
+                           )
+                           AS KEBENTID_PS,
+                           '' AS DIDADEAC, --PENDIENTE
+                           '' AS DANOREF,  --EN BLANCO
+                           '' AS KACEMPR,
+                           OA."OAIP1" AS VMTSALAR,
+                           '' AS KACTPSAL,
+                           '' AS TADMEMP,
+                           IO."INSR_BEGIN" AS TADMGRP,
+                           '' AS TSAIDGRP,
+                           'LPV' AS DCOMPA,
+                           '' AS DMARCA,
+                           '' AS TDNASCIM,
+                           '' AS DQDIASUB,
+                           '' AS DQESPING,
+                           '' AS KACSEXO,
+                           '' AS KACCAE,
+                           '' AS DQTRABAL,
+                           '' AS DINAPMEN,
+                           '' AS DQCOEFEQ,
+                           '' AS DQHORSEM, --EN BLANCO
+                           '' AS DQMESES,
+                           '' AS VMTALIME, --EN BLANCO
+                           '' AS DQMESALI, --EN BLANCO
+                           '' AS VMTALOJA,
+                           '' AS DQMESALO,
+                           '' AS VMTRENUM, --EN BLANCO
+                           '' AS DQMESREN,
+                           '' AS DQDIATRA,
+                           '' AS DQCOPRE,
+                           '' AS DITINER,
+                           '' AS DNOMES,
+                           '' AS KACUTILIZ,
+                           '' AS VMTDESCO, --EN BLANCO
+                           '' AS DFRANQU,  --EN BLANCO
+                           '' AS DTARIFA,
+                           '' AS DINTIPEXP,
+                           '' AS KACESPAN,
+                           '' AS DQANIMAL,
+                           '' AS KACTIPSG,
+                           '' AS DAPROESC,
+                           '' AS DCMUDESC,
+                           '' AS DQCAPITA,
+                           '' AS VTXCOMPA,
+                           '' AS DQCAES,
+                           '' AS DINEXTTE,
+                           '' AS KACCLTARI,
+                           '' AS KACTIPVEI,
+                           '' AS KACCATRIS,
+                           '' AS DINDCOL,
+                           '' AS DACONSTR,
+                           '' AS DQPESSO1,
+                           '' AS DQPESSO2,
+                           '' AS DQVIAS,
+                           '' AS KACAGRAV,
+                           '' AS KACPARTI,
+                           '' AS KACSERMD,
+                           '' AS KACMRISC,
+                           '' AS DINDCON,
+                           '' AS DQPRAZO,
+                           R."NROLE" AS KACTPPES,
+                           IO."OBJECT_STATE" AS KACESPES, --EN BLANCO
+                           '' AS KACMEPES,
+                           '' AS TDESPES,  --EN BLANCO
+                           '' AS KACTPPRA,
+                           '' AS DEMPREST,
+                           '' AS VMTPREST,
+                           '' AS VMTEMPRE,
+                           '' AS VMTPRCRD,
+                           '' AS DCONTCGD,
+                           '' AS DNCLICGD,
+                           '' AS DCERTIFC,
+                           '' AS TINICIO,  --EN BLANCO
+                           ''  AS TTERMO,  --EN BLANCO
+                           '' AS DNOMEPAR,
+                           '' AS KACPROF,
+                           '' AS KACACTIV,
+                           '' AS KACSACTIV,
+                           '' AS VMTSALMD,
+                           '' AS DCODSUB,
+                           '' AS KACTPCON,
+                           '' AS DAREACCV,
+                           '' AS DAREACUL,
+                           '' AS KACZONAG,
+                           '' AS KACTPIDX,
+                           '' AS TDTINDEX,
+                           '' AS VMTPRMIN,
+                           '' AS DCDREGIM,
+                           '' AS DQHORTRA,
+                           '' AS DQSEMTRA,  --EN BLANCO
+                           '' AS DCAMPANH,
+                           '' AS KACMODAL,
+                           '' AS DENTIDSO,
+                           '' AS DLOCREF,
+                           '' AS KACINTNI,
+                           '' AS KACCLRIS,
+                           '' AS KACAMBCB,
+                           '' AS KACTRAIN,
+                           '' AS DINDCIRS,
+                           '' AS DINCERPA,
+                           '' AS DINDMOTO,
+                           '' AS DMATRIC,
+                           '' AS DINDMARK,
+                           '' AS KACOPCBT,
+                           '' AS VTXINDX,
+                           '' AS DAGRIDAD,   --EN BLANCO
+                           '' AS KACPAIS_DT, --NO
+                           '' AS KACMDAC,    --EN BLANCO
+                           OA."AGE" AS DIDADECOM,  
+                           '' AS VTXPERINDC,
+                           '' AS TPGMYBENEF
+                           FROM USINSIV01."INSURED_OBJECT" IO
+                           JOIN USINSIV01."O_ACCINSURED" OA ON OA."OBJECT_ID" = IO."OBJECT_ID"
+                           JOIN USINSIV01."POLICY" P on P."POLICY_ID" = IO."POLICY_ID" and P."INSR_TYPE" = IO."INSR_TYPE"
+                           WHERE P."INSR_END" >= '2021-12-31) AS INSIS_LPV
+                           '''
+    
+    L_DF_ABCLRISP_INSIS_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCLRISP_INSIS_LPV).load()
