@@ -1,3 +1,6 @@
+from pyspark.sql.types import *
+from pyspark.sql.functions import col
+
 def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):         
 
    #Declara consulta VTIME
@@ -274,7 +277,5 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 
    #Perform the union operation
    L_DF_POLIZAS = L_DF_POLIZAS_VTIME_GENERAL.union(L_DF_POLIZAS_VTIME_VIDA).union(L_DF_POLIZAS_INSIS).union(L_DF_POLIZAS_INSUNIX_GENERAL).union(L_DF_POLIZAS_INSUNIX_VIDA)
-  
-   L_DF_POLIZAS = L_DF_POLIZAS.withColumn("VMTCOMR", col("VMTCOMR").cast(DecimalType(12, 2))).withColumn("VMTPRMBR", col("VMTPRMBR").cast(DecimalType(12, 2))).withColumn("VTXCOB", col("VTXCOB").cast(DecimalType(13, 9))).withColumn("VCAPITAL", col("VCAPITAL").cast(DecimalType(14, 2))).withColumn("VTXCAPIT", col("VTXCAPIT").cast(DecimalType(9, 5))).withColumn("VTXINDX", col("VTXINDX").cast(DecimalType(7, 4))).withColumn("VMTPREMC", col("VMTPREMC").cast(DecimalType(12, 2))).withColumn("VMTCAPLI", col("VMTCAPLI").cast(DecimalType(14, 2))).withColumn("VMTCAPIN", col("VMTCAPIN").cast(DecimalType(14, 2))).withColumn("VMTPREIN", col("VMTPREIN").cast(DecimalType(14, 2))).withColumn("VTXLMRES", col("VTXLMRES").cast(DecimalType(7, 4))).withColumn("VMTPRRES", col("VMTPRRES").cast(DecimalType(12, 2))).withColumn("VTXAJTBUA", col("VTXAJTBUA").cast(DecimalType(9, 4))).withColumn("VMTCAPREM", col("VMTCAPREM").cast(DecimalType(12, 2)))
 
    return L_DF_POLIZAS
