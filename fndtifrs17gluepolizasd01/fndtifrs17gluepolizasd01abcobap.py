@@ -555,13 +555,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TIOCFRM,
                               C."NBRANCH" ||'-'|| C."NPRODUCT" ||'-'|| C."NPOLICY" ||'-'|| C."NCERTIF" AS KABAPOL,
                               COALESCE((SELECT CAST(LC."NCOVERGEN" AS VARCHAR)  
-                                         FROM USVTIMG01."GEN_COVER" LC 
-                                         WHERE LC."NBRANCH" = C."NBRANCH" 
-                                         AND LC."NPRODUCT" = C."NPRODUCT"
-                                         AND LC."NMODULEC" = C."NMODULEC"
-                                         AND LC."NCOVER" = C."NCOVER"
-                                         AND LC."DEFFECDATE" <= C."DEFFECDATE" 
-                                         AND (LC."DNULLDATE" IS NULL OR LC."DNULLDATE" > C."DEFFECDATE")), '') AS KGCTPCBT,
+                                         FROM USBI01.IFRS170_V_GEN_LIFE_COVER GLC 
+                                         WHERE GLC."NBRANCH" = C."NBRANCH" 
+                                         AND   GLC."NPRODUCT"  = C."NPRODUCT"
+                                         AND   GLC."NMODULEC"  = C."NMODULEC"
+                                         AND   GLC."NCOVER"    = C."NCOVER"
+                                         AND   GLC."NCURRENCY" = C."NCURRENCY"
+                                         AND   GLC."DEFFECDATE" <= C."DEFFECDATE" 
+                                         AND (GLC."DNULLDATE" IS NULL OR GLC."DNULLDATE" > C."DEFFECDATE")), '') AS KGCTPCBT,
                               COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TINICIO,
                               COALESCE(CAST(CAST(C."DNULLDATE" AS DATE) AS VARCHAR),'') AS TTERMO,
                               COALESCE(C."NPREMIUM_O",0) AS VMTCOMR,
