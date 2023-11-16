@@ -1,12 +1,14 @@
 def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
     L_ABCLRISP_INSUNIX_LPG = f'''
                              (SELECT
+                             'D' INDDETREC, 
+                             'ABCLRISP' TABLAIFRS17, 
                              '' AS PK,
                              '' AS DTPREG,
                              '' AS TIOCPROC,
                              '' AS TIOCFRM, --PENDIENTE
                              '' AS TIOCTO,
-                             '' AS KGIORIGM,
+                             'PIG' AS KGIORIGM,
                              PC.BRANCH ||'-'|| COALESCE (PC.PRODUCT, 0) ||'-'|| PC.POLICY ||'-'|| PC.CERTIF AS KABAPOL,
                              PC.BRANCH ||'-'|| COALESCE (PC.PRODUCT, 0) ||'-'|| PC.POLICY ||'-'|| PC.CERTIF || '-' || (SELECT EVI.SCOD_VT  FROM USINSUG01.EQUI_VT_INX EVI WHERE EVI.SCOD_INX = R.CLIENT)  AS KABUNRIS,
                              COALESCE(( SELECT COALESCE(GC.COVERGEN, 0)           
@@ -212,12 +214,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 
     L_ABCLRISP_INSUNIX_LPV = f'''(
                                     SELECT
+                                    'D' INDDETREC, 
+                                    'ABCLRISP' TABLAIFRS17, 
                                     '' AS PK,
                                     '' AS DTPREG,
                                     '' AS TIOCPROC,
                                     '' AS TIOCFRM,
                                     '' AS TIOCTO,
-                                    '' AS KGIORIGM,
+                                    'PIV' AS KGIORIGM,
                                     PC.BRANCH ||'-'|| COALESCE (PC.PRODUCT, 0) ||'-'|| PC.POLICY ||'-'|| PC.CERTIF AS KABAPOL,
                                     '' AS KABUNRIS, --PENDIENTE
                                     COALESCE(( SELECT COALESCE(GC.COVERGEN, 0)           
@@ -424,12 +428,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
     L_ABCLRISP_VTIME_LPG = f'''
                               (
                                   SELECT
+                                    'D' INDDETREC, 
+                                    'ABCLRISP' TABLAIFRS17, 
                                     '' AS PK,
                                     '' AS DTPREG,
                                     '' AS TIOCPROC,
                                     '' AS TIOCFRM, --PENDIENTE
                                     '' AS TIOCTO,
-                                    '' AS KGIORIGM,
+                                    'PVG' AS KGIORIGM,
                                     PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" AS KABAPOL,
                                     PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" || '-' || R."SCLIENT"  AS KABUNRIS,
                                     COALESCE(( SELECT COALESCE(GC."NCOVERGEN", 0)           
@@ -594,12 +600,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 
     L_ABCLRISP_VTIME_LPV = f'''
                            (SELECT
+                           'D' INDDETREC, 
+                           'ABCLRISP' TABLAIFRS17, 
                            '' AS PK,
                            '' AS DTPREG,
                            '' AS TIOCPROC,
                            '' AS TIOCFRM, --PENDIENTE
                            '' AS TIOCTO,
-                           '' AS KGIORIGM,
+                           'PVV' AS KGIORIGM,
                            PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" AS KABAPOL,
                            PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" || '-' || R."SCLIENT"  AS KABUNRIS,
                            COALESCE(( SELECT COALESCE(GC."NCOVERGEN", 0)           
@@ -763,12 +771,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
     
     L_ABCLRISP_INSIS_LPV = f'''
                            (SELECT
+                           'D' INDDETREC, 
+                           'ABCLRISP' TABLAIFRS17, 
                            '' AS PK,
                            '' AS DTPREG,
                            '' AS TIOCPROC,
                            IO."INSR_BEGIN" AS TIOCFRM,
                            '' AS TIOCTO,
-                           '' AS KGIORIGM,
+                           'PNV' AS KGIORIGM,
                            '' AS KABAPOL,
                              AS KABUNRIS,
                            '' AS KGCTPCBT, --EN BLANCO
