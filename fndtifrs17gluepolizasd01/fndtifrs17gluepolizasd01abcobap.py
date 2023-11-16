@@ -228,7 +228,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
   L_DF_ABCOBAP_INSUNIX_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_INSUNIX_LPG).load()
 
   L_ABCOBAP_INSUNIX_LPV = f'''
-                          ( SELECT 
+                          (SELECT 
                            'D' AS INDDETREC,
                            'ABCOBAP' AS TABLAIFRS17,
                            '' AS PK,
@@ -322,7 +322,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                            FROM(
                                  SELECT 
                                  COALESCE (CAST(C.EFFECDATE AS VARCHAR),'')  AS TIOCFRM,
-                                 COALESCE(C.BRANCH, 0) || '-'|| POL.PRODUCT
+                                 COALESCE(C.BRANCH, 0) || '-'|| C.PRODUCT
                                                                 /*SELECT  P.PRODUCT 
                                                                 FROM  USINSUV01.POLICY P
                                                                 WHERE P.USERCOMP = C.USERCOMP
@@ -336,7 +336,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                            WHERE GC.USERCOMP = C.USERCOMP 
                                            AND GC.COMPANY = C.COMPANY 
                                            AND GC.BRANCH = C.BRANCH 
-                                           AND GC.PRODUCT = POL.PRODUCT 
+                                           AND GC.PRODUCT = C.PRODUCT 
                                                           /*(SELECT P.PRODUCT  FROM USINSUV01.POLICY P
                                                              WHERE P.USERCOMP = C.USERCOMP
                                                              AND P.COMPANY = C.COMPANY
@@ -424,35 +424,88 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                  AND R.CERTIF = 0
                                  AND R.EFFECDATE <= C.EFFECDATE
                                  AND (R.NULLDATE IS NULL OR R.NULLDATE > C.EFFECDATE)
-                                 AND R.TYPE <> 1))), 0) AS VMTPRRES,
-                                 CASE POL.POLITYPE
+                                 AND R.TYPE <> 1))), 0) AS VMTPRRES
+                                 /*CASE C.POLITYPE
                                  WHEN '1' THEN 0
                                  ELSE CERT.CERTIF
-                                 END  CERTIF   --EVITAR REGISTROS DE DUPLICADOS PARA POLIZAS COLECTIVAS 
-                                 FROM USINSUV01.COVER C  
-                                 LEFT JOIN USINSUV01.CERTIFICAT CERT
-                                 ON  C.USERCOMP = CERT.USERCOMP 
-                                 AND C.COMPANY  = CERT.COMPANY  
-                                 AND C.CERTYPE  = CERT.CERTYPE 
-                                 AND C.BRANCH   = CERT.BRANCH 
-                                 AND C.POLICY   = CERT.POLICY
-                                 AND C.CERTIF   = CERT.CERTIF
-                                 JOIN USINSUV01.POLICY POL
-                                 ON  POL.USERCOMP = C.USERCOMP 
-                                 AND POL.COMPANY  = C.COMPANY  
-                                 AND POL.CERTYPE  = C.CERTYPE
-                                 AND POL.BRANCH   = C.BRANCH 
-                                 AND POL.POLICY   = C.POLICY 
-                                 WHERE C.CERTYPE  = '2'
-                                 AND POL.STATUS_POL NOT IN ('2','3') 
-                                 AND ((POL.POLITYPE = '1' -- INDIVIDUAL 
-                                       AND POL.EXPIRDAT >= '2021-12-31' 
-                                       AND (POL.NULLDATE IS NULL OR POL.NULLDATE > '2021-12-31'))
-                                       OR 
-                                     (POL.POLITYPE <> '1' -- COLECTIVAS 
-                                       AND CERT.EXPIRDAT >= '2021-12-31' 
-                                 AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
-                                 AND POL.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')T ) AS TMP '''
+                                 END  CERTIF   --EVITAR REGISTROS DE DUPLICADOS PARA POLIZAS COLECTIVAS*/ 
+                                 FROM 
+                                 ( SELECT
+                                   C.USERCOMP,
+                                   C.COMPANY,
+                                   C.CERTYPE,
+                                   C.BRANCH,
+                                   POL.PRODUCT,
+                                   C.CURRENCY,
+                                   C.MODULEC,
+                                   C.COVER,
+                                   C.EFFECDATE,
+                                   C.NULLDATE,                                   
+                                   C.POLICY,
+                                   C.CERTIF, 
+                                   C.PREMIUM,
+                                   C.RATECOVE,
+                                   C.CAPITAL,
+                                   C.CAPITALI,
+		                               CASE 
+		                               WHEN C.NULLDATE IS NULL THEN 1
+		                               ELSE CASE	
+                                        WHEN EXISTS (	SELECT	1
+                                                      FROM	USINSUV01.COVER COV1
+                                                      WHERE 	COV1.USERCOMP = C.USERCOMP
+		                              	                  AND     COV1.CERTYPE  = C.CERTYPE
+                                                      AND 	COV1.COMPANY  = C.COMPANY
+                                                      AND 	COV1.BRANCH   = C.BRANCH
+                                                      --AND 	COV1.PRODUCT  = C.PRODUCT
+		                              	                  AND     COV1.MODULEC  = C.MODULEC
+		                              	                  AND     COV1.POLICY   = C.POLICY
+		                              	                  AND     COV1.CERTIF   = C.CERTIF
+		                              	                  AND     COV1.CURRENCY = C.CURRENCY
+		                              	                  AND     COV1.COVER    = C.COVER 
+                                                      AND		COV1.NULLDATE IS NULL) THEN 0
+		                                    ELSE 
+		                                        CASE	
+                                            WHEN C.NULLDATE = (SELECT MAX(COV1.NULLDATE)
+                   	 			                                     FROM	USINSUV01.COVER COV1
+                   	 			                                     WHERE 	COV1.USERCOMP = C.USERCOMP
+			     				                                             AND    COV1.CERTYPE  = C.CERTYPE
+                   	 			                                     AND 	COV1.COMPANY  = C.COMPANY
+                   	 			                                     AND 	COV1.BRANCH   = C.BRANCH
+                   	 			                                     --AND 	COV1.PRODUCT  = C.PRODUCT
+			     				                                             AND    COV1.MODULEC  = C.MODULEC
+			     				                                             AND    COV1.POLICY   = C.POLICY
+			     				                                             AND    COV1.CERTIF   = C.CERTIF
+			     				                                             AND    COV1.CURRENCY = C.CURRENCY
+			     				                                             AND    COV1.COVER    = C.COVER ) THEN 1
+                                            ELSE 0
+                                            END 
+                                        END
+		                               END FLAG
+                                   FROM USINSUV01.COVER C  
+                                   LEFT JOIN USINSUV01.CERTIFICAT CERT
+                                   ON  C.USERCOMP = CERT.USERCOMP 
+                                   AND C.COMPANY  = CERT.COMPANY  
+                                   AND C.CERTYPE  = CERT.CERTYPE 
+                                   AND C.BRANCH   = CERT.BRANCH 
+                                   AND C.POLICY   = CERT.POLICY
+                                   AND C.CERTIF   = CERT.CERTIF
+                                   JOIN USINSUV01.POLICY POL
+                                   ON  POL.USERCOMP = C.USERCOMP 
+                                   AND POL.COMPANY  = C.COMPANY  
+                                   AND POL.CERTYPE  = C.CERTYPE
+                                   AND POL.BRANCH   = C.BRANCH 
+                                   AND POL.POLICY   = C.POLICY 
+                                   WHERE C.CERTYPE  = '2'
+                                   AND POL.STATUS_POL NOT IN ('2','3') 
+                                   AND ((POL.POLITYPE = '1' -- INDIVIDUAL 
+                                         AND POL.EXPIRDAT >= '2021-12-31' 
+                                         AND (POL.NULLDATE IS NULL OR POL.NULLDATE > '2021-12-31'))
+                                         OR 
+                                       (POL.POLITYPE <> '1' -- COLECTIVAS 
+                                         AND CERT.EXPIRDAT >= '2021-12-31' 
+                                   AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
+                                   AND POL.EFFECDATE BETWEEN '2022-01-01' AND '2022-12-31') C WHERE C.FLAG = 1
+                                  )T ) AS TMP '''
  
   L_DF_ABCOBAP_INSUNIX_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_INSUNIX_LPV).load()
   
