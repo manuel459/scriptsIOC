@@ -791,7 +791,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as DINSNANC,
                               '' as DINREGFL                              
                              from  usinsiv01."INSURED_OBJECT" io 
-                             and cast(io."REGISTRATION_DATE" as date)  between  '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                             and cast(io."INSR_BEGIN" as date)  between  '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                              limit 100
                             )
                             ) AS TMP
