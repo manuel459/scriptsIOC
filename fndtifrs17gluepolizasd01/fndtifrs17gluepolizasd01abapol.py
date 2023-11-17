@@ -425,10 +425,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                         /*WHERE P."SCERTYPE" = '2' AND CAST(P."DCOMPDATE" AS DATE) BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/ 
                      ) as tmp'''
 
-  #Ejecutar consulta
   L_DF_POLIZAS_VTIME_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPG).load()  
-                        
-                        
+                                                
   L_POLIZAS_VTIME_LPV = f'''
                         (SELECT
                           'D' AS INDDETREC, 
@@ -777,7 +775,6 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                   ) AS TMP           
                   '''
 
-  #Ejecutar consulta
   L_DF_POLIZAS_VTIME_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPV).load()  
 
   print('USVTIMV01 exitoso')
@@ -1575,13 +1572,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           ) as TMP
                           '''
    #Ejecutar consulta
-   L_DF_POLIZAS_INSUNIX_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_INSUNIX_LPV).load()
-   print('USINSUV01 exitoso')
+  
+  L_DF_POLIZAS_INSUNIX_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_INSUNIX_LPV).load()
+  print('USINSUV01 exitoso')
 
     #------------------------------------------------------------------------------------------------------------------#
 
    #Declara consulta INSIS
-   L_POLIZAS_INSIS = f'''
+  L_POLIZAS_INSIS = f'''
                      (SELECT
                       'D' AS INDDETREC, 
                       'ABAPOL' AS TABLAIFRS17,
@@ -1592,13 +1590,13 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS TIOCTO,   --NO
                       'PNV' AS KGIORIGM,
                       'LPV' AS KACCOMPA,
-                      COALESCE(P."ATTR1", '') AS KGCRAMO,
-                      COALESCE(P."ATTR1", '') || '-' || COALESCE(P."ATTR2", '') AS KABPRODT,
+                      COALESCE(P."ATTR1", '0') AS KGCRAMO,
+                      COALESCE(P."ATTR1", '0') || P."INSR_TYPE" AS KABPRODT,
                       CASE COALESCE(PP."ENG_POL_TYPE", '')
                       WHEN 'DEPENDENT' THEN P."ATTR1" || '-' || P."ATTR2" || '-' || P."POLICY_NO" || '-' || PP."MASTER_POLICY_ID"
                       ELSE ''
                       END KABAPOL,
-                      COALESCE(P."ATTR1", '')  || '-' || COALESCE(P."ATTR2", '') || '-' || COALESCE(P."POLICY_NO", '') AS DNUMAPO,
+                      COALESCE(P."POLICY_NO", '') AS DNUMAPO,
                       CAST(P."POLICY_ID" AS VARCHAR) AS DNMCERT,
                       '' AS DTERMO, --EN BLANCO
                       COALESCE((
@@ -1636,7 +1634,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS KACAGENC, --NO
                       '' AS KACPROTO, --NO
                       CASE PP."ENG_POL_TYPE"
-                      WHEN 'REGULAR'   THEN 'INDIVIDUAL'
+                      WHEN 'POLICY'    THEN 'INDIVIDUAL'
                       WHEN 'MASTER'    THEN 'COLECTIVA'
                       WHEN 'DEPENDENT' THEN 'COLECTIVA'
                       ELSE ''
@@ -1748,7 +1746,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS DARQUIVO,    --NO
                       '' AS TARQUIVO,    --NO
                       CASE PP."ENG_POL_TYPE"
-                      WHEN 'REGULAR'   THEN 'INDIVIDUAL'
+                      WHEN 'POLICY'    THEN 'INDIVIDUAL'
                       WHEN 'MASTER'    THEN 'COLECTIVA'
                       WHEN 'DEPENDENT' THEN 'COLECTIVA'
                       ELSE ''
@@ -1819,17 +1817,17 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       FROM USINSIV01."POLICY" P 
                       LEFT JOIN USINSIV01."P_CLIENTS" PC ON P."CLIENT_ID" = PC."CLIENT_ID"
                       LEFT JOIN USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID"
-                      WHERE P."INSR_END" >= '2021-12-31' AND P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100) AS TMP 
+                      WHERE P."INSR_END" >= '2021-12-31' AND P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' LIMIT 100) AS TMP
                      '''
 
    #Ejecutar consulta
-   L_DF_POLIZAS_INSIS = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_INSIS).load()
+  
+  L_DF_POLIZAS_INSIS = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_INSIS).load()
 
-   print('EXITOSO USINSIV01')
+  print('EXITOSO USINSIV01')
 
-   #Perform the union operation
-   L_DF_POLIZAS = L_DF_POLIZAS_VTIME.union(L_DF_POLIZAS_INSIS).union(L_DF_POLIZAS_INSUNIX)
+  L_DF_POLIZAS = L_DF_POLIZAS_VTIME_LPG.union(L_DF_POLIZAS_VTIME_LPV).union(L_DF_POLIZAS_INSUNIX_LPG).union(L_DF_POLIZAS_INSUNIX_LPV).union(L_DF_POLIZAS_INSIS)
 
-   L_DF_POLIZAS = L_DF_POLIZAS.withColumn("VCAMBIO", col("VCAMBIO").cast(DecimalType(7, 4))).withColumn("VTXCOMCB", col("VTXCOMCB").cast(DecimalType(7, 4))).withColumn("VMTCOMCB", col("VMTCOMCB").cast(DecimalType(12, 2))).withColumn("VTXCOMMD", col("VTXCOMMD").cast(DecimalType(7, 4))).withColumn("VMTCOMMD", col("VMTCOMMD").cast(DecimalType(12, 2))).withColumn("VCAPITAL", col("VCAPITAL").cast(DecimalType(14, 2))).withColumn("VMTCOMR", col("VMTCOMR").cast(DecimalType(12, 2))).withColumn("VMTCMNQP", col("VMTCMNQP").cast(DecimalType(12, 2))).withColumn("VMTPRMBR", col("VMTPRMBR").cast(DecimalType(12, 2))).withColumn("VTXCOSSG", col("VTXCOSSG").cast(DecimalType(7, 4))).withColumn("VTXRETEN", col("VTXRETEN").cast(DecimalType(7, 4))).withColumn("VMTCAPRE", col("VMTCAPRE").cast(DecimalType(12, 2))).withColumn("DQTDPART", col("DQTDPART").cast(DecimalType(5, 0)))
+  L_DF_POLIZAS = L_DF_POLIZAS.withColumn("VCAMBIO", col("VCAMBIO").cast(DecimalType(7, 4))).withColumn("VTXCOMCB", col("VTXCOMCB").cast(DecimalType(7, 4))).withColumn("VMTCOMCB", col("VMTCOMCB").cast(DecimalType(12, 2))).withColumn("VTXCOMMD", col("VTXCOMMD").cast(DecimalType(7, 4))).withColumn("VMTCOMMD", col("VMTCOMMD").cast(DecimalType(12, 2))).withColumn("VCAPITAL", col("VCAPITAL").cast(DecimalType(14, 2))).withColumn("VMTCOMR", col("VMTCOMR").cast(DecimalType(12, 2))).withColumn("VMTCMNQP", col("VMTCMNQP").cast(DecimalType(12, 2))).withColumn("VMTPRMBR", col("VMTPRMBR").cast(DecimalType(12, 2))).withColumn("VTXCOSSG", col("VTXCOSSG").cast(DecimalType(7, 4))).withColumn("VTXRETEN", col("VTXRETEN").cast(DecimalType(7, 4))).withColumn("VMTCAPRE", col("VMTCAPRE").cast(DecimalType(12, 2))).withColumn("DQTDPART", col("DQTDPART").cast(DecimalType(5, 0)))
 
-   return L_DF_POLIZAS
+  return L_DF_POLIZAS
