@@ -1,10 +1,10 @@
 from pyspark.sql.types import *
 from pyspark.sql.functions import col
 
-def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):         
-
-   #Declara consulta VTIME
-   L_POLIZAS_VTIME_LPG = f'''
+def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
+  
+  #Declara consulta VTIME
+  L_POLIZAS_VTIME_LPG = f'''
                      (
                       SELECT
                         'D' AS INDDETREC, 
@@ -425,11 +425,11 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                         /*WHERE P."SCERTYPE" = '2' AND CAST(P."DCOMPDATE" AS DATE) BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/ 
                      ) as tmp'''
 
-   #Ejecutar consulta
-   L_DF_POLIZAS_VTIME_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPG).load()  
+  #Ejecutar consulta
+  L_DF_POLIZAS_VTIME_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPG).load()  
                         
                         
-   L_POLIZAS_VTIME_LPV = f'''
+  L_POLIZAS_VTIME_LPV = f'''
                         (SELECT
                           'D' AS INDDETREC, 
                           'ABAPOL' AS TABLAIFRS17,
@@ -777,14 +777,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                   ) AS TMP           
                   '''
 
-   #Ejecutar consulta
-   L_DF_POLIZAS_VTIME_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPV).load()  
+  #Ejecutar consulta
+  L_DF_POLIZAS_VTIME_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPV).load()  
 
-   print('USVTIMV01 exitoso')
-   #------------------------------------------------------------------------------------------------------------------#
+  print('USVTIMV01 exitoso')
+  #------------------------------------------------------------------------------------------------------------------#
 
-   #DECLARAR CONSULTA INSUNIX
-   L_POLIZAS_INSUNIX_LPG = f'''
+  #DECLARAR CONSULTA INSUNIX
+  L_POLIZAS_INSUNIX_LPG = f'''
                             (
                               SELECT 
                               'D' AS INDDETREC, 
