@@ -27,25 +27,70 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                         CAST(P."NBRANCH" AS VARCHAR) || '-' || CAST(P."NPRODUCT" AS VARCHAR) || '-' || P."NPOLICY" AS DNUMAPO,     
                         CAST(CERT."NCERTIF" AS VARCHAR) AS DNMCERT,  
                         '' AS DTERMO, --EN BLANCO
-                        COALESCE(P."SCLIENT", '') AS KEBENTID_TO,
-                        COALESCE(CAST(CAST(P."DDATE_ORIGI" AS DATE) AS VARCHAR), '') AS TCRIAPO,
-                        COALESCE(CAST(CAST(P."DISSUEDAT"   AS DATE) AS VARCHAR), '') AS TEMISSAO,
-                        COALESCE(CAST(CAST(P."DDATE_ORIGI" AS DATE) AS VARCHAR), '') AS TINICIO,
+                        COALESCE(case
+                      when p."SPOLITYPE" = '1' then p."SCLIENT"
+                      else cert."SCLIENT"
+                      end, '') as KEBENTID_TO,
+                      coalesce(cast(cast((case
+                        when p."SPOLITYPE" = '1' then P."DDATE_ORIGI"
+                        else cert."DDATE_ORIGI"
+                        end) as DATE) as VARCHAR),
+                        '') as TCRIAPO,
+                      coalesce(cast(cast((case
+                        when p."SPOLITYPE" = '1' then P."DISSUEDAT"
+                        else cert."DISSUEDAT"
+                        end) as DATE) as VARCHAR),
+                        '') as TEMISSAO,
+                      coalesce(cast(cast((case
+                      when p."SPOLITYPE" = '1' then P."DDATE_ORIGI"
+                      else cert."DDATE_ORIGI"
+                      end) as DATE) as VARCHAR),
+                      '') as TINICIO,
                         '' AS DHORAINI,
-                        COALESCE(CAST(CAST(P."DEXPIRDAT" AS DATE)  AS VARCHAR), '') AS TTERMO,
-                        COALESCE(CAST(CAST(P."DSTARTDATE" AS DATE) AS VARCHAR), '') AS TINIANU,
-                        COALESCE(CAST(CAST(P."DEXPIRDAT" AS DATE) AS  VARCHAR), '') AS TVENANU,
-                        COALESCE(CAST(CAST(P."DNULLDATE" AS DATE) AS  VARCHAR), '') AS TANSUSP,
+                        coalesce(cast(cast((case
+                      when p."SPOLITYPE" = '1' then P."DEXPIRDAT"
+                      else cert."DEXPIRDAT"
+                      end) as DATE) as VARCHAR),
+                      '') as TTERMO,
+                      coalesce(cast(cast((case
+                      when p."SPOLITYPE" = '1' then P."DSTARTDATE"
+                      else cert."DSTARTDATE"
+                      end) as DATE) as VARCHAR),
+                      '') as TINIANU,
+                      coalesce(cast(cast((case
+                      when p."SPOLITYPE" = '1' then P."DEXPIRDAT"
+                      else cert."DEXPIRDAT"
+                      end) as DATE) as VARCHAR),
+                      '') as TVENANU,
+                      coalesce(cast(cast((case
+                      when p."SPOLITYPE" = '1' then P."DNULLDATE"
+                      else cert."DNULLDATE"
+                      end) as DATE) as VARCHAR),
+                      '') as TANSUSP,
                         '' AS TESTADO,              --EN BLANCO
-                        COALESCE(P."SSTATUS_POL", '') AS KACESTAP,
+                        coalesce ((case
+                        when p."SPOLITYPE" in ('2', '3')
+                        and cert."NCERTIF" <> 0 then cert."SSTATUSVA"
+                        else P."SSTATUS_POL"
+                      end) ,
+                      '') as KACESTAP,
                         '' AS KACMOEST,
-                        COALESCE(CAST(CAST(P."DSTARTDATE" AS DATE) AS VARCHAR), '') AS TEFEACTA,             --ACLARAR
+                        coalesce(cast(cast((case
+                      when p."SPOLITYPE" = '1' then P."DSTARTDATE"
+                      else cert."DSTARTDATE"
+                      end) as DATE) as VARCHAR),
+                      '') as TEFEACTA,
                         '' AS DULTACTA,
                         '' AS KACCNEMI,
                         '' AS KACARGES,
                         '' AS KACAGENC,
                         '' AS KACPROTO,
-                        COALESCE(P."SPOLITYPE", '') AS KACTIPAP, 
+                        coalesce ((case
+                        when p."SPOLITYPE" in ('2', '3')
+                        and cert."NCERTIF" <> 0 then cert."SSTATUSVA"
+                        else P."SSTATUS_POL"
+                      end) ,
+                      '') as KACTIPAP,
                         '' AS DFROTA,
                         '' AS KACTPDUR,             --ACLARAR
                         COALESCE(P."SRENEWAL", '') AS KACMODRE,
@@ -428,352 +473,398 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
   L_DF_POLIZAS_VTIME_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPG).load()  
                                                 
   L_POLIZAS_VTIME_LPV = f'''
-                        (SELECT
-                          'D' AS INDDETREC, 
-                          'ABAPOL' AS TABLAIFRS17,
-                          '' AS PK,
-                          '' AS DTPREG,       --no 
-                          '' AS TIOCPROC,     --NO
-                          COALESCE(CAST(CAST(P."DDATE_ORIGI" AS DATE) AS VARCHAR), '') AS TIOCFRM,
-                          '' AS TIOCTO,       --NO
-                          'PVV' AS KGIORIGM,  --NO
-                          'LPV' AS KACCOMPA,
-                          CAST(P."NBRANCH" AS VARCHAR) KGCRAMO,
-                          CAST(P."NBRANCH" AS VARCHAR) || '-' || CAST(P."NPRODUCT" AS VARCHAR) KABPRODT,
-                          CASE COALESCE(P."SPOLITYPE", '')
-                          WHEN '2' THEN CASE WHEN CERT."NCERTIF" <> 0 THEN P."NBRANCH" || '-' || P."NPRODUCT" || '-' || P."NPOLICY" || '-' || '0'
-                          ELSE ''
-                          END
-                          ELSE '' 
-                          END AS KABAPOL,
-                          P."NBRANCH" || '-' || P."NPRODUCT" || '-' || P."NPOLICY" AS DNUMAPO,
-                          CAST(CERT."NCERTIF" AS VARCHAR) AS DNMCERT,
-                          '' AS DTERMO,
-                          COALESCE(P."SCLIENT", '') AS KEBENTID_TO,
-                          COALESCE(CAST(CAST(P."DDATE_ORIGI" AS DATE) AS VARCHAR), '') AS TCRIAPO,
-                          COALESCE(CAST(CAST(P."DISSUEDAT" AS DATE)   AS VARCHAR), '') AS TEMISSAO,
-                          COALESCE(CAST(CAST(P."DDATE_ORIGI" AS DATE) AS VARCHAR), '') AS TINICIO,
-                          '' AS DHORAINI,
-                          COALESCE(CAST(CAST(P."DEXPIRDAT" AS DATE) AS VARCHAR) , '')AS TTERMO,
-                          COALESCE(CAST(CAST(P."DSTARTDATE" AS DATE) AS VARCHAR), '') AS TINIANU,
-                          COALESCE(CAST(CAST(P."DEXPIRDAT" AS DATE) AS VARCHAR) , '')AS TVENANU,
-                          COALESCE(CAST(CAST(P."DNULLDATE" AS DATE) AS VARCHAR) , '')AS TANSUSP,
-                          '' AS TESTADO,
-                          COALESCE(P."SSTATUS_POL", '') AS KACESTAP,
-                          '' AS KACMOEST, --NO
-                          COALESCE(CAST(CAST(P."DSTARTDATE" AS DATE) AS VARCHAR), '')  AS TEFEACTA,
-                          '' AS DULTACTA, --NO
-                          '' AS KACCNEMI, --NO
-                          '' AS KACARGES, --NO
-                          '' AS KACAGENC, --NO
-                          '' AS KACPROTO, --NO
-                          COALESCE(P."SPOLITYPE", '') AS KACTIPAP, --NO
-                          '' AS DFROTA, --NO
-                          '' AS KACTPDUR, --ACLARAR
-                          COALESCE(P."SRENEWAL", '') AS KACMODRE,
-                          '' AS KACMTNRE, --NO
-                          '' AS KACTPCOB, --NO
-                          COALESCE(CAST(P."NPAYFREQ" AS VARCHAR), '') AS KACTPFRC,
-                          CASE P."SBUSSITYP"  
-                          WHEN '2' THEN  '2' 
-                          WHEN '1' THEN COALESCE((SELECT '1' FROM USVTIMV01."COINSURAN" C
-                                                  WHERE C."SCERTYPE" = '2'
-                                                  AND C."NBRANCH" = P."NBRANCH"
-                                                  AND C."NPRODUCT" = P."NPRODUCT"
-                                                  AND C."NPOLICY" = P."NPOLICY"
-                                                  AND C."DEFFECDATE" <= P."DSTARTDATE"
-                                                  AND ( C."DNULLDATE" IS NULL OR C."DNULLDATE" > P."DSTARTDATE")LIMIT 1),'')
-                          ELSE ''
-                          END AS KACTPCSG,
-                          COALESCE(P."SCOLREINT", '') AS KACINDRE,
-                          '' AS KACCDGER, --NO
-                          COALESCE((
-                              SELECT CAST(CP."NCURRENCY" AS VARCHAR) FROM USVTIMV01."CURREN_POL" CP 
-                              WHERE  CP."SCERTYPE" = P."SCERTYPE"
-                              AND    CP."NBRANCH"  = P."NBRANCH"
-                              AND    CP."NPRODUCT" = P."NPRODUCT" 
-                              AND    CP."NPOLICY"  = P."NPOLICY"
-                              AND    CP."NCERTIF"  = CERT."NCERTIF"
-                              AND    CP."DEFFECDATE" <= P."DSTARTDATE" 
-                              AND ( CP."DNULLDATE" IS NULL OR CP."DNULLDATE" > P."DSTARTDATE")
-                          ) ,'0') AS KACMOEDA,
-                          COALESCE((
-                          SELECT COALESCE(E."NEXCHANGE", 0)
-                          FROM USVTIMV01."EXCHANGE" E 
-                          WHERE E."NCURRENCY" = ( SELECT CP."NCURRENCY" FROM USVTIMV01."CURREN_POL" CP
-                                                  WHERE "SCERTYPE" = '2'
-                                                  AND "NBRANCH"    = P."NBRANCH"
-                                                  AND "NPRODUCT"   = P."NPRODUCT"
-                                                  AND "NPOLICY"    = P."NPOLICY"
-                                                  AND "NCERTIF"    = 0
-                                                  AND CP."DEFFECDATE" <= P."DSTARTDATE"
-                                                  AND (CP."DNULLDATE" IS NULL OR CP."DNULLDATE" > P."DSTARTDATE") limit 1)
-                          AND E."DEFFECDATE" <= P."DSTARTDATE"
-                          AND (E."DNULLDATE" IS NULL OR E."DNULLDATE" > P."DSTARTDATE")
-                          ) ,0) AS VCAMBIO,
-                          '' AS KACREGCB,  --NO
-                          '' AS KCBMED_DRA,--NO
-                          '' AS KCBMED_CB, --NO
-                          COALESCE((SELECT COALESCE(DX."NPERCENT",0) FROM USVTIMV01."DISC_XPREM" DX
-                          JOIN USVTIMV01."DISCO_EXPR" DE
-                          ON DX."NBRANCH" = DE."NBRANCH"
-                          AND DX."NPRODUCT" = DE."NPRODUCT"
-                          AND DX."NDISC_CODE" = DE."NDISEXPRC"
-                          WHERE DX."SCERTYPE" = P."SCERTYPE"
-                          AND DX."NBRANCH" = P."NBRANCH"
-                          AND DX."NPRODUCT" = P."NPRODUCT"
-                          AND DX."NPOLICY" = P."NPOLICY"
-                          AND DX."NCERTIF" = CERT."NCERTIF"
-                          AND DX."DEFFECDATE" <= P."DSTARTDATE"
-                          AND (DX."DNULLDATE" IS NULL
-                          OR DX."DNULLDATE" > P."DSTARTDATE")
-                          AND DE."NBILL_ITEM" = 4), 0) AS VTXCOMCB, --ACLARAR
-                          '' AS VMTCOMCB, --ACLARAR
-                          '' AS KCBMED_PD,--NO
-                          COALESCE(COALESCE(  --POR CERTIFICADO
-                                  (SELECT COALESCE("NPERCENT", 0) FROM  USVTIMV01."COMMISSION" CO 
-                                      WHERE  CO."SCERTYPE" = '2'
-                                      AND    CO."NBRANCH"  = P."NBRANCH"
-                                      AND	   CO."NPRODUCT" = P."NPRODUCT" 	
-                                      AND    CO."NPOLICY"  = P."NPOLICY"  
-                                      AND    CO."NCERTIF"  = CERT."NCERTIF" 
-                                      AND    CO."DEFFECDATE" <= P."DSTARTDATE"
-                                      AND    (CO."DNULLDATE" IS NULL OR CO."DNULLDATE" > P."DSTARTDATE")
-                                      AND    CO."NINTERTYP" <> 1
-                                      LIMIT 1),
-                                      --POR POLIZA
-                                      (SELECT COALESCE("NPERCENT", 0) FROM  USVTIMV01."COMMISSION" CO 
-                                      WHERE  CO."SCERTYPE" = '2'
-                                      AND    CO."NBRANCH"  = P."NBRANCH"
-                                      AND	CO."NPRODUCT" = P."NPRODUCT" 	
-                                      AND    CO."NPOLICY"  = P."NPOLICY"  
-                                      AND    CO."NCERTIF"  = 0
-                                      AND    CO."DEFFECDATE" <= P."DSTARTDATE"
-                                      AND 	(CO."DNULLDATE" IS NULL OR CO."DNULLDATE" > P."DSTARTDATE")
-                                      AND    CO."NINTERTYP" <> 1
-                                      LIMIT 1)  
-                          ),0) AS VTXCOMMD,
-                          COALESCE(COALESCE(  --POR CERTIFICADO
-                                    (SELECT COALESCE("NAMOUNT", 0) FROM  USVTIMV01."COMMISSION" CO 
-                                      WHERE  CO."SCERTYPE" = '2'
-                                      AND    CO."NBRANCH"  = P."NBRANCH"
-                                      AND	 CO."NPRODUCT" = P."NPRODUCT" 	
-                                      AND    CO."NPOLICY"  = P."NPOLICY"  
-                                      AND    CO."NCERTIF"  = CERT."NCERTIF" 
-                                      AND    CO."DEFFECDATE" <= P."DSTARTDATE"
-                                      AND   (CO."DNULLDATE" IS NULL OR CO."DNULLDATE" > P."DSTARTDATE")
-                                      AND    CO."NINTERTYP" <> 1
-                                      LIMIT 1),
-                                      --POR POLIZA
-                                    (SELECT COALESCE("NAMOUNT", 0) FROM  USVTIMV01."COMMISSION" CO 
-                                      WHERE  CO."SCERTYPE" = '2'
-                                      AND    CO."NBRANCH"  = P."NBRANCH"
-                                      AND	CO."NPRODUCT" = P."NPRODUCT" 	
-                                      AND    CO."NPOLICY"  = P."NPOLICY"  
-                                      AND    CO."NCERTIF"  = 0
-                                      AND    CO."DEFFECDATE" <= P."DSTARTDATE"
-                                      AND 	(CO."DNULLDATE" IS NULL OR CO."DNULLDATE" > P."DSTARTDATE")
-                                      AND    CO."NINTERTYP" <> 1
-                                      LIMIT 1)
-                          ),0) AS VMTCOMMD,
-                          '' AS KCBMED_P2, --NO
-                          '' AS VTXCOMME,--NO
-                          '' AS VMTCOMME,--NO
-                          COALESCE((
-                            SELECT SUM(COALESCE (COV."NCAPITAL",0))  FROM USVTIMV01."COVER" COV
-                            WHERE COV."SCERTYPE" = P."SCERTYPE"
-                            AND   COV."NBRANCH"  = P."NBRANCH"
-                            AND   COV."NPRODUCT" = P."NPRODUCT"
-                            AND   COV."NPOLICY"  = P."NPOLICY" 
-                            AND   COV."NCERTIF"  = CERT."NCERTIF"
-                            AND   COV."DEFFECDATE" <= P."DSTARTDATE"
-                            AND ( COV."DNULLDATE" IS NULL OR COV."DNULLDATE" > P."DSTARTDATE") 
-                          ) ,0) AS VCAPITAL,
-                          '' AS VMTPRMSP, --NO
-                          COALESCE(P."NPREMIUM",0) AS VMTCOMR,
-                          COALESCE((
-                            SELECT (COALESCE(C."NSHARE", 0) * COALESCE(P."NPREMIUM", 0))
-                            FROM USVTIMV01."COINSURAN" C
-                            WHERE C."SCERTYPE" = '2'
-                            AND   C."NBRANCH"  = P."NBRANCH" 
-                            AND   C."NPRODUCT" = P."NPRODUCT"
-                            AND   C."NPOLICY"  = P."NPOLICY"
-                            AND   C."NCOMPANY" =  1 --CODIGO DE LA CIA LIDER POSITIVA
-                            AND   C."DEFFECDATE" <= P."DSTARTDATE"
-                            AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > P."DSTARTDATE")
-                          ) ,0) AS VMTCMNQP,
-                          '' AS VMTBOMAT,--NO
-                          '' AS VTXBOMAT,--NO
-                          '' AS VMTBOCOM,--NO
-                          '' AS VTXBOCOM,--NO
-                          '' AS VMTDECOM,--NO
-                          '' AS VTXDECOM,--NO
-                          '' AS VMTDETEC,--NO
-                          '' AS VTXDETEC,--NO
-                          '' AS VMTAGRAV,--NO
-                          '' AS VTXAGRAV,--NO
-                          '' AS VMTCSAP, --NO
-                          '' AS VMTPRMIN,--NO
-                          '' AS VMTPRMTR,--NO
-                          '' AS VMTPRLIQ,--NO
-                          COALESCE(P."NPREMIUM",0) AS VMTPRMBR,
-                          COALESCE((
-                            SELECT COALESCE(C."NSHARE",0)
-                            FROM USVTIMV01."COINSURAN" C
-                            WHERE C."SCERTYPE" = '2'
-                            AND   C."NBRANCH"  = P."NBRANCH" 
-                            AND   C."NPRODUCT" = P."NPRODUCT"
-                            AND   C."NPOLICY"  = P."NPOLICY"
-                            AND   C."NCOMPANY" =  1 --CODIGO DE LA CIA LIDER POSITIVA
-                            AND   C."DEFFECDATE" <= P."DSTARTDATE"
-                            AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > P."DSTARTDATE")
-                          ),0)  AS VTXCOSSG,
-                          0 AS VTXRETEN,
-                          COALESCE(((SELECT TRUNC(COALESCE(R."NSHARE", 0),2) /100
-                              FROM USVTIMV01."REINSURAN" R
-                              WHERE R."SCERTYPE" =  '2'
-                              AND   R."NBRANCH"  = P."NBRANCH"
-                              AND   R."NPRODUCT" = P."NPRODUCT" 
-                              AND   R."NPOLICY"  = P."NPOLICY" 
-                              AND   R."NCERTIF"  = CERT."NCERTIF"
-                              AND   R."DEFFECDATE" <= P."DSTARTDATE" 
-                              AND  (R."DNULLDATE" IS NULL OR R."DNULLDATE" > P."DSTARTDATE")
-                              AND   R."NCOMPANY" = 1
-                              AND  R."NTYPE_REIN" = 1
-                              AND  R."NCOVER" = 1)*
-                            (SELECT SUM(COALESCE(C."NCAPITAL", 0)) FROM USVTIMV01."COVER" C
+                         (
+                          SELECT
+                            'D' AS INDDETREC, 
+                            'ABAPOL' AS TABLAIFRS17,
+                            '' AS PK,
+                            '' AS DTPREG,       --no 
+                            '' AS TIOCPROC,     --NO
+                            COALESCE(CAST(CAST(P."DDATE_ORIGI" AS DATE) AS VARCHAR), '') AS TIOCFRM,
+                            '' AS TIOCTO,       --NO
+                            'PVV' AS KGIORIGM,  --NO
+                            'LPV' AS KACCOMPA,
+                            CAST(P."NBRANCH" AS VARCHAR) KGCRAMO,
+                            CAST(P."NBRANCH" AS VARCHAR) || '-' || CAST(P."NPRODUCT" AS VARCHAR) KABPRODT,
+                            CASE COALESCE(P."SPOLITYPE", '')
+                            WHEN '2' THEN CASE WHEN CERT."NCERTIF" <> 0 THEN P."NBRANCH" || '-' || P."NPRODUCT" || '-' || P."NPOLICY" || '-' || '0'
+                            ELSE ''
+                            END
+                            ELSE '' 
+                            END AS KABAPOL,
+                            P."NBRANCH" || '-' || P."NPRODUCT" || '-' || P."NPOLICY" AS DNUMAPO,
+                            CAST(CERT."NCERTIF" AS VARCHAR) AS DNMCERT,
+                            '' AS DTERMO,
+                            COALESCE(case
+                          when p."SPOLITYPE" = '1' then p."SCLIENT"
+                          else cert."SCLIENT"
+                          end, '') as KEBENTID_TO,
+                          coalesce(cast(cast((case
+                          when p."SPOLITYPE" = '1' then P."DDATE_ORIGI"
+                          else cert."DDATE_ORIGI"
+                          end) as DATE) as VARCHAR),
+                          '') as TCRIAPO,
+                          coalesce(cast(cast((case
+                          when p."SPOLITYPE" = '1' then P."DISSUEDAT"
+                          else cert."DISSUEDAT"
+                          end) as DATE) as VARCHAR),
+                          '') as TEMISSAO,
+                          coalesce(cast(cast((case
+                          when p."SPOLITYPE" = '1' then P."DDATE_ORIGI"
+                          else cert."DDATE_ORIGI"
+                          end) as DATE) as VARCHAR),
+                          '') as TINICIO,
+                            '' AS DHORAINI,
+                            coalesce(cast(cast((case
+                          when p."SPOLITYPE" = '1' then P."DEXPIRDAT"
+                          else cert."DEXPIRDAT"
+                          end) as DATE) as VARCHAR),
+                          '') as TTERMO,
+                          coalesce(cast(cast((case
+                          when p."SPOLITYPE" = '1' then P."DSTARTDATE"
+                          else cert."DSTARTDATE"
+                          end) as DATE) as VARCHAR),
+                          '') as TINIANU,
+                          coalesce(cast(cast((case
+                          when p."SPOLITYPE" = '1' then P."DEXPIRDAT"
+                          else cert."DEXPIRDAT"
+                          end) as DATE) as VARCHAR),
+                          '') as TVENANU,
+                          coalesce(cast(cast((case
+                          when p."SPOLITYPE" = '1' then P."DNULLDATE"
+                          else cert."DNULLDATE"
+                          end) as DATE) as VARCHAR),
+                          '') as TANSUSP,
+                            '' AS TESTADO,
+                            coalesce ((case
+                            when p."SPOLITYPE" in ('2', '3')
+                            and cert."NCERTIF" <> 0 then cert."SSTATUSVA"
+                            else P."SSTATUS_POL"
+                          end) ,
+                          '') as KACESTAP,
+                            '' AS KACMOEST, --no
+                            coalesce(cast(cast((case
+                          when p."SPOLITYPE" = '1' then P."DSTARTDATE"
+                          else cert."DSTARTDATE"
+                          end) as DATE) as VARCHAR),
+                          '') as TEFEACTA,
+                            '' AS DULTACTA, --NO
+                            '' AS KACCNEMI, --NO
+                            '' AS KACARGES, --NO
+                            '' AS KACAGENC, --NO
+                            '' AS KACPROTO, --no
+                            coalesce ((case
+                            when p."SPOLITYPE" in ('2', '3')
+                            and cert."NCERTIF" <> 0 then cert."SSTATUSVA"
+                            else P."SSTATUS_POL"
+                          end) ,
+                          '') as KACTIPAP,
+                            '' AS DFROTA, --NO
+                            '' AS KACTPDUR, --ACLARAR
+                            COALESCE(P."SRENEWAL", '') AS KACMODRE,
+                            '' AS KACMTNRE, --NO
+                            '' AS KACTPCOB, --NO
+                            COALESCE(CAST(P."NPAYFREQ" AS VARCHAR), '') AS KACTPFRC,
+                            CASE P."SBUSSITYP"  
+                            WHEN '2' THEN  '2' 
+                            WHEN '1' THEN COALESCE((SELECT '1' FROM USVTIMV01."COINSURAN" C
+                                                    WHERE C."SCERTYPE" = '2'
+                                                    AND C."NBRANCH" = P."NBRANCH"
+                                                    AND C."NPRODUCT" = P."NPRODUCT"
+                                                    AND C."NPOLICY" = P."NPOLICY"
+                                                    AND C."DEFFECDATE" <= P."DSTARTDATE"
+                                                    AND ( C."DNULLDATE" IS NULL OR C."DNULLDATE" > P."DSTARTDATE")LIMIT 1),'')
+                            ELSE ''
+                            END AS KACTPCSG,
+                            COALESCE(P."SCOLREINT", '') AS KACINDRE,
+                            '' AS KACCDGER, --NO
+                            COALESCE((
+                                SELECT CAST(CP."NCURRENCY" AS VARCHAR) FROM USVTIMV01."CURREN_POL" CP 
+                                WHERE  CP."SCERTYPE" = P."SCERTYPE"
+                                AND    CP."NBRANCH"  = P."NBRANCH"
+                                AND    CP."NPRODUCT" = P."NPRODUCT" 
+                                AND    CP."NPOLICY"  = P."NPOLICY"
+                                AND    CP."NCERTIF"  = CERT."NCERTIF"
+                                AND    CP."DEFFECDATE" <= P."DSTARTDATE" 
+                                AND ( CP."DNULLDATE" IS NULL OR CP."DNULLDATE" > P."DSTARTDATE")
+                            ) ,'0') AS KACMOEDA,
+                            COALESCE((
+                            SELECT COALESCE(E."NEXCHANGE", 0)
+                            FROM USVTIMV01."EXCHANGE" E 
+                            WHERE E."NCURRENCY" = ( SELECT CP."NCURRENCY" FROM USVTIMV01."CURREN_POL" CP
+                                                    WHERE "SCERTYPE" = '2'
+                                                    AND "NBRANCH"    = P."NBRANCH"
+                                                    AND "NPRODUCT"   = P."NPRODUCT"
+                                                    AND "NPOLICY"    = P."NPOLICY"
+                                                    AND "NCERTIF"    = 0
+                                                    AND CP."DEFFECDATE" <= P."DSTARTDATE"
+                                                    AND (CP."DNULLDATE" IS NULL OR CP."DNULLDATE" > P."DSTARTDATE") limit 1)
+                            AND E."DEFFECDATE" <= P."DSTARTDATE"
+                            AND (E."DNULLDATE" IS NULL OR E."DNULLDATE" > P."DSTARTDATE")
+                            ) ,0) AS VCAMBIO,
+                            '' AS KACREGCB,  --NO
+                            '' AS KCBMED_DRA,--NO
+                            '' AS KCBMED_CB, --NO
+                            COALESCE((SELECT COALESCE(DX."NPERCENT",0) FROM USVTIMV01."DISC_XPREM" DX
+                            JOIN USVTIMV01."DISCO_EXPR" DE
+                            ON DX."NBRANCH" = DE."NBRANCH"
+                            AND DX."NPRODUCT" = DE."NPRODUCT"
+                            AND DX."NDISC_CODE" = DE."NDISEXPRC"
+                            WHERE DX."SCERTYPE" = P."SCERTYPE"
+                            AND DX."NBRANCH" = P."NBRANCH"
+                            AND DX."NPRODUCT" = P."NPRODUCT"
+                            AND DX."NPOLICY" = P."NPOLICY"
+                            AND DX."NCERTIF" = CERT."NCERTIF"
+                            AND DX."DEFFECDATE" <= P."DSTARTDATE"
+                            AND (DX."DNULLDATE" IS NULL
+                            OR DX."DNULLDATE" > P."DSTARTDATE")
+                            AND DE."NBILL_ITEM" = 4), 0) AS VTXCOMCB, --ACLARAR
+                            '' AS VMTCOMCB, --ACLARAR
+                            '' AS KCBMED_PD,--NO
+                            COALESCE(COALESCE(  --POR CERTIFICADO
+                                    (SELECT COALESCE("NPERCENT", 0) FROM  USVTIMV01."COMMISSION" CO 
+                                        WHERE  CO."SCERTYPE" = '2'
+                                        AND    CO."NBRANCH"  = P."NBRANCH"
+                                        AND	   CO."NPRODUCT" = P."NPRODUCT" 	
+                                        AND    CO."NPOLICY"  = P."NPOLICY"  
+                                        AND    CO."NCERTIF"  = CERT."NCERTIF" 
+                                        AND    CO."DEFFECDATE" <= P."DSTARTDATE"
+                                        AND    (CO."DNULLDATE" IS NULL OR CO."DNULLDATE" > P."DSTARTDATE")
+                                        AND    CO."NINTERTYP" <> 1
+                                        LIMIT 1),
+                                        --POR POLIZA
+                                        (SELECT COALESCE("NPERCENT", 0) FROM  USVTIMV01."COMMISSION" CO 
+                                        WHERE  CO."SCERTYPE" = '2'
+                                        AND    CO."NBRANCH"  = P."NBRANCH"
+                                        AND	CO."NPRODUCT" = P."NPRODUCT" 	
+                                        AND    CO."NPOLICY"  = P."NPOLICY"  
+                                        AND    CO."NCERTIF"  = 0
+                                        AND    CO."DEFFECDATE" <= P."DSTARTDATE"
+                                        AND 	(CO."DNULLDATE" IS NULL OR CO."DNULLDATE" > P."DSTARTDATE")
+                                        AND    CO."NINTERTYP" <> 1
+                                        LIMIT 1)  
+                            ),0) AS VTXCOMMD,
+                            COALESCE(COALESCE(  --POR CERTIFICADO
+                                      (SELECT COALESCE("NAMOUNT", 0) FROM  USVTIMV01."COMMISSION" CO 
+                                        WHERE  CO."SCERTYPE" = '2'
+                                        AND    CO."NBRANCH"  = P."NBRANCH"
+                                        AND	 CO."NPRODUCT" = P."NPRODUCT" 	
+                                        AND    CO."NPOLICY"  = P."NPOLICY"  
+                                        AND    CO."NCERTIF"  = CERT."NCERTIF" 
+                                        AND    CO."DEFFECDATE" <= P."DSTARTDATE"
+                                        AND   (CO."DNULLDATE" IS NULL OR CO."DNULLDATE" > P."DSTARTDATE")
+                                        AND    CO."NINTERTYP" <> 1
+                                        LIMIT 1),
+                                        --POR POLIZA
+                                      (SELECT COALESCE("NAMOUNT", 0) FROM  USVTIMV01."COMMISSION" CO 
+                                        WHERE  CO."SCERTYPE" = '2'
+                                        AND    CO."NBRANCH"  = P."NBRANCH"
+                                        AND	CO."NPRODUCT" = P."NPRODUCT" 	
+                                        AND    CO."NPOLICY"  = P."NPOLICY"  
+                                        AND    CO."NCERTIF"  = 0
+                                        AND    CO."DEFFECDATE" <= P."DSTARTDATE"
+                                        AND 	(CO."DNULLDATE" IS NULL OR CO."DNULLDATE" > P."DSTARTDATE")
+                                        AND    CO."NINTERTYP" <> 1
+                                        LIMIT 1)
+                            ),0) AS VMTCOMMD,
+                            '' AS KCBMED_P2, --NO
+                            '' AS VTXCOMME,--NO
+                            '' AS VMTCOMME,--NO
+                            COALESCE((
+                              SELECT SUM(COALESCE (COV."NCAPITAL",0))  FROM USVTIMV01."COVER" COV
+                              WHERE COV."SCERTYPE" = P."SCERTYPE"
+                              AND   COV."NBRANCH"  = P."NBRANCH"
+                              AND   COV."NPRODUCT" = P."NPRODUCT"
+                              AND   COV."NPOLICY"  = P."NPOLICY" 
+                              AND   COV."NCERTIF"  = CERT."NCERTIF"
+                              AND   COV."DEFFECDATE" <= P."DSTARTDATE"
+                              AND ( COV."DNULLDATE" IS NULL OR COV."DNULLDATE" > P."DSTARTDATE") 
+                            ) ,0) AS VCAPITAL,
+                            '' AS VMTPRMSP, --NO
+                            COALESCE(P."NPREMIUM",0) AS VMTCOMR,
+                            COALESCE((
+                              SELECT (COALESCE(C."NSHARE", 0) * COALESCE(P."NPREMIUM", 0))
+                              FROM USVTIMV01."COINSURAN" C
                               WHERE C."SCERTYPE" = '2'
-                              AND   C."NBRANCH"  = P."NBRANCH"
+                              AND   C."NBRANCH"  = P."NBRANCH" 
                               AND   C."NPRODUCT" = P."NPRODUCT"
                               AND   C."NPOLICY"  = P."NPOLICY"
-                              AND   C."NCERTIF"  = CERT."NCERTIF"
+                              AND   C."NCOMPANY" =  1 --CODIGO DE LA CIA LIDER POSITIVA
                               AND   C."DEFFECDATE" <= P."DSTARTDATE"
-                              AND ( C."DNULLDATE" IS NULL OR P."DNULLDATE" > P."DSTARTDATE"))
-                          ), 0) AS VMTCAPRE,
-                          '' AS DNUMVIAS,--NO
-                          '' AS DQTCRED,--NO
-                          '' AS DNIB,--NO
-                          '' AS DLOCREF,--NO
-                          '' AS KEBMORAD,--NO
-                          '' AS DLOCCOBR,--NO
-                          '' AS TULTMALT,--NO
-                          '' AS DUSRUPD,--NO
-                          '' AS VMIPRMTR,--NO
-                          '' AS VMIPRLIQ,--NO
-                          '' AS VMIPRMBR,--NO
-                          '' AS VMIRPMSP,--NO
-                          '' AS VMIAGRAV,--NO
-                          '' AS VMIDETEC,--NO
-                          '' AS VMIDECOM,--NO
-                          '' AS VMIBOCOM,--NO
-                          '' AS VMIBOMAT,--NO
-                          '' AS VMICOMR,--NO
-                          '' AS VMICMNQP,--NO
-                          '' AS VMICOMME,--NO
-                          '' AS VMICOMMD,--NO
-                          '' AS VMICOMCB,--NO
-                          'LPV' AS DCOMPA,
-                          '' AS DMARCA,--NO
-                          '' AS KACRGMCB,--NO
-                          '' AS KABAPOL_MP,--NO
-                          '' AS TMIGPARA,--NO
-                          '' AS KABAPOL_MD,--NO
-                          '' AS TMIGDE,--NO
-                          '' AS KACPGPRE,
-                          '' AS TDPGPRE,
-                          '' AS TINIPGPR,
-                          '' AS TFIMPGPR,
-                          '' AS KABAPOL_ESQ,--NO
-                          '' AS KABAPOL_EFT,--NO
-                          '' AS DSUBSCR,--NO
-                          '' AS DNUAPLI,--NO
-                          COALESCE(P."SNONULL", '') AS DINDINIB,
-                          '' AS DLOCRECB,--NO
-                          '' AS KACCLCLI,--NO
-                          COALESCE(CAST (P."NNULLCODE" AS VARCHAR), '') AS KACMTALT,
-                          COALESCE ((
-                          SELECT CAST(COALESCE (PH."NTYPE_HIST",0) AS VARCHAR) FROM 
-                                  USVTIMV01."POLICY_HIS" PH
-                                WHERE PH."SCERTYPE" = P."SCERTYPE"
-                                  AND   PH."NBRANCH" = P."NBRANCH"
-                                  AND   PH."NPRODUCT" = P."NPRODUCT"
-                                  AND   PH."NPOLICY" = P."NPOLICY"
-                                  AND   PH."NCERTIF" = CERT."NCERTIF"
-                                  AND   PH."DEFFECDATE" <= P."DSTARTDATE"
-                                  AND  (PH."DNULLDATE" IS NULL OR PH."DNULLDATE" > P."DSTARTDATE")
-                                  AND   PH."NTYPE_HIST" = 1 --EN EMISION
-                                  LIMIT 1
-                          ),'0') AS KACTPTRA, --TODAY ACLARAR
-                          '' AS TEMICANC,--NO
-                          '' AS DENTIDSO,--NO
-                          '' AS DARQUIVO,--NO
-                          '' AS TARQUIVO,--NO
-                          COALESCE(P."SPOLITYPE", '') AS KACTPSUB,
-                          '' AS KACPARES,
-                          '' AS KGCRAMO_SAP,--NO
-                          '' AS KACTPCRED, --NO
-                          '' AS DIBAN,--NO
-                          '' AS DSWIFT,--NO
-                          '' AS KARMODALID,--NO
-                          '' AS DUSREMIS,--NO
-                          '' AS KCBMED_VENDA,--NO
-                          '' AS DUSRACEIT,--NO
-                          '' AS DCANALOPE,--NO
-                          '' AS KAICANEM,--NO
-                          '' AS DIDCANEM,--NO
-                          '' AS KAICANVD,--NO
-                          '' AS DIDCANVD,--NO
-                          '' AS DNMMULTI,--NO
-                          '' AS DOBSERV, --NO
-                          (
-                            SELECT CAST(COUNT(*) AS VARCHAR) FROM USVTIMG01."ROLES" R 
-                            WHERE R."SCERTYPE" = P."SCERTYPE"
-                            AND   R."NBRANCH"  = P."NBRANCH" 
-                            AND   R."NPOLICY"  = P."NPOLICY"
-                            AND   R."NCERTIF"  = CERT."NCERTIF"
-                          ) AS DQTDPART,
-                          '' AS TINIPRXANU,
-                          '' AS KACTPREAP,
-                          '' AS DENTCONGE, --NO
-                          '' AS KCBMED_PARCE, --NO
-                          '' AS DCODPARC, --NO
-                          '' AS DMODPARC, --NO
-                          COALESCE(P."SBUSSITYP", '') AS DTIPSEG,
-                          '' AS KACTPNEG, --NO
-                          '' AS DURPAGAPO,
-                          '' AS DNMINTERP,--NO
-                          '' AS DNUMADES, --NO 
-                          '' AS KACTPPRD, --ACLARAR
-                          '' AS KACSBTPRD,    --ACLARAR
-                          '' AS KABPRODT_REL, --NO
-                          '' AS KACTPPARES,   --NO
-                          '' AS KACTIPIFAP,   --NO
-                          '' AS KACTPALT_IFRS17, --NO
-                          '' AS TEFEALTE,   --NO
-                          '' AS TINITARLTA, --NO
-                          '' AS TFIMTARLTA, --NO
-                          '' AS DTERMO_IFRS17, --NO
-                          '' AS TEMISREN      --NO
-                          FROM USVTIMV01."POLICY" P
-                          LEFT JOIN USVTIMV01."CERTIFICAT" CERT
-                          ON CERT."SCERTYPE" = P."SCERTYPE" 
-                          AND CERT."NBRANCH" = P."NBRANCH" 
-                          AND CERT."NPRODUCT" = P."NPRODUCT" 
-                          AND CERT."NPOLICY" = P."NPOLICY"
-                          where P."SCERTYPE" = '2' 
-                          and p."SSTATUS_POL" not in ('2','3') 
-                          and ( (p."SPOLITYPE" = '1' -- INDIVIDUAL 
-                                and P."DEXPIRDAT" >= '2021-12-31' 
-                                and (p."DNULLDATE" is null or p."DNULLDATE" > '2021-12-31') )
-                                or 
-                                (p."SPOLITYPE" <> '1' -- COLECTIVAS
-                                and CERT."DEXPIRDAT" >= '2021-12-31' 
-                                and (CERT."DNULLDATE" is null or CERT."DNULLDATE" > '2021-12-31'))
-                              )
-                          and p."DSTARTDATE" between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
-                        /*WHERE P."SCERTYPE" = '2' AND P."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/
-                  ) AS TMP           
-                  '''
+                              AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > P."DSTARTDATE")
+                            ) ,0) AS VMTCMNQP,
+                            '' AS VMTBOMAT,--NO
+                            '' AS VTXBOMAT,--NO
+                            '' AS VMTBOCOM,--NO
+                            '' AS VTXBOCOM,--NO
+                            '' AS VMTDECOM,--NO
+                            '' AS VTXDECOM,--NO
+                            '' AS VMTDETEC,--NO
+                            '' AS VTXDETEC,--NO
+                            '' AS VMTAGRAV,--NO
+                            '' AS VTXAGRAV,--NO
+                            '' AS VMTCSAP, --NO
+                            '' AS VMTPRMIN,--NO
+                            '' AS VMTPRMTR,--NO
+                            '' AS VMTPRLIQ,--NO
+                            COALESCE(P."NPREMIUM",0) AS VMTPRMBR,
+                            COALESCE((
+                              SELECT COALESCE(C."NSHARE",0)
+                              FROM USVTIMV01."COINSURAN" C
+                              WHERE C."SCERTYPE" = '2'
+                              AND   C."NBRANCH"  = P."NBRANCH" 
+                              AND   C."NPRODUCT" = P."NPRODUCT"
+                              AND   C."NPOLICY"  = P."NPOLICY"
+                              AND   C."NCOMPANY" =  1 --CODIGO DE LA CIA LIDER POSITIVA
+                              AND   C."DEFFECDATE" <= P."DSTARTDATE"
+                              AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > P."DSTARTDATE")
+                            ),0)  AS VTXCOSSG,
+                            0 AS VTXRETEN,
+                            COALESCE(((SELECT TRUNC(COALESCE(R."NSHARE", 0),2) /100
+                                FROM USVTIMV01."REINSURAN" R
+                                WHERE R."SCERTYPE" =  '2'
+                                AND   R."NBRANCH"  = P."NBRANCH"
+                                AND   R."NPRODUCT" = P."NPRODUCT" 
+                                AND   R."NPOLICY"  = P."NPOLICY" 
+                                AND   R."NCERTIF"  = CERT."NCERTIF"
+                                AND   R."DEFFECDATE" <= P."DSTARTDATE" 
+                                AND  (R."DNULLDATE" IS NULL OR R."DNULLDATE" > P."DSTARTDATE")
+                                AND   R."NCOMPANY" = 1
+                                AND  R."NTYPE_REIN" = 1
+                                AND  R."NCOVER" = 1)*
+                              (SELECT SUM(COALESCE(C."NCAPITAL", 0)) FROM USVTIMV01."COVER" C
+                                WHERE C."SCERTYPE" = '2'
+                                AND   C."NBRANCH"  = P."NBRANCH"
+                                AND   C."NPRODUCT" = P."NPRODUCT"
+                                AND   C."NPOLICY"  = P."NPOLICY"
+                                AND   C."NCERTIF"  = CERT."NCERTIF"
+                                AND   C."DEFFECDATE" <= P."DSTARTDATE"
+                                AND ( C."DNULLDATE" IS NULL OR P."DNULLDATE" > P."DSTARTDATE"))
+                            ), 0) AS VMTCAPRE,
+                            '' AS DNUMVIAS,--NO
+                            '' AS DQTCRED,--NO
+                            '' AS DNIB,--NO
+                            '' AS DLOCREF,--NO
+                            '' AS KEBMORAD,--NO
+                            '' AS DLOCCOBR,--NO
+                            '' AS TULTMALT,--NO
+                            '' AS DUSRUPD,--NO
+                            '' AS VMIPRMTR,--NO
+                            '' AS VMIPRLIQ,--NO
+                            '' AS VMIPRMBR,--NO
+                            '' AS VMIRPMSP,--NO
+                            '' AS VMIAGRAV,--NO
+                            '' AS VMIDETEC,--NO
+                            '' AS VMIDECOM,--NO
+                            '' AS VMIBOCOM,--NO
+                            '' AS VMIBOMAT,--NO
+                            '' AS VMICOMR,--NO
+                            '' AS VMICMNQP,--NO
+                            '' AS VMICOMME,--NO
+                            '' AS VMICOMMD,--NO
+                            '' AS VMICOMCB,--NO
+                            'LPV' AS DCOMPA,
+                            '' AS DMARCA,--NO
+                            '' AS KACRGMCB,--NO
+                            '' AS KABAPOL_MP,--NO
+                            '' AS TMIGPARA,--NO
+                            '' AS KABAPOL_MD,--NO
+                            '' AS TMIGDE,--NO
+                            '' AS KACPGPRE,
+                            '' AS TDPGPRE,
+                            '' AS TINIPGPR,
+                            '' AS TFIMPGPR,
+                            '' AS KABAPOL_ESQ,--NO
+                            '' AS KABAPOL_EFT,--NO
+                            '' AS DSUBSCR,--NO
+                            '' AS DNUAPLI,--NO
+                            COALESCE(P."SNONULL", '') AS DINDINIB,
+                            '' AS DLOCRECB,--NO
+                            '' AS KACCLCLI,--NO
+                            COALESCE(CAST (P."NNULLCODE" AS VARCHAR), '') AS KACMTALT,
+                            COALESCE ((
+                            SELECT CAST(COALESCE (PH."NTYPE_HIST",0) AS VARCHAR) FROM 
+                                    USVTIMV01."POLICY_HIS" PH
+                                  WHERE PH."SCERTYPE" = P."SCERTYPE"
+                                    AND   PH."NBRANCH" = P."NBRANCH"
+                                    AND   PH."NPRODUCT" = P."NPRODUCT"
+                                    AND   PH."NPOLICY" = P."NPOLICY"
+                                    AND   PH."NCERTIF" = CERT."NCERTIF"
+                                    AND   PH."DEFFECDATE" <= P."DSTARTDATE"
+                                    AND  (PH."DNULLDATE" IS NULL OR PH."DNULLDATE" > P."DSTARTDATE")
+                                    AND   PH."NTYPE_HIST" = 1 --EN EMISION
+                                    LIMIT 1
+                            ),'0') AS KACTPTRA, --TODAY ACLARAR
+                            '' AS TEMICANC,--NO
+                            '' AS DENTIDSO,--NO
+                            '' AS DARQUIVO,--NO
+                            '' AS TARQUIVO,--NO
+                            COALESCE(P."SPOLITYPE", '') AS KACTPSUB,
+                            '' AS KACPARES,
+                            '' AS KGCRAMO_SAP,--NO
+                            '' AS KACTPCRED, --NO
+                            '' AS DIBAN,--NO
+                            '' AS DSWIFT,--NO
+                            '' AS KARMODALID,--NO
+                            '' AS DUSREMIS,--NO
+                            '' AS KCBMED_VENDA,--NO
+                            '' AS DUSRACEIT,--NO
+                            '' AS DCANALOPE,--NO
+                            '' AS KAICANEM,--NO
+                            '' AS DIDCANEM,--NO
+                            '' AS KAICANVD,--NO
+                            '' AS DIDCANVD,--NO
+                            '' AS DNMMULTI,--NO
+                            '' AS DOBSERV, --NO
+                            (
+                              SELECT CAST(COUNT(*) AS VARCHAR) FROM USVTIMG01."ROLES" R 
+                              WHERE R."SCERTYPE" = P."SCERTYPE"
+                              AND   R."NBRANCH"  = P."NBRANCH" 
+                              AND   R."NPOLICY"  = P."NPOLICY"
+                              AND   R."NCERTIF"  = CERT."NCERTIF"
+                            ) AS DQTDPART,
+                            '' AS TINIPRXANU,
+                            '' AS KACTPREAP,
+                            '' AS DENTCONGE, --NO
+                            '' AS KCBMED_PARCE, --NO
+                            '' AS DCODPARC, --NO
+                            '' AS DMODPARC, --NO
+                            COALESCE(P."SBUSSITYP", '') AS DTIPSEG,
+                            '' AS KACTPNEG, --NO
+                            '' AS DURPAGAPO,
+                            '' AS DNMINTERP,--NO
+                            '' AS DNUMADES, --NO 
+                            '' AS KACTPPRD, --ACLARAR
+                            '' AS KACSBTPRD,    --ACLARAR
+                            '' AS KABPRODT_REL, --NO
+                            '' AS KACTPPARES,   --NO
+                            '' AS KACTIPIFAP,   --NO
+                            '' AS KACTPALT_IFRS17, --NO
+                            '' AS TEFEALTE,   --NO
+                            '' AS TINITARLTA, --NO
+                            '' AS TFIMTARLTA, --NO
+                            '' AS DTERMO_IFRS17, --NO
+                            '' AS TEMISREN      --NO
+                            FROM USVTIMV01."POLICY" P
+                            LEFT JOIN USVTIMV01."CERTIFICAT" CERT
+                            ON CERT."SCERTYPE" = P."SCERTYPE" 
+                            AND CERT."NBRANCH" = P."NBRANCH" 
+                            AND CERT."NPRODUCT" = P."NPRODUCT" 
+                            AND CERT."NPOLICY" = P."NPOLICY"
+                            where P."SCERTYPE" = '2' 
+                            and p."SSTATUS_POL" not in ('2','3') 
+                            and ( (p."SPOLITYPE" = '1' -- INDIVIDUAL 
+                                  and P."DEXPIRDAT" >= '2021-12-31' 
+                                  and (p."DNULLDATE" is null or p."DNULLDATE" > '2021-12-31') )
+                                  or 
+                                  (p."SPOLITYPE" <> '1' -- COLECTIVAS
+                                  and CERT."DEXPIRDAT" >= '2021-12-31' 
+                                  and (CERT."DNULLDATE" is null or CERT."DNULLDATE" > '2021-12-31'))
+                                )
+                            and p."DSTARTDATE" between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
+                          /*WHERE P."SCERTYPE" = '2' AND P."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/
+                         ) AS TMP           
+                         '''
 
   L_DF_POLIZAS_VTIME_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPV).load()  
 
