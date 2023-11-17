@@ -85,12 +85,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                         '' AS KACARGES,
                         '' AS KACAGENC,
                         '' AS KACPROTO,
-                        coalesce ((case
-                        when p."SPOLITYPE" in ('2', '3')
-                        and cert."NCERTIF" <> 0 then cert."SSTATUSVA"
-                        else P."SSTATUS_POL"
-                      end) ,
-                      '') as KACTIPAP,
+                        COALESCE(P."SPOLITYPE", '') as KACTIPAP,
                         '' AS DFROTA,
                         '' AS KACTPDUR,             --ACLARAR
                         COALESCE(P."SRENEWAL", '') AS KACMODRE,
@@ -553,12 +548,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             '' AS KACARGES, --NO
                             '' AS KACAGENC, --NO
                             '' AS KACPROTO, --no
-                            coalesce ((case
-                            when p."SPOLITYPE" in ('2', '3')
-                            and cert."NCERTIF" <> 0 then cert."SSTATUSVA"
-                            else P."SSTATUS_POL"
-                          end) ,
-                          '') as KACTIPAP,
+                            COALESCE(P."SPOLITYPE", '')  as KACTIPAP,
                             '' AS DFROTA, --NO
                             '' AS KACTPDUR, --ACLARAR
                             COALESCE(P."SRENEWAL", '') AS KACMODRE,
