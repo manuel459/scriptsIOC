@@ -454,23 +454,23 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                       FROM	USINSUV01.COVER COV1
                                                       WHERE 	COV1.USERCOMP = C.USERCOMP
 		                              	                  AND     COV1.CERTYPE  = C.CERTYPE
-                                                      AND 	COV1.COMPANY  = C.COMPANY
-                                                      AND 	COV1.BRANCH   = C.BRANCH
+                                                      AND 	  COV1.COMPANY  = C.COMPANY
+                                                      AND 	  COV1.BRANCH   = C.BRANCH
                                                       --AND 	COV1.PRODUCT  = C.PRODUCT
 		                              	                  AND     COV1.MODULEC  = C.MODULEC
 		                              	                  AND     COV1.POLICY   = C.POLICY
 		                              	                  AND     COV1.CERTIF   = C.CERTIF
 		                              	                  AND     COV1.CURRENCY = C.CURRENCY
 		                              	                  AND     COV1.COVER    = C.COVER 
-                                                      AND		COV1.NULLDATE IS NULL) THEN 0
+                                                      AND		  COV1.NULLDATE IS NULL) THEN 0
 		                                    ELSE 
 		                                        CASE	
                                             WHEN C.NULLDATE = (SELECT MAX(COV1.NULLDATE)
                    	 			                                     FROM	USINSUV01.COVER COV1
                    	 			                                     WHERE 	COV1.USERCOMP = C.USERCOMP
 			     				                                             AND    COV1.CERTYPE  = C.CERTYPE
-                   	 			                                     AND 	COV1.COMPANY  = C.COMPANY
-                   	 			                                     AND 	COV1.BRANCH   = C.BRANCH
+                   	 			                                     AND 	  COV1.COMPANY  = C.COMPANY
+                   	 			                                     AND 	  COV1.BRANCH   = C.BRANCH
                    	 			                                     --AND 	COV1.PRODUCT  = C.PRODUCT
 			     				                                             AND    COV1.MODULEC  = C.MODULEC
 			     				                                             AND    COV1.POLICY   = C.POLICY
