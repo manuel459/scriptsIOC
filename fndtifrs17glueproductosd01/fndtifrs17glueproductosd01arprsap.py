@@ -26,11 +26,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                               (SELECT CAST(AA.BRANCH_PYG AS VARCHAR)
                                                FROM USINSUG01.ACC_AUTOM2 AA 
                                                WHERE GC.BRANCH = AA.BRANCH  
-                                               AND   GC.PRODUCT = AA.PRODUCT LIMIT 1)
-                                            ), 
-                                    (SELECT CAST(AA.BRANCH_PYG AS VARCHAR)
-                                     FROM USINSUG01.ACC_AUTOM2 AA 
-                                     WHERE GC.BRANCH = AA.BRANCH LIMIT 1)
+                                               AND   GC.PRODUCT = AA.PRODUCT LIMIT 1)), 
+                                              (SELECT CAST(AA.BRANCH_PYG AS VARCHAR)
+                                               FROM USINSUG01.ACC_AUTOM2 AA 
+                                               WHERE GC.BRANCH = AA.BRANCH LIMIT 1)
                           )  AS KGCRAMO_SAP,
                           '' AS DMASTER,
                           '' AS KACTPSPR, 
@@ -55,7 +54,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                           		 	  ELSE	CASE	
                                         WHEN EXISTS (	SELECT	1
                           		 				              	FROM	USINSUG01.PRODUCT PR1
-                          		 				              	WHERE 	PR1.USERCOMP = PRO.USERCOMP
+                          		 				              	WHERE PR1.USERCOMP = PRO.USERCOMP
                           		 				              	AND 	PR1.COMPANY = PRO.COMPANY
                           		 				              	AND 	PR1.BRANCH = PRO.BRANCH
                           		 				              	AND 	PR1.PRODUCT = PRO.PRODUCT
@@ -76,6 +75,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                           	WHERE PRO.CTID = PR0.PRO_ID) P 
                           ON GC.BRANCH = P.BRANCH  AND GC.PRODUCT  = P.PRODUCT
                           WHERE GC.COMPDATE BETWEEN '{L_FECHA_INICIO}' AND '{L_FECHA_FIN}')
+                          
                           UNION ALL
                         
                           (SELECT
@@ -94,19 +94,18 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                           '' AS KACCDFDO,
                           '' AS KACFUNAU,
                           COALESCE(
-                                    COALESCE((SELECT CAST(AA.BRANCH_PYG AS VARCHAR)
-                                              FROM USINSUV01.ACC_AUTOM2 AA 
-                                              WHERE LC.BRANCH = AA.BRANCH  
-                                              AND   LC.PRODUCT = AA.PRODUCT 
-                                              AND   LC.BILL_ITEM = AA.CONCEPT_FAC
-                                              LIMIT 1), 
+                                    COALESCE( (SELECT CAST(AA.BRANCH_PYG AS VARCHAR)
+                                               FROM USINSUV01.ACC_AUTOM2 AA 
+                                               WHERE LC.BRANCH = AA.BRANCH  
+                                               AND   LC.PRODUCT = AA.PRODUCT 
+                                               AND   LC.BILL_ITEM = AA.CONCEPT_FAC LIMIT 1), 
                                               (SELECT CAST(AA.BRANCH_PYG AS VARCHAR)
                                                FROM USINSUV01.ACC_AUTOM2 AA 
                                                WHERE LC.BRANCH = AA.BRANCH  
                                                AND   LC.PRODUCT = AA.PRODUCT LIMIT 1)), 
-                                    (SELECT CAST(AA.BRANCH_PYG AS VARCHAR)
-                                    FROM USINSUG01.ACC_AUTOM2 AA 
-                                    WHERE LC.BRANCH = AA.BRANCH LIMIT 1)) AS KGCRAMO_SAP,
+                                              (SELECT CAST(AA.BRANCH_PYG AS VARCHAR)
+                                               FROM USINSUV01.ACC_AUTOM2 AA 
+                                               WHERE LC.BRANCH = AA.BRANCH LIMIT 1)) AS KGCRAMO_SAP,
                           '' AS DMASTER,
                           '' AS KACTPSPR, 
                           '' AS KACPARES, 
