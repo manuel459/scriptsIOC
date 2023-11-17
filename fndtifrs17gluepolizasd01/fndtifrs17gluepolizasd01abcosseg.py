@@ -1,5 +1,7 @@
+
 def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
-    L_ABCOSSEG_INSUNIX = f'''
+
+    L_ABCOSSEG_INSUNIX_G = f'''
                              (
                              (SELECT
                               'D' AS INDDETREC,
@@ -54,9 +56,17 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               AND C.BRANCH = P.BRANCH
                               AND C.POLICY = P.policy --1994-03-05	2020-04-06
                               where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
-                              limit 100
                              )
-                             union all
+                             ) AS TMP
+                             '''
+    
+    #EJECUTAR CONSULTA
+    print("1-TERMINO TABLA ABCOSSEG_INX_G")
+    L_DF_ABCOSSEG_INSUNIX_G = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABCOSSEG_INSUNIX_G).load()
+    print("2-TERMINO TABLA ABCOSSEG_INX_G")
+
+    L_ABCOSSEG_INSUNIX_V = f'''
+                             (
                              (SELECT
                               'D' AS INDDETREC,
                               'ABCOSSEG' AS TABLAIFRS17,
@@ -110,17 +120,16 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               AND C.BRANCH = P.BRANCH
                               AND C.POLICY = P.policy --1997-10-02	2020-11-02
                              where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
-                             limit 100
                              )
                              ) AS TMP
                              '''
     
     #EJECUTAR CONSULTA
-    print("1-TERMINO TABLA ABCOSSEG_INX")
-    L_DF_ABCOSSEG_INSUNIX = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABCOSSEG_INSUNIX).load()
-    print("2-TERMINO TABLA ABCOSSEG_INX")
+    print("1-TERMINO TABLA ABCOSSEG_INX_")
+    L_DF_ABCOSSEG_INSUNIX_V = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABCOSSEG_INSUNIX_V).load()
+    print("2-TERMINO TABLA ABCOSSEG_INX_V")
     
-    L_ABCOSSEG_VTIME = f'''
+    L_ABCOSSEG_VTIME_G = f'''
                             (
                             (SELECT 
                             'D' AS INDDETREC,
@@ -165,10 +174,16 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                          '' AS DUSRUPD --NO
                             FROM USVTIMG01."COINSURAN" C --0029-09-20	2019-12-17
                             where cast(c."DCOMPDATE" as date) between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
-                            limit 100
                             )
-                            union all
-                            
+                            ) AS TMP
+                           '''
+    #EJECUTAR CONSULTA
+    print("1-TERMINO TABLA ABCOSSEG_VT")
+    L_DF_ABCOSSEG_VTIME_G = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABCOSSEG_VTIME_G).load()
+    print("2-TERMINO TABLA ABCOSSEG_VT")
+
+    L_ABCOSSEG_VTIME_V = f'''
+                            (
                             (SELECT 
                             'D' AS INDDETREC,
 	                        'ABCOSSEG' AS TABLAIFRS17,
@@ -212,19 +227,19 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                          '' AS DUSRUPD --NO
                             FROM USVTIMV01."COINSURAN" C --'2013-12-05'  '2013-12-10'
                             where cast(c."DCOMPDATE" as date) between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
-                            limit 100
                             )
                             ) AS TMP
                            '''
     
     #EJECUTAR CONSULTA
     print("1-TERMINO TABLA ABCOSSEG_VT")
-    L_DF_ABCOSSEG_VTIME = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABCOSSEG_VTIME).load()
+    L_DF_ABCOSSEG_VTIME_V = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABCOSSEG_VTIME_V).load()
     print("2-TERMINO TABLA ABCOSSEG_VT")
     
     #PERFORM THE UNION OPERATION 
-    L_DF_ABCOSSEG = L_DF_ABCOSSEG_INSUNIX.union(L_DF_ABCOSSEG_VTIME)
+    L_DF_ABCOSSEG = L_DF_ABCOSSEG_INSUNIX_G.union(L_DF_ABCOSSEG_INSUNIX_V).union(L_DF_ABCOSSEG_VTIME_G).union(L_DF_ABCOSSEG_VTIME_V)
     
     print("AQUI SE MANDE EL CONTEO")
     print(L_DF_ABCOSSEG.count())
+
     return L_DF_ABCOSSEG
