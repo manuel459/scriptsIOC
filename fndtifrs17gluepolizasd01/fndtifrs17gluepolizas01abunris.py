@@ -11,7 +11,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCPROC,
                               coalesce(cast(rol.effecdate as varchar),'') TIOCFRM,            -- Fecha de inicio de validez del registro
                               '' as TIOCTO,
-                              'PIG' KGIORIGM                                                  -- Indicador
+                              'PIG' KGIORIGM,                                                  -- Indicador
                               coalesce(cast(rol.branch as varchar),'') || '-' || coalesce(cast(rol.policy as varchar),'') ||  '-' || coalesce(cast(rol.certif as varchar),'') KABAPOL,  -- Numero de Poliza
                               (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = rol.branch  and "SOURCESCHEMA" = 'usinsug01') KACTPRIS ,           -- Codigo del Tipo de riesgo
                               (select evi.scod_vt  FROM usinsug01.equi_vt_inx evi  WHERE evi.scod_inx  = rol.client)  DUNIRIS,                                                          -- Codigo de unidad de riesgo 
@@ -100,7 +100,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCPROC,
                               coalesce(cast(p.effecdate as varchar),'') TIOCFRM,            -- Fecha de inicio de validez del registro
                               '' as TIOCTO,
-                              'PIG' KGIORIGM                                                  -- Indicador
+                              'PIG' KGIORIGM,                                                  -- Indicador
                               coalesce(cast(ad.branch as varchar),'') || '-' || coalesce(cast(ad.policy as varchar),'') ||  '-' || coalesce(cast(ad.certif as varchar),'') KABAPOL,  -- Numero de Poliza
                               (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = ad.branch  and "SOURCESCHEMA" = 'usinsug01') KACTPRIS ,           -- Codigo del Tipo de riesgo
                               coalesce(cast(ad.branch as varchar),'') || '-' || coalesce(cast(ad.policy as varchar),'') ||  '-' || coalesce(cast(ad.certif as varchar),'')  DUNIRIS,                                                          -- Codigo de unidad de riesgo 
@@ -728,9 +728,9 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCPROC,
                               cast(cast(io."INSR_BEGIN" as date)as varchar) as TIOCFRM,                        
                               '' as TIOCTO,
-                              'PVV' KGIORIGM,                                                 
-                              '' KABAPOL,                      
-                              '' KACTPRIS ,     
+                              'PVV' KGIORIGM,                                         
+                              cast(io."POLICY_ID" as varchar)  KABAPOL,                      
+                              '' KACTPRIS,     
                               '' DUNIRIS,                                                                     
                               cast(cast(io."INSR_BEGIN" as date)as varchar) TINCRIS,                         
                               cast(cast(io."INSR_END" as date)as varchar) TVENCRI,      
@@ -791,7 +791,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as DINSNANC,
                               '' as DINREGFL                              
                              from  usinsiv01."INSURED_OBJECT" io 
-                             and cast(io."INSR_BEGIN" as date)  between  '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                             and cast(io."REGISTRATION_DATE" as date)  between  '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                              limit 100
                             )
                             ) AS TMP
