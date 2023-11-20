@@ -1714,12 +1714,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS KACARGES, --NO
                       '' AS KACAGENC, --NO
                       '' AS KACPROTO, --NO
-                      CASE PP."ENG_POL_TYPE"
-                      WHEN 'POLICY'    THEN 'INDIVIDUAL'
-                      WHEN 'MASTER'    THEN 'COLECTIVA'
-                      WHEN 'DEPENDENT' THEN 'COLECTIVA'
-                      ELSE ''
-                      END AS KACTIPAP,
+                      (SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = PP."ENG_POL_TYPE" ) AS KACTIPAP,
                       '' AS DFROTA,   --NO
                       '' AS KACTPDUR, --EN BLANCO
                       COALESCE(P."RENEWABLE_FLAG", '') AS KACMODRE,
@@ -1826,12 +1821,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS DENTIDSO,    --NO
                       '' AS DARQUIVO,    --NO
                       '' AS TARQUIVO,    --NO
-                      CASE PP."ENG_POL_TYPE"
-                      WHEN 'POLICY'    THEN 'INDIVIDUAL'
-                      WHEN 'MASTER'    THEN 'COLECTIVA'
-                      WHEN 'DEPENDENT' THEN 'COLECTIVA'
-                      ELSE ''
-                      END AS KACTPSUB,
+                      (SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = PP."ENG_POL_TYPE" ) AS KACTPSUB,
                       '' AS KACPARES,
                       '' AS KGCRAMO_SAP, --NO
                       '' AS KACTPCRED,   --NO
