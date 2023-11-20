@@ -197,7 +197,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                         (P.POLITYPE <> '1' -- COLECTIVAS 
                                         AND CERT.EXPIRDAT >= '2021-12-31' 
                                         AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31'))
-                                   ) AND P.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}') AS PC	
+                                   )) AS PC	
                              ON  R.USERCOMP = PC.USERCOMP 
                              AND R.COMPANY  = PC.COMPANY 
                              AND R.CERTYPE  = PC.CERTYPE
@@ -236,7 +236,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                           --AND GC.MODULEC =  C.MODULEC
                                           AND GC.COVER   =  C.COVER
                                           AND GC.EFFECDATE <= PC.EFFECDATE
-                                                AND (GC.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE)		       		   
+                                          AND (GC.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE)		       		   
                                           WHERE C.USERCOMP   = PC.USERCOMP 
                                           AND   C.COMPANY    = PC.COMPANY 
                                           AND   C.CERTYPE    = '2' 
