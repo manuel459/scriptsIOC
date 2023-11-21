@@ -332,7 +332,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                                 AND P.POLICY = C.POLICY*/
                                  || '-' ||  COALESCE(C.POLICY, 0)|| '-' || COALESCE(C.CERTIF, 0)  AS KABAPOL,
                                  '' AS KABUNRIS,
-                                 COALESCE((SELECT COALESCE(CAST(GC.COVERGEN AS VARCHAR), '0') FROM USINSUV01.GEN_COVER GC 
+                                 COALESCE((SELECT COALESCE(CAST(GC.COVERGEN AS VARCHAR), '0') FROM USINSUV01.LIFE_COVER GC 
                                            WHERE GC.USERCOMP = C.USERCOMP 
                                            AND GC.COMPANY = C.COMPANY 
                                            AND GC.BRANCH = C.BRANCH 
@@ -344,7 +344,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                              AND P.BRANCH = C.BRANCH
                                                              AND P.POLICY = C.POLICY)*/
                                  AND GC.CURRENCY = C.CURRENCY
-                                 AND GC.MODULEC = C.MODULEC
+                                 --AND GC.MODULEC = C.MODULEC
                                  AND GC.COVER = C.COVER 
                                  AND GC.EFFECDATE <= C.EFFECDATE
                                  AND (GC.NULLDATE IS NULL OR GC.NULLDATE > C.EFFECDATE) LIMIT 1 --SUBPRODUCT COMPARTE COVERGEN
@@ -448,13 +448,13 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                    C.CAPITAL,
                                    C.CAPITALI,
 		                               CASE 
-		                               WHEN C.NULLDATE IS NULL THEN 1
+		                               WHEN (C.EFFECDATE <= POL.EFFECDATE AND (C.NULLDATE IS NULL OR C.NULLDATE > POL.EFFECDATE)) THEN 1		                               
 		                               ELSE CASE	
                                         WHEN EXISTS (	SELECT	1
                                                       FROM	USINSUV01.COVER COV1
-                                                      WHERE 	COV1.USERCOMP = C.USERCOMP
-		                              	                  AND     COV1.CERTYPE  = C.CERTYPE
-                                                      AND 	  COV1.COMPANY  = C.COMPANY
+                                                      WHERE 	COV1.CERTYPE  = C.CERTYPE
+                                                      AND     COV1.USERCOMP = C.USERCOMP
+                                                      AND 	  COV1.COMPANY  = C.COMPANY		                              	                  
                                                       AND 	  COV1.BRANCH   = C.BRANCH
                                                       --AND 	COV1.PRODUCT  = C.PRODUCT
 		                              	                  AND     COV1.MODULEC  = C.MODULEC
@@ -462,7 +462,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 		                              	                  AND     COV1.CERTIF   = C.CERTIF
 		                              	                  AND     COV1.CURRENCY = C.CURRENCY
 		                              	                  AND     COV1.COVER    = C.COVER 
-                                                      AND		  COV1.NULLDATE IS NULL) THEN 0
+                                                      AND		  COV1.EFFECDATE <= POL.EFFECDATE
+                                                      AND     (COV1.NULLDATE IS NULL OR COV1.NULLDATE > POL.EFFECDATE)) THEN 0
 		                                    ELSE 
 		                                        CASE	
                                             WHEN C.NULLDATE = (SELECT MAX(COV1.NULLDATE)
@@ -480,7 +481,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                             ELSE 0
                                             END 
                                         END
-		                               END FLAG
+                                   END FLAG    
                                    FROM USINSUV01.COVER C  
                                    LEFT JOIN USINSUV01.CERTIFICAT CERT
                                    ON  C.USERCOMP = CERT.USERCOMP 
@@ -504,7 +505,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                        (POL.POLITYPE <> '1' -- COLECTIVAS 
                                          AND CERT.EXPIRDAT >= '2021-12-31' 
                                    AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
-                                   AND POL.EFFECDATE BETWEEN '2022-01-01' AND '2022-12-31') C WHERE C.FLAG = 1
+                                   AND POL.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}') C /*WHERE C.FLAG = 1*/
                                   )T ) AS TMP '''
  
   L_DF_ABCOBAP_INSUNIX_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_INSUNIX_LPV).load()
