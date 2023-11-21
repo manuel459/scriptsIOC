@@ -1672,7 +1672,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       'PNV' AS KGIORIGM,
                       'LPV' AS KACCOMPA,
                       COALESCE(P."ATTR1", '0') AS KGCRAMO,
-                      COALESCE(P."ATTR1", '0') || P."INSR_TYPE" AS KABPRODT,
+                      P."INSR_TYPE" AS KABPRODT,
                       CASE COALESCE(PP."ENG_POL_TYPE", '')
                       WHEN 'DEPENDENT' THEN P."ATTR1" || '-' || P."ATTR2" || '-' || P."POLICY_NO" || '-' || PP."MASTER_POLICY_ID"
                       ELSE ''
