@@ -690,7 +690,74 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > C."DEFFECDATE")
                                     AND R."NTYPE_REIN" <> 1))), 0) AS VMTPRRES,
                               COALESCE(CAST(C."NTYPDURINS" AS VARCHAR),'0') AS KACTPDUR,
-                              COALESCE(CAST(C."NDURINSUR" AS VARCHAR),'0') AS DURCOB
+                              COALESCE(CAST(C."NDURINSUR" AS VARCHAR),'0') AS DURCOB,
+                              CASE 
+                                  WHEN POL."SPOLITYPE" = '1' --INDIVIDUAL
+                              THEN 
+                                    CASE WHEN (C."DEFFECDATE" <= POL."DSTARTDATE" AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > POL."DSTARTDATE")) THEN 1		                               
+                                        ELSE 
+                                  CASE	
+                                        WHEN EXISTS ( SELECT	1
+                                                      FROM	usvtimg01."COVER" COV1
+                                                      WHERE 	COV1."SCERTYPE" = C."SCERTYPE"
+                                                      AND     COV1."NBRANCH"    = C."NBRANCH"
+                                                      AND 	  COV1."NPRODUCT"   = C."NPRODUCT"		                              	                  
+                                                        AND     COV1."NMODULEC"   = C."NMODULEC"
+                                                        AND     COV1."NPOLICY"    = C."NPOLICY"
+                                                        AND     COV1."NCERTIF"    = C."NCERTIF"
+                                                        AND     COV1."NCURRENCY"  = C."NCURRENCY"
+                                                        AND     COV1."NCOVER"     = C."NCOVER" 
+                                                      AND		  COV1."DEFFECDATE" <= POL."DSTARTDATE"
+                                                      AND     (COV1."DNULLDATE" IS NULL OR COV1."DNULLDATE" > POL."DSTARTDATE")) THEN 0
+                                            ELSE 
+                                                CASE	
+                                            WHEN C."DNULLDATE" = (SELECT MAX(COV1."DNULLDATE")
+                                                                  FROM	usvtimg01."COVER" COV1
+                                                                  WHERE  COV1."SCERTYPE" = C."SCERTYPE"
+                                                                  AND 	COV1."NBRANCH"  = C."NBRANCH"
+                                                                  AND    COV1."NPRODUCT" = C."NPRODUCT"
+                                                                      AND   COV1."NMODULEC"  = C."NMODULEC"
+                                                                      AND   COV1."NPOLICY"   = C."NPOLICY"
+                                                                      AND   COV1."NCERTIF"   = C."NCERTIF"
+                                                                      AND   COV1."NCURRENCY" = C."NCURRENCY"
+                                                                      AND   COV1."NCOVER"    = C."NCOVER" ) THEN 1
+                                            ELSE 0
+                                            END 
+                                        END
+                                    END  
+                                              ELSE
+                                                    CASE WHEN (C."DEFFECDATE" <= CERT."DSTARTDATE" AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > CERT."DSTARTDATE")) THEN 1		                               
+                                          ELSE 
+                                                CASE	
+                                          WHEN EXISTS ( SELECT	1
+                                                      FROM	usvtimg01."COVER" COV1
+                                                      WHERE 	COV1."SCERTYPE" = C."SCERTYPE"
+                                                      AND     COV1."NBRANCH"    = C."NBRANCH"
+                                                      AND 	  COV1."NPRODUCT"   = C."NPRODUCT"		                              	                  
+                                                        AND     COV1."NMODULEC"   = C."NMODULEC"
+                                                        AND     COV1."NPOLICY"    = C."NPOLICY"
+                                                        AND     COV1."NCERTIF"    = C."NCERTIF"
+                                                        AND     COV1."NCURRENCY"  = C."NCURRENCY"
+                                                        AND     COV1."NCOVER"     = C."NCOVER" 
+                                                      AND		  COV1."DEFFECDATE" <= cert."DSTARTDATE"
+                                                      AND     (COV1."DNULLDATE" IS NULL OR COV1."DNULLDATE" > cert."DSTARTDATE")) THEN 0
+                                          ELSE 
+                                              CASE	
+                                          WHEN C."DNULLDATE" = (SELECT MAX(COV1."DNULLDATE")
+                                                                  FROM	usvtimg01."COVER" COV1
+                                                                  WHERE  COV1."SCERTYPE" = C."SCERTYPE"
+                                                                  AND 	COV1."NBRANCH"  = C."NBRANCH"
+                                                                  AND    COV1."NPRODUCT" = C."NPRODUCT"
+                                                                      AND   COV1."NMODULEC"  = C."NMODULEC"
+                                                                      AND   COV1."NPOLICY"   = C."NPOLICY"
+                                                                      AND   COV1."NCERTIF"   = C."NCERTIF"
+                                                                      AND   COV1."NCURRENCY" = C."NCURRENCY"
+                                                                      AND   COV1."NCOVER"    = C."NCOVER") THEN 1
+                                          ELSE 0
+                                          END 
+                                      END
+                                  END 
+                              END FLAG
                               FROM USVTIMG01."COVER" C  
  					                    LEFT JOIN USVTIMG01."CERTIFICAT" CERT
  					                    ON  C."SCERTYPE"      = CERT."SCERTYPE"  
@@ -712,7 +779,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                   (POL."SPOLITYPE" <> '1' -- COLECTIVAS 
                                   AND CERT."DEXPIRDAT" >= '2021-12-31' 
                                   AND (CERT."DNULLDATE" IS NULL OR CERT."DNULLDATE" > '2021-12-31')))
-                                  AND POL."DSTARTDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}') COV_CERT) AS TMP'''
+                                  AND POL."DSTARTDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}') COV_CERT WHERE FLAG = 1) AS TMP'''
 
   L_DF_ABCOBAP_VTIME_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_VTIME_LPG).load()
 
