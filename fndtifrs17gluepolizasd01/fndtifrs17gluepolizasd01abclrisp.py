@@ -436,24 +436,24 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     'PVG' AS KGIORIGM,
                                     PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" AS KABAPOL,
                                     PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" || '-' || R."SCLIENT"  AS KABUNRIS,
-                                    COALESCE(( SELECT COALESCE(GC."NCOVERGEN", 0)           
-                                                FROM USVTIMG01."GEN_COVER" GC 
-                                                JOIN USVTIMG01."COVER" C  
-                                                ON  GC."NBRANCH"   = C."NBRANCH"
-                                                AND GC."NPRODUCT"  = PC."NPRODUCT"
-                                                AND GC."NCURRENCY" = C."NCURRENCY"
-                                                AND GC."NMODULEC" =  C."NMODULEC"
-                                                AND GC."NCOVER"   =  C."NCOVER"
-                                                AND GC."DEFFECDATE" <= PC."DSTARTDATE"
-                                                AND (GC."DNULLDATE" IS NULL OR GC."DNULLDATE" > PC."DSTARTDATE")		       		   
-                                                WHERE C."SCERTYPE"    = PC."SCERTYPE" 
-                                                AND   C."NBRANCH"     = PC."NBRANCH"
-                                                AND   C."NPRODUCT"    = PC."NPRODUCT"
-                                                AND   C."NPOLICY"     = PC."NPOLICY"
-                                                AND   C."NCERTIF"     = PC."NCERTIF"
-                                                AND   C."DEFFECDATE" <= PC."DSTARTDATE"
-                                                AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE")
-                                                AND  C."NCOVER" = 1
+                                    COALESCE((SELECT COALESCE(GLC."NCOVERGEN", 0)           
+                                              FROM USBI01.IFRS170_V_GEN_LIFE_COVER GLC
+                                              JOIN USVTIMG01."COVER" C  
+                                              ON  GLC."NBRANCH"   = C."NBRANCH"
+                                              AND GLC."NPRODUCT"  = PC."NPRODUCT"
+                                              AND GLC."NCURRENCY" = C."NCURRENCY"
+                                              AND GLC."NMODULEC" =  C."NMODULEC"
+                                              AND GLC."NCOVER"   =  C."NCOVER"
+                                              AND GLC."DEFFECDATE" <= PC."DSTARTDATE"
+                                              AND (GLC."DNULLDATE" IS NULL OR GLC."DNULLDATE" > PC."DSTARTDATE")		       		   
+                                              WHERE C."SCERTYPE"    = PC."SCERTYPE" 
+                                              AND   C."NBRANCH"     = PC."NBRANCH"
+                                              AND   C."NPRODUCT"    = PC."NPRODUCT"
+                                              AND   C."NPOLICY"     = PC."NPOLICY"
+                                              AND   C."NCERTIF"     = PC."NCERTIF"
+                                              AND   C."DEFFECDATE" <= PC."DSTARTDATE"
+                                              AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE")
+                                              AND  C."NCOVER" = 1
                                     ) ,'0') AS KGCTPCBT,
                                     ROW_NUMBER () OVER (PARTITION  BY PC."NBRANCH", PC."NPRODUCT", PC."NPOLICY", PC."NCERTIF" ORDER BY R."SCLIENT") AS DNPESEG,
                                     R."SCLIENT" AS KEBENTID_PS,

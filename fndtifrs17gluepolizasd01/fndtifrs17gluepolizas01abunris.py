@@ -1,3 +1,5 @@
+from pyspark.sql.types import *
+from pyspark.sql.functions import col
 
 def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 
@@ -311,10 +313,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TDVENTRA,
                               '' as DHORAINI,
                               1  as DQOBJSEG,                                                 -- Numero de objetos asegurados 
-                              coalesce(cast(tnb.CAPITAL as numeric(14,2)),0) VCAPITAL,        -- Importe Capital asegurado
+                              0 VCAPITAL,                                                     -- Importe Capital asegurado
                               '' as VMTPRABP,
-                              coalesce(cast(tnb.PREMIUM as numeric(12,2)),0) VMTPRMBR,        -- Importe de Prima Bruta
-                              coalesce(cast(tnb.PREMIUM as numeric(12,2)),0) VMTCOMR,         -- Importe de Prima Comercial
+                              0 VMTPRMBR,                                                     -- Importe de Prima Bruta
+                              0 VMTCOMR,                                                      -- Importe de Prima Comercial
                               '' as VMTPRLIQ,
                               '' as VMTPREMC,                                                 -- Comision de la prima
                               '' as VMTPRMTR,
@@ -462,11 +464,11 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               coalesce(cast(cast(ad."DEFFECDATE" as date) as varchar),'')  TIOCFRM,                         -- Fecha de inicio de validez del registro
                               '' as TIOCTO,
                               'PVG' KGIORIGM,                                                                                -- Indicador
-                              rol."NBRANCH" || '-' || rol."NPOLICY"  ||  '-' || rol."NCERTIF"  KABAPOL,                      -- Numero de Poliza
+                              ad."NBRANCH" || '-' || ad."NPOLICY" ||  '-' || ad."NCERTIF"  KABAPOL,                          -- Numero de Poliza
                               (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = ad."NBRANCH" and "SOURCESCHEMA" = 'usvtimg01' ) KACTPRIS ,     -- Codigo del Tipo de riesgo 
                               ad."SKEYADDRESS" DUNIRIS,                                                                      -- Codigo de unidad de riesgo  
                               coalesce(cast(cast(ad."DEFFECDATE" as date) as varchar),'')  TINCRIS,                          -- Fecha de Inicio del riesgo
-                              coalesce(cast(ad."DNULLDATE" as VARCHAR),'')  TVENCRI,                                        -- Fecha de vencimiento del riesgo 
+                              coalesce(cast(ad."DNULLDATE" as VARCHAR),'')  TVENCRI,                                         -- Fecha de vencimiento del riesgo 
                               '' as TSITRIS,                                                  -- Fecha de estado de la unidad del riesgo
                               '' as KACSITUR,                                                 -- Codigo de estad de la unidad del riesgo
                               '' as KACESQM,
@@ -791,22 +793,25 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as DINSNANC,
                               '' as DINREGFL                              
                              from  usinsiv01."INSURED_OBJECT" io 
-                             and cast(io."REGISTRATION_DATE" as date)  between  '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                             where cast(io."REGISTRATION_DATE" as date)  between  '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                              limit 100
                             )
                             ) AS TMP
                            '''
     
     #EJECUTAR CONSULTA
-    print("1-TERMINO TABLA ABUNRIS_VTIME_V_PES")
+    print("1-TERMINO TABLA ABUNRIS_INSIS")
     L_DF_ABUNRIS_INSIS_V = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABUNRIS_INSIS_V).load()
-    print("2-TERMINO TABLA ABUNRIS_VTIME_V_PES")
+    print("2-TERMINO TABLA ABUNRIS_INSIS")
 
 
     #PERFORM THE UNION OPERATION
     L_DF_ABUNRIS = L_DF_ABUNRIS_INX_G.union(L_DF_ABUNRIS_INSUNIX_V_PES).union(L_DF_ABUNRIS_VTIME_G).union(L_DF_ABUNRIS_VTIME_V_PES).union(L_DF_ABUNRIS_INSIS_V)
     
+    L_DF_ABUNRIS = L_DF_ABUNRIS.withColumn("DQOBJSEG",col("DQOBJSEG").cast(DecimalType(10,0))).withColumn("VCAPITAL",col("VCAPITAL").cast(DecimalType(14,2))).withColumn("VMTPRMBR",col("VMTPRMBR").cast(DecimalType(12,2))).withColumn("VMTCOMR",col("VMTCOMR").cast(DecimalType(12,2)))
+
     print("AQUI SE MANDE EL CONTEO")
     print(L_DF_ABUNRIS.count())
 
     return L_DF_ABUNRIS
+

@@ -1,3 +1,6 @@
+from pyspark.sql.types import *
+from pyspark.sql.functions import col
+
 
 def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 
@@ -36,8 +39,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               ) AS DCREFERE,
                               COALESCE(CAST(C.SHARE AS numeric(9,6)), '0') AS VTXQUOTA,
                               '' AS VMTCAPIT,
-                              '0' AS VTXCOMCB,
-                              '0' AS VTXCOMMD,
+                              0 AS VTXCOMCB,
+                              0 AS VTXCOMMD,
                               COALESCE(CAST(C.EXPENSIV AS numeric(10,7)), '0') AS VTXGESTAO,
                               CASE 
                               WHEN C.COMPANYC IN (1, 12) THEN 'S'
@@ -56,10 +59,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               AND C.BRANCH = P.BRANCH
                               AND C.POLICY = P.policy --1994-03-05	2020-04-06
                               where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                              limit 100
                              )
                              ) AS TMP
                              '''
-    
     #EJECUTAR CONSULTA
     print("1-TERMINO TABLA ABCOSSEG_INX_G")
     L_DF_ABCOSSEG_INSUNIX_G = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABCOSSEG_INSUNIX_G).load()
@@ -100,8 +103,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               ) AS DCREFERE,
                               COALESCE(CAST(C.SHARE AS numeric(9,6)), '0') AS VTXQUOTA,
                               '' AS VMTCAPIT,
-                              '0' AS VTXCOMCB,
-                              '0' AS VTXCOMMD,
+                              0 AS VTXCOMCB,
+                              0 AS VTXCOMMD,
                               COALESCE(CAST(C.EXPENSIV AS numeric(10,7)), '0') AS VTXGESTAO,
                               CASE 
                               WHEN C.COMPANYC IN (1, 12) THEN 'S'
@@ -120,12 +123,13 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               AND C.BRANCH = P.BRANCH
                               AND C.POLICY = P.policy --1997-10-02	2020-11-02
                              where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                             limit 100
                              )
                              ) AS TMP
                              '''
     
     #EJECUTAR CONSULTA
-    print("1-TERMINO TABLA ABCOSSEG_INX_")
+    print("1-TERMINO TABLA ABCOSSEG_INX_V")
     L_DF_ABCOSSEG_INSUNIX_V = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABCOSSEG_INSUNIX_V).load()
     print("2-TERMINO TABLA ABCOSSEG_INX_V")
     
@@ -160,8 +164,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                        ) AS DCREFERE,
 	                        COALESCE ( CAST ( C."NSHARE"  AS numeric(9,6)), '0') AS VTXQUOTA,
 	                        '' AS VMTCAPIT,
-	                        '0' AS VTXCOMCB, 
-	                        '0' AS VTXCOMMD,
+	                        0 AS VTXCOMCB, 
+	                        0 AS VTXCOMMD,
 	                        COALESCE ( CAST (C."NEXPENSES" AS numeric(10,7)), '0') AS VTXGESTAO,
 	                        CASE C."NCOMPANY"
                             WHEN 1 THEN 'S' --CODIGO GENERALES
@@ -174,13 +178,14 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                          '' AS DUSRUPD --NO
                             FROM USVTIMG01."COINSURAN" C --0029-09-20	2019-12-17
                             where cast(c."DCOMPDATE" as date) between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                            limit 100
                             )
                             ) AS TMP
                            '''
     #EJECUTAR CONSULTA
     print("1-TERMINO TABLA ABCOSSEG_VT")
     L_DF_ABCOSSEG_VTIME_G = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_ABCOSSEG_VTIME_G).load()
-    print("2-TERMINO TABLA ABCOSSEG_VT")
+    print("2-TERMINO TABLA ABCOSSEG_VT")    
 
     L_ABCOSSEG_VTIME_V = f'''
                             (
@@ -213,8 +218,8 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                        ) AS DCREFERE,
 	                        COALESCE ( CAST ( C."NSHARE"  AS numeric(9,6)), '0') AS VTXQUOTA,
 	                        '' AS VMTCAPIT,
-	                        '0' AS VTXCOMCB, 
-	                        '0' AS VTXCOMMD,
+	                        0 AS VTXCOMCB, 
+	                        0 AS VTXCOMMD,
 	                        COALESCE ( CAST (C."NEXPENSES" AS numeric(10,7)), '0') AS VTXGESTAO,
 	                        CASE C."NCOMPANY"
                             WHEN 1 THEN 'S' --CODIGO GENERALES
@@ -227,6 +232,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                          '' AS DUSRUPD --NO
                             FROM USVTIMV01."COINSURAN" C --'2013-12-05'  '2013-12-10'
                             where cast(c."DCOMPDATE" as date) between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                            limit 100
                             )
                             ) AS TMP
                            '''
@@ -239,7 +245,10 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
     #PERFORM THE UNION OPERATION 
     L_DF_ABCOSSEG = L_DF_ABCOSSEG_INSUNIX_G.union(L_DF_ABCOSSEG_INSUNIX_V).union(L_DF_ABCOSSEG_VTIME_G).union(L_DF_ABCOSSEG_VTIME_V)
     
+    L_DF_ABCOSSEG = L_DF_ABCOSSEG.withColumn("VTXQUOTA",col("VTXQUOTA").cast(DecimalType(9,6))).withColumn("VTXQUOTA",col("VTXQUOTA").cast(DecimalType(9,6))).withColumn("VTXCOMCB",col("VTXCOMCB").cast(DecimalType(7,4))).withColumn("VTXCOMMD",col("VTXCOMMD").cast(DecimalType(7,4))).withColumn("VTXGESTAO",col("VTXGESTAO").cast(DecimalType(10,7)))
+
     print("AQUI SE MANDE EL CONTEO")
     print(L_DF_ABCOSSEG.count())
+
 
     return L_DF_ABCOSSEG
