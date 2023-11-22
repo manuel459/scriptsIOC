@@ -609,7 +609,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TIOCFRM,
                               C."NBRANCH" ||'-'|| C."NPRODUCT" ||'-'|| C."NPOLICY" ||'-'|| C."NCERTIF" AS KABAPOL,
                               COALESCE((SELECT CAST(LC."NCOVERGEN" AS VARCHAR)  
-                                         FROM USBI01.IFRS170_V_GEN_LIFE_COVER GLC 
+                                         FROM USBI01.IFRS170_V_GEN_LIFE_COVER_VTIMELPG GLC 
                                          WHERE GLC."NBRANCH" = C."NBRANCH" 
                                          AND   GLC."NPRODUCT"  = C."NPRODUCT"
                                          AND   GLC."NMODULEC"  = C."NMODULEC"
