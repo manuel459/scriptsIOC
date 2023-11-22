@@ -6,57 +6,83 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
    #Declara consulta VTIME
    L_POLIZAS_VTIME_GENERAL = f'''
                               (
-                                select 
-                                'D' INDDETREC, 
-                                'ABCARGA' TABLAIFRS17, 
-                                '' PK, --PENDIENTE
-                                '' DTPREG, --NO
-                                '' TIOCPROC, --NO
-                                coalesce(cast(cast(DX."DEFFECDATE" as date) as varchar), '') TIOCFRM, --PENDIENTE
-                                '' TIOCTO, --NO
-                                'PVG' KGIORIGM, 
-                                dx."NBRANCH" || '-' || DX."NPRODUCT" || '-' || DX."NPOLICY" || '-' || DX."NCERTIF" KABAPOL, --FK
-                                '' KABUNRIS, --FK  
-                                /*
-                                *  DE ACUERDO A JAOS el dato se pudiera obtener en base a la primera covertura pero los sistemas 
-                                no tienen esa informacion de manera directa en la tabla de recargos y descuentos
-                                (
-                                  SELECT C."NCOVER" FROM USVTIMG01."COVER" C 
-                                  where C."SCERTYPE" = '2' 
-                                  and   C."NBRANCH" = DX."NBRANCH"  
-                                  AND   C."NPOLICY" = DX."NPOLICY"
-                                  AND   C."NCERTIF" = DX."NCERTIF" 
-                                  AND   C."NCOVER"  = 1
-                                  and   C."DEFFECDATE" <= DX."DEFFECDATE" 
-                                  AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > DX."DEFFECDATE") 
-                                )*/
-                                '' KGCTPCBT, 
-                                '' KACCDFDO, --VALOR VACIO
-                                coalesce(de."SDISEXPRI" , '') KACTPCAG,
-                                DX."NDISC_CODE" KACCDCAG, 
-                                DX."NAMOUNT" VMTCARGA, 
-                                coalesce(cast(cast(DX."DEFFECDATE" as date) as varchar), '') TULTMALT, 
-                                '' DUSRUPD, --NO
-                                'LPG' DCOMPA, 
-                                '' DMARCA, --NO
-                                '' DINCPRM, --VALOR VACIO
-                                CASE WHEN (
-                                  DX."NAMOUNT" != 0 
-                                  AND DX."NAMOUNT" IS NOT NULL
-                                ) 
-                                AND (
-                                  CAST(DX."NPERCENT" AS INTEGER)= 0 
-                                  AND DX."NPERCENT" IS NULL
-                                ) THEN 'IMPORTE' ELSE 'PORCENTAJE' END KACTPVCG, 
-                                '' DDURACAO, 
-                                '' KACTPCBB --valor vacio
-                                FROM 
-                                  USVTIMG01."DISC_XPREM" dx
+                                select  
+                                  'D' INDDETREC, 
+                                  'ABCARGA' TABLAIFRS17, 
+                                  '' PK, --PENDIENTE
+                                  '' DTPREG, --NO
+                                  '' TIOCPROC, --NO
+                                  coalesce(cast(cast(DX."DEFFECDATE" as date) as varchar), '') TIOCFRM, --PENDIENTE
+                                  '' TIOCTO, --NO
+                                  'PVG' KGIORIGM, 
+                                  dx."NBRANCH" || '-' || DX."NPRODUCT" || '-' || DX."NPOLICY" || '-' || DX."NCERTIF" KABAPOL, --FK
+                                  '' KABUNRIS, --FK  
+                                  /*
+                                  *  DE ACUERDO A JAOS el dato se pudiera obtener en base a la primera covertura pero los sistemas 
+                                  no tienen esa informacion de manera directa en la tabla de recargos y descuentos
+                                  (
+                                    SELECT C."NCOVER" FROM USVTIMG01."COVER" C 
+                                    where C."SCERTYPE" = '2' 
+                                    and   C."NBRANCH" = DX."NBRANCH"  
+                                    AND   C."NPOLICY" = DX."NPOLICY"
+                                    AND   C."NCERTIF" = DX."NCERTIF" 
+                                    AND   C."NCOVER"  = 1
+                                    and   C."DEFFECDATE" <= DX."DEFFECDATE" 
+                                    AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > DX."DEFFECDATE") 
+                                  )*/
+                                  '' KGCTPCBT, 
+                                  '' KACCDFDO, --VALOR VACIO
+                                  coalesce(de."SDISEXPRI" , '') KACTPCAG,
+                                  DX."NDISC_CODE" KACCDCAG, 
+                                  DX."NAMOUNT" VMTCARGA, 
+                                  coalesce(cast(cast(DX."DEFFECDATE" as date) as varchar), '') TULTMALT, 
+                                  '' DUSRUPD, --NO
+                                  'LPG' DCOMPA, 
+                                  '' DMARCA, --NO
+                                  '' DINCPRM, --VALOR VACIO
+                                  CASE WHEN (
+                                    DX."NAMOUNT" != 0 
+                                    AND DX."NAMOUNT" IS NOT NULL
+                                  ) 
+                                  AND (
+                                    CAST(DX."NPERCENT" AS INTEGER)= 0 
+                                    AND DX."NPERCENT" IS NULL
+                                  ) THEN 'IMPORTE' ELSE 'PORCENTAJE' END KACTPVCG, 
+                                  '' DDURACAO, 
+                                  '' KACTPCBB --valor vacio
+                              FROM USVTIMG01."POLICY" P
+                              left join USVTIMG01."CERTIFICAT" CERT 
+                                on CERT."SCERTYPE" = P."SCERTYPE"
+                                  and CERT."NBRANCH" = P."NBRANCH"
+                                  and CERT."NPRODUCT" = P."NPRODUCT"
+                                  and CERT."NPOLICY" = P."NPOLICY"
+                                join USVTIMG01."DISC_XPREM" dx
+                                on dx."SCERTYPE" = P."SCERTYPE"
+                                  and dx."NBRANCH" = P."NBRANCH"
+                                  and dx."NPRODUCT" = P."NPRODUCT"
+                                  and dx."NPOLICY" = p."NPOLICY"
+                                  and dx."NCERTIF" = cert."NCERTIF"
+                                  and dx."DEFFECDATE" <= p."DSTARTDATE"
+                                  and (dx."DNULLDATE" is null or dx."DNULLDATE" > P."DSTARTDATE")
                                 left join usvtimg01."DISCO_EXPR" de
                                 on dx."NBRANCH" = de."NBRANCH"
-                                and dx."NPRODUCT" = de."NPRODUCT"
-                                and dx."NDISC_CODE" = de."NDISEXPRC"
-                                where dx."DCOMPDATE" between '{P_FECHA_INICIO}' and '{P_FECHA_FIN}' limit 100                         
+                                  and dx."NPRODUCT" = de."NPRODUCT"
+                                  and dx."NDISC_CODE" = de."NDISEXPRC"
+                                where
+                                P."SCERTYPE" = '2' 
+                                and p."SSTATUS_POL" not in ('2', '3')
+                                and ( (p."SPOLITYPE" = '1'
+                                -- INDIVIDUAL 
+                                  and P."DEXPIRDAT" >= '2021-12-31'
+                                  and (p."DNULLDATE" is null
+                                    or p."DNULLDATE" > '2021-12-31') )
+                                or 
+                                        (p."SPOLITYPE" <> '1'
+                                -- COLECTIVAS
+                                  and CERT."DEXPIRDAT" >= '2021-12-31'
+                                  and (CERT."DNULLDATE" is null
+                                    or CERT."DNULLDATE" > '2021-12-31')) )
+                                AND dx."DCOMPDATE" between '{P_FECHA_INICIO}' and '{P_FECHA_FIN}'                         
                               ) as tmp
                               '''
   #Ejecutar consulta
@@ -108,12 +134,38 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                 ) THEN 'IMPORTE' ELSE 'PORCENTAJE' END KACTPVCG, 
                                 '' DDURACAO, --VALOR VACIO
                                 '' KACTPCBB --valor vacio
-                              FROM 
-                                USVTIMV01."DISC_XPREM" dx
-                                left join usvtimv01."DISCO_EXPR" de
+                              FROM USVTIMV01."POLICY" P
+                              left join USVTIMV01."CERTIFICAT" CERT 
+                                on CERT."SCERTYPE" = P."SCERTYPE"
+                                  and CERT."NBRANCH" = P."NBRANCH"
+                                  and CERT."NPRODUCT" = P."NPRODUCT"
+                                  and CERT."NPOLICY" = P."NPOLICY"
+                                join USVTIMV01."DISC_XPREM" dx
+                                on dx."SCERTYPE" = P."SCERTYPE"
+                                  and dx."NBRANCH" = P."NBRANCH"
+                                  and dx."NPRODUCT" = P."NPRODUCT"
+                                  and dx."NPOLICY" = p."NPOLICY"
+                                  and dx."NCERTIF" = cert."NCERTIF"
+                                  and dx."DEFFECDATE" <= p."DSTARTDATE"
+                                  and (dx."DNULLDATE" is null or dx."DNULLDATE" > P."DSTARTDATE")
+                                left join USVTIMV01."DISCO_EXPR" de
                                 on dx."NBRANCH" = de."NBRANCH"
-                                and dx."NPRODUCT" = de."NPRODUCT"
-                                and dx."NDISC_CODE" = de."NDISEXPRC"
+                                  and dx."NPRODUCT" = de."NPRODUCT"
+                                  and dx."NDISC_CODE" = de."NDISEXPRC"
+                                where
+                                P."SCERTYPE" = '2' 
+                                and p."SSTATUS_POL" not in ('2', '3')
+                                and ( (p."SPOLITYPE" = '1'
+                                -- INDIVIDUAL 
+                                  and P."DEXPIRDAT" >= '2021-12-31'
+                                  and (p."DNULLDATE" is null
+                                    or p."DNULLDATE" > '2021-12-31') )
+                                or 
+                                        (p."SPOLITYPE" <> '1'
+                                -- COLECTIVAS
+                                  and CERT."DEXPIRDAT" >= '2021-12-31'
+                                  and (CERT."DNULLDATE" is null
+                                    or CERT."DNULLDATE" > '2021-12-31')) )
                               WHERE dx."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' and '{P_FECHA_FIN}' limit 100
                             ) as tmp
                       '''
@@ -163,8 +215,31 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                   end KACTPVCG,
                                   '' DDURACAO,--valor vacio
                                   '' KACTPCBB--valor vacio
-                                  from
-                                    USINSUG01.DISC_XPREM DX
+                                  from USINSUG01.POLICY P 
+                                  LEFT JOIN USINSUG01.CERTIFICAT CERT 
+                                    ON  CERT.USERCOMP = P.USERCOMP  
+                                    AND CERT.COMPANY = P.COMPANY
+                                    AND CERT.CERTYPE = P.CERTYPE
+                                    AND CERT.BRANCH  = P.BRANCH
+                                    AND CERT.POLICY  = P.POLICY 
+                                    AND CERT.PRODUCT = P.PRODUCT
+                                  left join USINSUG01.DISC_XPREM DX
+                                    on dx.usercomp = p.usercomp
+                                    and dx.company = p.company
+                                    and dx.branch = p.branch
+                                    and dx.policy = p.policy
+                                    and dx.certif = cert.certif
+                                    and dx.effecdate <= p.effecdate
+                                    and (dx.nulldate is null or dx.nulldate > p.effecdate)
+                                  WHERE P.CERTYPE  = '2'
+                                  AND P.STATUS_POL NOT IN ('2','3') 
+                                  AND ((P.POLITYPE = '1' -- INDIVIDUAL 
+                                        AND P.EXPIRDAT >= '2021-12-31' 
+                                        AND (P.NULLDATE IS NULL OR P.NULLDATE > '2021-12-31'))
+                                        OR 
+                                      (P.POLITYPE <> '1' -- COLECTIVAS 
+                                        AND CERT.EXPIRDAT >= '2021-12-31' 
+                                  AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
                                   WHERE DX.compdate between '{P_FECHA_INICIO}' and '{P_FECHA_FIN}' limit 100
                                 ) AS TMP
                                 '''
@@ -218,7 +293,31 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     '' DDURACAO, 
                                     '' KACTPCBB --valor vacio
                                   FROM 
-                                  USINSUV01.DISC_XPREM DX
+                                  from USINSUV01.POLICY P 
+                                  LEFT JOIN USINSUV01.CERTIFICAT CERT 
+                                    ON  CERT.USERCOMP = P.USERCOMP  
+                                    AND CERT.COMPANY = P.COMPANY
+                                    AND CERT.CERTYPE = P.CERTYPE
+                                    AND CERT.BRANCH  = P.BRANCH
+                                    AND CERT.POLICY  = P.POLICY 
+                                    AND CERT.PRODUCT = P.PRODUCT
+                                  left join USINSUV01.DISC_XPREM DX
+                                    on dx.usercomp = p.usercomp
+                                    and dx.company = p.company
+                                    and dx.branch = p.branch
+                                    and dx.policy = p.policy
+                                    and dx.certif = cert.certif
+                                    and dx.effecdate <= p.effecdate
+                                    and (dx.nulldate is null or dx.nulldate > p.effecdate)
+                                  WHERE P.CERTYPE  = '2'
+                                  AND P.STATUS_POL NOT IN ('2','3') 
+                                  AND ((P.POLITYPE = '1' -- INDIVIDUAL 
+                                        AND P.EXPIRDAT >= '2021-12-31' 
+                                        AND (P.NULLDATE IS NULL OR P.NULLDATE > '2021-12-31'))
+                                        OR 
+                                      (P.POLITYPE <> '1' -- COLECTIVAS 
+                                        AND CERT.EXPIRDAT >= '2021-12-31' 
+                                  AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31'))
                                   WHERE DX.compdate between '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
                               ) as tmp
                              '''

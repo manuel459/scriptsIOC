@@ -23,7 +23,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                         AND GC.MODULEC =  C.MODULEC
                                         AND GC.COVER   =  C.COVER
                                         AND GC.EFFECDATE <= PC.EFFECDATE
-                             		   AND (GC.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE)		       		   
+                             		   AND (GC.NULLDATE IS NULL OR GC.NULLDATE > PC.EFFECDATE)		       		   
                                         WHERE C.USERCOMP   = PC.USERCOMP 
                                         AND   C.COMPANY    = PC.COMPANY 
                                         AND   C.CERTYPE    = '2' 
@@ -206,11 +206,12 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              AND R.CERTIF   = PC.CERTIF  
                              AND R.EFFECDATE <= PC.EFFECDATE 
                              AND (R.NULLDATE IS NULL OR R.NULLDATE > PC.EFFECDATE)
-                             WHERE R.ROLE IN (2,8)) AS PIG
+                             AND R.ROLE IN (2,8)) AS PIG
                              '''
     
     L_DF_ABCLRISP_INSUNIX_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCLRISP_INSUNIX_LPG).load()
 
+    print("INSUNIX LPG")
 
     L_ABCLRISP_INSUNIX_LPV = f'''(
                                     SELECT
@@ -236,7 +237,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                           --AND GC.MODULEC =  C.MODULEC
                                           AND GC.COVER   =  C.COVER
                                           AND GC.EFFECDATE <= PC.EFFECDATE
-                                          AND (GC.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE)		       		   
+                                          AND (GC.NULLDATE IS NULL OR GC.NULLDATE > PC.EFFECDATE)		       		   
                                           WHERE C.USERCOMP   = PC.USERCOMP 
                                           AND   C.COMPANY    = PC.COMPANY 
                                           AND   C.CERTYPE    = '2' 
@@ -416,7 +417,11 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     WHERE R.ROLE IN (2,8)
                                  ) as tmp
                               '''
+    
     L_DF_ABCLRISP_INSUNIX_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCLRISP_INSUNIX_LPV).load()
+
+    print("INSUNIX LPV")
+    #----------------------------------------------------------------------------------------------------------------------------------#
 
     L_ABCLRISP_VTIME_LPG = f'''
                               (
@@ -440,7 +445,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                 AND GC."NMODULEC" =  C."NMODULEC"
                                                 AND GC."NCOVER"   =  C."NCOVER"
                                                 AND GC."DEFFECDATE" <= PC."DSTARTDATE"
-                                                AND (GC."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE")		       		   
+                                                AND (GC."DNULLDATE" IS NULL OR GC."DNULLDATE" > PC."DSTARTDATE")		       		   
                                                 WHERE C."SCERTYPE"    = PC."SCERTYPE" 
                                                 AND   C."NBRANCH"     = PC."NBRANCH"
                                                 AND   C."NPRODUCT"    = PC."NPRODUCT"
@@ -590,7 +595,10 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     WHERE R."NROLE" IN (2,8)  
                               ) as tmp
                             '''
+    
     L_DF_ABCLRISP_VTIME_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCLRISP_VTIME_LPG).load()
+
+    print("VTIME LPG")
 
     L_ABCLRISP_VTIME_LPV = f'''
                            (SELECT
@@ -613,7 +621,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                       AND GC."NMODULEC" =  C."NMODULEC"
                                       AND GC."NCOVER"   =  C."NCOVER"
                                       AND GC."DEFFECDATE" <= PC."DSTARTDATE"
-                           		   AND (GC."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE")		       		   
+                           		   AND (GC."DNULLDATE" IS NULL OR GC."DNULLDATE" > PC."DSTARTDATE")		       		   
                                       WHERE C."SCERTYPE"    = PC."SCERTYPE" 
                                       AND   C."NBRANCH"     = PC."NBRANCH"
                                       AND   C."NPRODUCT"    = PC."NPRODUCT"
@@ -621,7 +629,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                       AND   C."NCERTIF"     = PC."NCERTIF"
                                       AND   C."DEFFECDATE" <= PC."DSTARTDATE"
                                       AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE")
-                                      AND  C."NCOVER" = 1
+                                      AND  C."NCOVER" = 1 LIMIT 1                                      
                            ) ,'0') AS KGCTPCBT,
                            ROW_NUMBER () OVER (PARTITION  BY PC."NBRANCH", PC."NPRODUCT", PC."NPOLICY", PC."NCERTIF" ORDER BY R."SCLIENT") AS DNPESEG,
                            R."SCLIENT" AS KEBENTID_PS,
@@ -633,7 +641,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                            '' AS TADMEMP,
                            '' AS TADMGRP,
                            '' AS TSAIDGRP,
-                           'LPG' AS DCOMPA,
+                           'LPV' AS DCOMPA,
                            '' AS DMARCA,
                            '' AS TDNASCIM,
                            '' AS DQDIASUB,
@@ -761,10 +769,15 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                            AND R."NCERTIF"   = PC."NCERTIF"  
                            AND R."DEFFECDATE" <= PC."DSTARTDATE" 
                            AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > PC."DSTARTDATE")
-                           WHERE R."NROLE" IN (2,8)) AS
+                           WHERE R."NROLE" IN (2,8) LIMIT 100) AS VTIME_LPV
                            '''
+    
     L_DF_ABCLRISP_VTIME_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCLRISP_VTIME_LPV).load()
     
+    print("VTIME LPV")
+
+    #----------------------------------------------------------------------------------------------------------------------------------#
+
     L_ABCLRISP_INSIS_LPV = f'''
                            (
                               SELECT
@@ -908,7 +921,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
     
     L_DF_ABCLRISP_INSIS_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCLRISP_INSIS_LPV).load()
 
-
+    print("INSIS LPV")
+    
     L_DF_ABCLRISP = L_DF_ABCLRISP_INSUNIX_LPG.union(L_DF_ABCLRISP_INSUNIX_LPV).union(L_DF_ABCLRISP_VTIME_LPG).union(L_DF_ABCLRISP_VTIME_LPV).union(L_DF_ABCLRISP_INSIS_LPV)
 
     return L_DF_ABCLRISP

@@ -12,7 +12,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               'PIG' AS KGIORIGM,  
                               'LPG' AS DCOMPA,
                               '' AS DMARCA,       
-                              COALESCE(P.BRANCH, 0) || '-' || COALESCE (P.PRODUCT, 0) AS KABPRODT,
+                              COALESCE(P.BRANCH, 0) || '-' || COALESCE (P.PRODUCT, 0) || '-' ||coalesce(p.sub_product,0) AS KABPRODT,
                               COALESCE(CAST(GC.COVERGEN  AS VARCHAR), '')  AS KGCTPCBT,
                               '' AS KACINDOPS,    
                               '' AS KACTIPCB,
@@ -53,6 +53,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               JOIN (SELECT	
 	                                  PRO.PRODUCT,
 	                                  PRO.BRANCH,
+                                    PRO.SUB_PRODUCT,
                                     CASE WHEN PRO.NULLDATE IS NOT NULL THEN 1 ELSE 0 END FLAG_NULLDATE
                                     FROM (	
                                             SELECT	PRO.*,
@@ -185,7 +186,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             'PVG' AS KGIORIGM,
                             'LPG' AS DCOMPA,
                             '' AS DMARCA,
-                            P."NBRANCH" || '-' || P."NPRODUCT" AS KABPRODT,
+                            COALESCE(P."NBRANCH", 0) || '-' || COALESCE(P."NPRODUCT", 0) AS KABPRODT,
                             COALESCE(CAST(GC."NCOVERGEN" AS VARCHAR), '') AS KGCTPCBT,
                             '' AS KACINDOPS,
                             '' AS KACTIPCB,
@@ -264,7 +265,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              'PVV' AS KGIORIGM,
                              'LPV' AS DCOMPA,
                              '' AS DMARCA,
-                             P."NBRANCH" || '-' || P."NPRODUCT" AS KABPRODT,
+                             COALESCE(P."NBRANCH", 0) || '-' || COALESCE(P."NPRODUCT", 0) AS KABPRODT,
                              COALESCE(CAST(LC."NCOVERGEN" AS VARCHAR), '') AS KGCTPCBT,
                              '' AS KACINDOPS,
                              '' AS KACTIPCB,
