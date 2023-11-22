@@ -1661,7 +1661,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 
    #Declara consulta INSIS
   L_POLIZAS_INSIS = f'''
-                     (SELECT
+                     (                      SELECT
                       'D' AS INDDETREC, 
                       'ABAPOL' AS TABLAIFRS17,
                       '' AS PK,
@@ -1672,13 +1672,13 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       'PNV' AS KGIORIGM,
                       'LPV' AS KACCOMPA,
                       COALESCE(P."ATTR1", '0') AS KGCRAMO,
-                      P."INSR_TYPE" AS KABPRODT,
+                      COALESCE(P."ATTR1", '0') || P."INSR_TYPE" AS KABPRODT,
                       CASE COALESCE(PP."ENG_POL_TYPE", '')
                       WHEN 'DEPENDENT' THEN P."ATTR1" || '-' || P."ATTR2" || '-' || P."POLICY_NO" || '-' || PP."MASTER_POLICY_ID"
                       ELSE ''
                       END KABAPOL,
-                      COALESCE(P."POLICY_NO", '') AS DNUMAPO,
-                      CAST(P."POLICY_ID" AS VARCHAR) AS DNMCERT,
+                      DNUMAPO,
+                      DNMCERT,
                       '' AS DTERMO, --EN BLANCO
                       COALESCE((
                                 SELECT ILPI."LEGACY_ID" FROM
@@ -1714,7 +1714,12 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS KACARGES, --NO
                       '' AS KACAGENC, --NO
                       '' AS KACPROTO, --NO
-                      (SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = PP."ENG_POL_TYPE" ) AS KACTIPAP,
+                      CASE PP."ENG_POL_TYPE"
+                      WHEN 'POLICY'    THEN 'INDIVIDUAL'
+                      WHEN 'MASTER'    THEN 'COLECTIVA'
+                      WHEN 'DEPENDENT' THEN 'COLECTIVA'
+                      ELSE ''
+                      END AS KACTIPAP,
                       '' AS DFROTA,   --NO
                       '' AS KACTPDUR, --EN BLANCO
                       COALESCE(P."RENEWABLE_FLAG", '') AS KACMODRE,
@@ -1821,7 +1826,12 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS DENTIDSO,    --NO
                       '' AS DARQUIVO,    --NO
                       '' AS TARQUIVO,    --NO
-                      (SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = PP."ENG_POL_TYPE" ) AS KACTPSUB,
+                      CASE PP."ENG_POL_TYPE"
+                      WHEN 'POLICY'    THEN 'INDIVIDUAL'--1
+                      WHEN 'MASTER'    THEN 'COLECTIVA' --2
+                      WHEN 'DEPENDENT' THEN 'COLECTIVA' --2
+                      ELSE ''
+                      END AS KACTPSUB,
                       '' AS KACPARES,
                       '' AS KGCRAMO_SAP, --NO
                       '' AS KACTPCRED,   --NO
@@ -1885,10 +1895,79 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS TFIMTARLTA,     --NO
                       '' AS DTERMO_IFRS17,  --NO
                       '' AS TEMISREN        --NO
-                      FROM USINSIV01."POLICY" P 
+                      FROM        
+                      ( SELECT 
+                        P."POLICY_ID",
+                        P."INSR_BEGIN",
+                        P."ATTR1", 
+                        PP."ENG_POL_TYPE"  
+                        P."ATTR2",
+                        P."POLICY_NO",
+                        P."REGISTRATION_DATE",
+                        P."DATE_GIVEN",
+                        P."INSR_BEGIN",
+                        P."POLICY_ID" ,
+                        P."POLICY_STATE",
+                        P."RENEWABLE_FLAG",
+                        P."ATTR5",
+                        CAST(PP."POLICY_ID" AS VARCHAR) DNUMAPO, 
+                        0 DNMCERT, 
+                        P."CLIENT_ID", 
+                        P."INSR_END"
+                        FROM USINSIV01."POLICY" P 
+                        LEFT JOIN USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID" WHERE PP."ENG_POL_TYPE" = 'POLICY'                       
+                        AND P."INSR_END" >= '2021-12-31'
+
+                        UNION ALL
+
+                        SELECT CAST(P."POLICY_ID" AS VARCHAR) DNUMAPO,
+                        P."POLICY_ID",
+                        P."INSR_BEGIN",
+                        P."ATTR1", 
+                        P."ATTR2",
+                        P."POLICY_NO",
+                        P."REGISTRATION_DATE",
+                        P."DATE_GIVEN",
+                        P."INSR_BEGIN",
+                        P."POLICY_ID" ,
+                        P."POLICY_STATE",
+                        P."RENEWABLE_FLAG",
+                        P."ATTR5",
+                        0 AS DNMCERT, 
+                        P."CLIENT_ID", 
+                        P."INSR_END",                        
+                        PP."ENG_POL_TYPE"  
+                        FROM USINSIV01."POLICY" P 
+                        LEFT JOIN  USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID" WHERE PP."ENG_POL_TYPE" = 'MASTER'
+                        AND P."INSR_END" >= '2021-12-31'
+
+                        UNION ALL
+
+                        SELECT 
+                        CAST(PP."MASTER_POLICY_ID" AS VARCHAR) DNUMAPO, 
+                        PP."POLICY_ID" DNMCERT, 
+                        P."POLICY_ID",
+                        P."INSR_BEGIN",
+                        P."ATTR1", 
+                        P."ATTR2",
+                        P."POLICY_NO",
+                        P."REGISTRATION_DATE",
+                        P."DATE_GIVEN",
+                        P."INSR_BEGIN",
+                        P."POLICY_ID" ,
+                        P."POLICY_STATE",
+                        P."RENEWABLE_FLAG",
+                        P."ATTR5",
+                        0 AS DNMCERT, 
+                        P."CLIENT_ID", 
+                        P."INSR_END",                        
+                        PP."ENG_POL_TYPE"   
+                        FROM USINSIV01."POLICY" P
+                        LEFT JOIN  USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID" WHERE PP."ENG_POL_TYPE" = 'DEPENDENT'
+                        AND P."INSR_END" >= '2021-12-31'                    
+                      ) P 
                       LEFT JOIN USINSIV01."P_CLIENTS" PC ON P."CLIENT_ID" = PC."CLIENT_ID"
-                      LEFT JOIN USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID"
-                      WHERE P."INSR_END" >= '2021-12-31' AND P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' LIMIT 100) AS TMP
+                      WHERE P."INSR_END" >= '2021-12-31' AND P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100) AS TMP
                      '''
 
    #Ejecutar consulta
