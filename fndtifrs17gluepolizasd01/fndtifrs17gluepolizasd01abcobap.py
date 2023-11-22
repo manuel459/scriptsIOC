@@ -545,241 +545,245 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
   #-------------------------------------------------------------------------------------------------------------------------------#
 
   L_ABCOBAP_VTIME_LPG = f'''
-                        ( SELECT 
-                        'D' AS INDDETREC,
-                        'ABCOBAP' AS TABLAIFRS17,
-                        '' AS PK,
-                        '' AS DTPREG,
-                        '' AS TIOCPROC,
-                        TIOCFRM,
-                        '' AS TIOCTO,
-                        'PVG' AS KGIORIGM,
-                        KABAPOL,
-                        '' AS KABUNRIS,
-                        KGCTPCBT,
-                        TINICIO,
-                        TTERMO,
-                        '' AS TSITCOB,
-                        '' AS KACSITCB,
-                        '' AS VMTPRMSP,
-                        VMTCOMR,
-                        '' AS VMTBOMAT,
-                        '' AS VTXBOMAT,
-                        '' AS VMTBOCOM,
-                        '' AS VTXBOCOM,
-                        '' AS VMTDECOM,
-                        '' AS VTXDECOM,
-                        '' AS VMTDETEC,
-                        '' AS VTXDETEC,
-                        '' AS VMTAGRAV,
-                        '' AS VTXAGRAV,
-                        '' AS VMTPRMTR,
-                        '' AS VMTPRLIQ,
-                        VMTPRMBR,
-                        VTXCOB,
-                        VCAPITAL, 
-                        '' AS VTXCAPIT,
-                        '' AS KACTPIDX,
-                        '' AS VTXINDX,
-                        'LPG' AS DCOMPA,
-                        '' AS DMARCA,
-                        '' AS TDACECOB,
-                        '' AS TDCANCOB,
-                        '' AS TDCRICOB,
-                        TDRENOVA,
-                        '' AS TDVENTRA,
-                        '' AS DHORAINI,
-                        VMTPREMC,
-                        '' AS VMIBOMAT,
-                        '' AS VMIBOCOM,
-                        '' AS VMIDECOM,
-                        '' AS VMIDETEC,
-                        '' AS VMIRPMSP,
-                        '' AS VMIPRMBR,
-                        '' AS VMICOMR,
-                        '' AS VMIPRLIQ,
-                        '' AS VMICMNQP,
-                        '' AS VMIPRMTR,
-                        '' AS VMIAGRAV,
-                        '' AS KACTIPCB,
-                        '' AS VMTCAPLI,
-                        '' AS KACTRARE, --PENDIENTE
-                        '' AS KACFMCAL,
-                        '' AS DFACMULT,
-                        VMTCAPIN,
-                        VMTPREIN,
-                        '' AS DINDESES,
-                        '' AS DINDMOTO,
-                        '' AS KACSALIN,
-                        '' AS VMTSALMD,
-                        '' AS VTXLMRES,
-                        '' AS VTXEQUIP,
-                        '' AS VTXPRIOR,
-                        '' AS VTXCONTR,
-                        '' AS VTXESPEC,
-                        '' AS DCAPMORT,
-                        VMTPRRES,
-                        '' AS DIDADETAR,
-                        '' AS DIDADLIMCOBA,
-                        KACTPDUR,
-                        '' AS KGCRAMO_SAP,
-                        '' AS KACTCOMP,
-                        '' AS KACINDTX,
-                        '' AS KACCALIDA,
-                        '' AS DNCABCALP,
-                        '' AS DINDNIVEL,
-                        DURCOB,
-                        '' AS DURPAGCOB,
-                        '' AS KACTPDURCB,
-                        '' AS DINCOBINDX,
-                        '' AS KACGRCBT,
-                        '' AS KABTRTAB_2,
-                        '' AS VTXAJTBUA,
-                        '' AS VMTCAPREM
-                        FROM(
-                              SELECT 
-                              COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TIOCFRM,
-                              C."NBRANCH" ||'-'|| C."NPRODUCT" ||'-'|| C."NPOLICY" ||'-'|| C."NCERTIF" AS KABAPOL,
-                              COALESCE((SELECT CAST(LC."NCOVERGEN" AS VARCHAR)  
-                                         FROM USBI01.IFRS170_V_GEN_LIFE_COVER_VTIMELPG GLC 
-                                         WHERE GLC."NBRANCH" = C."NBRANCH" 
-                                         AND   GLC."NPRODUCT"  = C."NPRODUCT"
-                                         AND   GLC."NMODULEC"  = C."NMODULEC"
-                                         AND   GLC."NCOVER"    = C."NCOVER"
-                                         AND   GLC."NCURRENCY" = C."NCURRENCY"
-                                         AND   GLC."DEFFECDATE" <= C."DEFFECDATE" 
-                                         AND (GLC."DNULLDATE" IS NULL OR GLC."DNULLDATE" > C."DEFFECDATE")), '') AS KGCTPCBT,
-                              COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TINICIO,
-                              COALESCE(CAST(CAST(C."DNULLDATE" AS DATE) AS VARCHAR),'') AS TTERMO,
-                              COALESCE(C."NPREMIUM_O",0) AS VMTCOMR,
-                              COALESCE(C."NPREMIUM_O",0) AS VMTPRMBR,
-                              COALESCE(C."NRATECOVE",0) AS VTXCOB, --TASA APLICAR A LA COBERTURA
-                              COALESCE(CAST(C."NCAPITAL" AS VARCHAR), '0')  AS VCAPITAL,
-                              COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE )AS VARCHAR),'') AS TDRENOVA,
-                              COALESCE(CAST(((SELECT COALESCE(CO."NSHARE")  
-                                              FROM USVTIMG01."COINSURAN" CO
-                                              WHERE CO."SCERTYPE" = C."SCERTYPE" 
-                                              AND CO."NBRANCH"  = C."NBRANCH" 
-                                              AND CO."NPRODUCT" = C."NPRODUCT"
-                                              AND CO."NPOLICY" = C."NPOLICY"
-                                              AND CO."NCOMPANY" = 2
-                                              AND CO."DEFFECDATE"  <= C."DEFFECDATE"
-                                              AND (CO."DNULLDATE" IS NULL AND CO."DNULLDATE"  > C."DEFFECDATE")) * C."NPREMIUM") AS VARCHAR), '100') AS VMTPREMC,                                  
-                              COALESCE(C."NCAPITALI", 0)  AS VMTCAPIN,
-                              COALESCE(TRUNC(C."NPREMIUM_O", 2), 0) AS VMTPREIN,
-                              COALESCE((COALESCE ((SELECT (SUM(R."NSHARE"/100)) * C."NPREMIUM"  FROM USVTIMG01."REINSURAN" R 
-                                    WHERE R."SCERTYPE" = C."SCERTYPE"  
-                                    AND R."NBRANCH"  = C."NBRANCH"
-                                    AND R."NPRODUCT" = C."NPRODUCT"
-                                    AND R."NPOLICY"  = C."NPOLICY"
-                                    AND R."NCERTIF"  = C."NCERTIF"
-                                    AND R."NMODULEC" = C."NMODULEC"
-                                    AND R."NCOVER" = C."NCOVER"
-                                    AND R."DEFFECDATE" <= C."DEFFECDATE"
-                                    AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > C."DEFFECDATE")
-                                    AND R."NTYPE_REIN" <> 1),
-                                    (SELECT (SUM(R."NSHARE"/100)) * C."NPREMIUM" FROM USVTIMG01."REINSURAN" R 
-                                    WHERE R."SCERTYPE" = C."SCERTYPE"  
-                                    AND R."NBRANCH"  = C."NBRANCH"
-                                    AND R."NPRODUCT" = C."NPRODUCT"
-                                    AND R."NPOLICY"  = C."NPOLICY"
-                                    AND R."NCERTIF"  = 0
-                                    AND R."NMODULEC" = C."NMODULEC"
-                                    AND R."NCOVER" = C."NCOVER"
-                                    AND R."DEFFECDATE" <= C."DEFFECDATE"
-                                    AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > C."DEFFECDATE")
-                                    AND R."NTYPE_REIN" <> 1))), 0) AS VMTPRRES,
-                              COALESCE(CAST(C."NTYPDURINS" AS VARCHAR),'0') AS KACTPDUR,
-                              COALESCE(CAST(C."NDURINSUR" AS VARCHAR),'0') AS DURCOB,
-                              CASE 
-                                  WHEN POL."SPOLITYPE" = '1' --INDIVIDUAL
-                              THEN 
-                                    CASE WHEN (C."DEFFECDATE" <= POL."DSTARTDATE" AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > POL."DSTARTDATE")) THEN 1		                               
-                                        ELSE 
-                                  CASE	
-                                        WHEN EXISTS ( SELECT	1
-                                                      FROM	usvtimg01."COVER" COV1
-                                                      WHERE 	COV1."SCERTYPE" = C."SCERTYPE"
-                                                      AND     COV1."NBRANCH"    = C."NBRANCH"
-                                                      AND 	  COV1."NPRODUCT"   = C."NPRODUCT"		                              	                  
-                                                        AND     COV1."NMODULEC"   = C."NMODULEC"
-                                                        AND     COV1."NPOLICY"    = C."NPOLICY"
-                                                        AND     COV1."NCERTIF"    = C."NCERTIF"
-                                                        AND     COV1."NCURRENCY"  = C."NCURRENCY"
-                                                        AND     COV1."NCOVER"     = C."NCOVER" 
-                                                      AND		  COV1."DEFFECDATE" <= POL."DSTARTDATE"
-                                                      AND     (COV1."DNULLDATE" IS NULL OR COV1."DNULLDATE" > POL."DSTARTDATE")) THEN 0
+                        (
+                          SELECT 
+                            'D' AS INDDETREC,
+                            'ABCOBAP' AS TABLAIFRS17,
+                            '' AS PK,
+                            '' AS DTPREG,
+                            '' AS TIOCPROC,
+                            TIOCFRM,
+                            '' AS TIOCTO,
+                            'PVG' AS KGIORIGM,
+                            KABAPOL,
+                            '' AS KABUNRIS,
+                            KGCTPCBT,
+                            TINICIO,
+                            TTERMO,
+                            '' AS TSITCOB,
+                            '' AS KACSITCB,
+                            '' AS VMTPRMSP,
+                            VMTCOMR,
+                            '' AS VMTBOMAT,
+                            '' AS VTXBOMAT,
+                            '' AS VMTBOCOM,
+                            '' AS VTXBOCOM,
+                            '' AS VMTDECOM,
+                            '' AS VTXDECOM,
+                            '' AS VMTDETEC,
+                            '' AS VTXDETEC,
+                            '' AS VMTAGRAV,
+                            '' AS VTXAGRAV,
+                            '' AS VMTPRMTR,
+                            '' AS VMTPRLIQ,
+                            VMTPRMBR,
+                            VTXCOB,
+                            VCAPITAL, 
+                            '' AS VTXCAPIT,
+                            '' AS KACTPIDX,
+                            '' AS VTXINDX,
+                            'LPG' AS DCOMPA,
+                            '' AS DMARCA,
+                            '' AS TDACECOB,
+                            '' AS TDCANCOB,
+                            '' AS TDCRICOB,
+                            TDRENOVA,
+                            '' AS TDVENTRA,
+                            '' AS DHORAINI,
+                            VMTPREMC,
+                            '' AS VMIBOMAT,
+                            '' AS VMIBOCOM,
+                            '' AS VMIDECOM,
+                            '' AS VMIDETEC,
+                            '' AS VMIRPMSP,
+                            '' AS VMIPRMBR,
+                            '' AS VMICOMR,
+                            '' AS VMIPRLIQ,
+                            '' AS VMICMNQP,
+                            '' AS VMIPRMTR,
+                            '' AS VMIAGRAV,
+                            '' AS KACTIPCB,
+                            '' AS VMTCAPLI,
+                            '' AS KACTRARE, --PENDIENTE
+                            '' AS KACFMCAL,
+                            '' AS DFACMULT,
+                            VMTCAPIN,
+                            VMTPREIN,
+                            '' AS DINDESES,
+                            '' AS DINDMOTO,
+                            '' AS KACSALIN,
+                            '' AS VMTSALMD,
+                            '' AS VTXLMRES,
+                            '' AS VTXEQUIP,
+                            '' AS VTXPRIOR,
+                            '' AS VTXCONTR,
+                            '' AS VTXESPEC,
+                            '' AS DCAPMORT,
+                            VMTPRRES,
+                            '' AS DIDADETAR,
+                            '' AS DIDADLIMCOBA,
+                            KACTPDUR,
+                            '' AS KGCRAMO_SAP,
+                            '' AS KACTCOMP,
+                            '' AS KACINDTX,
+                            '' AS KACCALIDA,
+                            '' AS DNCABCALP,
+                            '' AS DINDNIVEL,
+                            DURCOB,
+                            '' AS DURPAGCOB,
+                            '' AS KACTPDURCB,
+                            '' AS DINCOBINDX,
+                            '' AS KACGRCBT,
+                            '' AS KABTRTAB_2,
+                            '' AS VTXAJTBUA,
+                            '' AS VMTCAPREM
+                            FROM(
+                                  SELECT 
+                                  COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TIOCFRM,
+                                  C."NBRANCH" ||'-'|| C."NPRODUCT" ||'-'|| C."NPOLICY" ||'-'|| C."NCERTIF" AS KABAPOL,
+                                  COALESCE((SELECT CAST(GLC."NCOVERGEN" AS VARCHAR)  
+                                            FROM USBI01.IFRS170_V_GEN_LIFE_COVER_VTIMELPG GLC 
+                                            WHERE GLC."NBRANCH" = C."NBRANCH" 
+                                            AND   GLC."NPRODUCT"  = C."NPRODUCT"
+                                            AND   GLC."NMODULEC"  = C."NMODULEC"
+                                            AND   GLC."NCOVER"    = C."NCOVER"
+                                            AND   GLC."NCURRENCY" = C."NCURRENCY"
+                                            AND   GLC."DEFFECDATE" <= C."DEFFECDATE" 
+                                            AND (GLC."DNULLDATE" IS NULL OR GLC."DNULLDATE" > C."DEFFECDATE")), '') AS KGCTPCBT,
+                                  COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TINICIO,
+                                  COALESCE(CAST(CAST(C."DNULLDATE" AS DATE) AS VARCHAR),'') AS TTERMO,
+                                  COALESCE(C."NPREMIUM_O",0) AS VMTCOMR,
+                                  COALESCE(C."NPREMIUM_O",0) AS VMTPRMBR,
+                                  COALESCE(C."NRATECOVE",0) AS VTXCOB, --TASA APLICAR A LA COBERTURA
+                                  COALESCE(CAST(C."NCAPITAL" AS VARCHAR), '0')  AS VCAPITAL,
+                                  COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE )AS VARCHAR),'') AS TDRENOVA,
+                                  COALESCE(CAST(((SELECT COALESCE(CO."NSHARE")  
+                                                  FROM USVTIMG01."COINSURAN" CO
+                                                  WHERE CO."SCERTYPE" = C."SCERTYPE" 
+                                                  AND CO."NBRANCH"  = C."NBRANCH" 
+                                                  AND CO."NPRODUCT" = C."NPRODUCT"
+                                                  AND CO."NPOLICY" = C."NPOLICY"
+                                                  AND CO."NCOMPANY" = 2
+                                                  AND CO."DEFFECDATE"  <= C."DEFFECDATE"
+                                                  AND (CO."DNULLDATE" IS NULL AND CO."DNULLDATE"  > C."DEFFECDATE")) * C."NPREMIUM") AS VARCHAR), '100') AS VMTPREMC,                                  
+                                  COALESCE(C."NCAPITALI", 0)  AS VMTCAPIN,
+                                  COALESCE(TRUNC(C."NPREMIUM_O", 2), 0) AS VMTPREIN,
+                                  COALESCE((COALESCE ((SELECT (SUM(R."NSHARE"/100)) * C."NPREMIUM"  FROM USVTIMG01."REINSURAN" R 
+                                        WHERE R."SCERTYPE" = C."SCERTYPE"  
+                                        AND R."NBRANCH"  = C."NBRANCH"
+                                        AND R."NPRODUCT" = C."NPRODUCT"
+                                        AND R."NPOLICY"  = C."NPOLICY"
+                                        AND R."NCERTIF"  = C."NCERTIF"
+                                        AND R."NMODULEC" = C."NMODULEC"
+                                        AND R."NCOVER" = C."NCOVER"
+                                        AND R."DEFFECDATE" <= C."DEFFECDATE"
+                                        AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > C."DEFFECDATE")
+                                        AND R."NTYPE_REIN" <> 1),
+                                        (SELECT (SUM(R."NSHARE"/100)) * C."NPREMIUM" FROM USVTIMG01."REINSURAN" R 
+                                        WHERE R."SCERTYPE" = C."SCERTYPE"  
+                                        AND R."NBRANCH"  = C."NBRANCH"
+                                        AND R."NPRODUCT" = C."NPRODUCT"
+                                        AND R."NPOLICY"  = C."NPOLICY"
+                                        AND R."NCERTIF"  = 0
+                                        AND R."NMODULEC" = C."NMODULEC"
+                                        AND R."NCOVER" = C."NCOVER"
+                                        AND R."DEFFECDATE" <= C."DEFFECDATE"
+                                        AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > C."DEFFECDATE")
+                                        AND R."NTYPE_REIN" <> 1))), 0) AS VMTPRRES,
+                                  COALESCE(CAST(C."NTYPDURINS" AS VARCHAR),'0') AS KACTPDUR,
+                                  COALESCE(CAST(C."NDURINSUR" AS VARCHAR),'0') AS DURCOB,    
+                                CASE 
+                                    WHEN POL."SPOLITYPE" = '1' --INDIVIDUAL
+                                THEN 
+                                      CASE WHEN (C."DEFFECDATE" <= POL."DSTARTDATE" AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > POL."DSTARTDATE")) THEN 1		                               
+                                          ELSE 
+                                    CASE	
+                                          WHEN EXISTS ( SELECT	1
+                                                        FROM	usvtimg01."COVER" COV1
+                                                        WHERE 	COV1."SCERTYPE" = C."SCERTYPE"
+                                                        AND     COV1."NBRANCH"    = C."NBRANCH"
+                                                        AND 	  COV1."NPRODUCT"   = C."NPRODUCT"		                              	                  
+                                                          AND     COV1."NMODULEC"   = C."NMODULEC"
+                                                          AND     COV1."NPOLICY"    = C."NPOLICY"
+                                                          AND     COV1."NCERTIF"    = C."NCERTIF"
+                                                          AND     COV1."NCURRENCY"  = C."NCURRENCY"
+                                                          AND     COV1."NCOVER"     = C."NCOVER" 
+                                                        AND		  COV1."DEFFECDATE" <= POL."DSTARTDATE"
+                                                        AND     (COV1."DNULLDATE" IS NULL OR COV1."DNULLDATE" > POL."DSTARTDATE")) THEN 0
+                                              ELSE 
+                                                  CASE	
+                                              WHEN C."DNULLDATE" = (SELECT MAX(COV1."DNULLDATE")
+                                                                    FROM	usvtimg01."COVER" COV1
+                                                                    WHERE  COV1."SCERTYPE" = C."SCERTYPE"
+                                                                    AND 	COV1."NBRANCH"  = C."NBRANCH"
+                                                                    AND    COV1."NPRODUCT" = C."NPRODUCT"
+                                                                        AND   COV1."NMODULEC"  = C."NMODULEC"
+                                                                        AND   COV1."NPOLICY"   = C."NPOLICY"
+                                                                        AND   COV1."NCERTIF"   = C."NCERTIF"
+                                                                        AND   COV1."NCURRENCY" = C."NCURRENCY"
+                                                                        AND   COV1."NCOVER"    = C."NCOVER" ) THEN 1
+                                              ELSE 0
+                                              END 
+                                          END
+                                      END  
+                                                ELSE
+                                                      CASE WHEN (C."DEFFECDATE" <= CERT."DSTARTDATE" AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > CERT."DSTARTDATE")) THEN 1		                               
+                                            ELSE 
+                                                  CASE	
+                                            WHEN EXISTS ( SELECT	1
+                                                        FROM	usvtimg01."COVER" COV1
+                                                        WHERE 	COV1."SCERTYPE" = C."SCERTYPE"
+                                                        AND     COV1."NBRANCH"    = C."NBRANCH"
+                                                        AND 	  COV1."NPRODUCT"   = C."NPRODUCT"		                              	                  
+                                                          AND     COV1."NMODULEC"   = C."NMODULEC"
+                                                          AND     COV1."NPOLICY"    = C."NPOLICY"
+                                                          AND     COV1."NCERTIF"    = C."NCERTIF"
+                                                          AND     COV1."NCURRENCY"  = C."NCURRENCY"
+                                                          AND     COV1."NCOVER"     = C."NCOVER" 
+                                                        AND		  COV1."DEFFECDATE" <= cert."DSTARTDATE"
+                                                        AND     (COV1."DNULLDATE" IS NULL OR COV1."DNULLDATE" > cert."DSTARTDATE")) THEN 0
                                             ELSE 
                                                 CASE	
                                             WHEN C."DNULLDATE" = (SELECT MAX(COV1."DNULLDATE")
-                                                                  FROM	usvtimg01."COVER" COV1
-                                                                  WHERE  COV1."SCERTYPE" = C."SCERTYPE"
-                                                                  AND 	COV1."NBRANCH"  = C."NBRANCH"
-                                                                  AND    COV1."NPRODUCT" = C."NPRODUCT"
-                                                                      AND   COV1."NMODULEC"  = C."NMODULEC"
-                                                                      AND   COV1."NPOLICY"   = C."NPOLICY"
-                                                                      AND   COV1."NCERTIF"   = C."NCERTIF"
-                                                                      AND   COV1."NCURRENCY" = C."NCURRENCY"
-                                                                      AND   COV1."NCOVER"    = C."NCOVER" ) THEN 1
+                                                                    FROM	usvtimg01."COVER" COV1
+                                                                    WHERE  COV1."SCERTYPE" = C."SCERTYPE"
+                                                                    AND 	COV1."NBRANCH"  = C."NBRANCH"
+                                                                    AND    COV1."NPRODUCT" = C."NPRODUCT"
+                                                                        AND   COV1."NMODULEC"  = C."NMODULEC"
+                                                                        AND   COV1."NPOLICY"   = C."NPOLICY"
+                                                                        AND   COV1."NCERTIF"   = C."NCERTIF"
+                                                                        AND   COV1."NCURRENCY" = C."NCURRENCY"
+                                                                        AND   COV1."NCOVER"    = C."NCOVER") THEN 1
                                             ELSE 0
                                             END 
                                         END
-                                    END  
-                                              ELSE
-                                                    CASE WHEN (C."DEFFECDATE" <= CERT."DSTARTDATE" AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > CERT."DSTARTDATE")) THEN 1		                               
-                                          ELSE 
-                                                CASE	
-                                          WHEN EXISTS ( SELECT	1
-                                                      FROM	usvtimg01."COVER" COV1
-                                                      WHERE 	COV1."SCERTYPE" = C."SCERTYPE"
-                                                      AND     COV1."NBRANCH"    = C."NBRANCH"
-                                                      AND 	  COV1."NPRODUCT"   = C."NPRODUCT"		                              	                  
-                                                        AND     COV1."NMODULEC"   = C."NMODULEC"
-                                                        AND     COV1."NPOLICY"    = C."NPOLICY"
-                                                        AND     COV1."NCERTIF"    = C."NCERTIF"
-                                                        AND     COV1."NCURRENCY"  = C."NCURRENCY"
-                                                        AND     COV1."NCOVER"     = C."NCOVER" 
-                                                      AND		  COV1."DEFFECDATE" <= cert."DSTARTDATE"
-                                                      AND     (COV1."DNULLDATE" IS NULL OR COV1."DNULLDATE" > cert."DSTARTDATE")) THEN 0
-                                          ELSE 
-                                              CASE	
-                                          WHEN C."DNULLDATE" = (SELECT MAX(COV1."DNULLDATE")
-                                                                  FROM	usvtimg01."COVER" COV1
-                                                                  WHERE  COV1."SCERTYPE" = C."SCERTYPE"
-                                                                  AND 	COV1."NBRANCH"  = C."NBRANCH"
-                                                                  AND    COV1."NPRODUCT" = C."NPRODUCT"
-                                                                      AND   COV1."NMODULEC"  = C."NMODULEC"
-                                                                      AND   COV1."NPOLICY"   = C."NPOLICY"
-                                                                      AND   COV1."NCERTIF"   = C."NCERTIF"
-                                                                      AND   COV1."NCURRENCY" = C."NCURRENCY"
-                                                                      AND   COV1."NCOVER"    = C."NCOVER") THEN 1
-                                          ELSE 0
-                                          END 
-                                      END
-                                  END 
-                              END FLAG
-                              FROM USVTIMG01."COVER" C  
- 					                    LEFT JOIN USVTIMG01."CERTIFICAT" CERT
- 					                    ON  C."SCERTYPE"      = CERT."SCERTYPE"  
-                                  AND C."NBRANCH"   = CERT."NBRANCH"
-                                  AND C."NPRODUCT"  = CERT."NPRODUCT"
-                                  AND C."NPOLICY"   = CERT."NPOLICY"
-                                  AND C."NCERTIF"   = CERT."NCERTIF"
-                                  JOIN USVTIMG01."POLICY" POL
-                                  ON  POL."SCERTYPE"  = C."SCERTYPE"
-                                  AND POL."NBRANCH"   = C."NBRANCH" 
-                                  AND POL."NPRODUCT"  = C."NPRODUCT"
-                                  AND POL."NPOLICY"   = C."NPOLICY" 
-                                  WHERE POL."SCERTYPE" = '2' 
-                                  AND   POL."SSTATUS_POL" NOT IN ('2','3') 
-                                  AND ((POL."SPOLITYPE" = '1' -- INDIVIDUAL 
-                                  AND POL."DEXPIRDAT" >= '2021-12-31' 
-                                  AND (POL."DNULLDATE" IS NULL OR POL."DNULLDATE" > '2021-12-31'))
-                                  OR 
-                                  (POL."SPOLITYPE" <> '1' -- COLECTIVAS 
-                                  AND CERT."DEXPIRDAT" >= '2021-12-31' 
-                                  AND (CERT."DNULLDATE" IS NULL OR CERT."DNULLDATE" > '2021-12-31')))
-                                  AND POL."DSTARTDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}') COV_CERT WHERE FLAG = 1) AS TMP'''
+                                    END 
+                                END FLAG
+                                  FROM USVTIMG01."COVER" C  
+                                            LEFT JOIN USVTIMG01."CERTIFICAT" CERT
+                                            ON  C."SCERTYPE"      = CERT."SCERTYPE"  
+                                      AND C."NBRANCH"   = CERT."NBRANCH"
+                                      AND C."NPRODUCT"  = CERT."NPRODUCT"
+                                      AND C."NPOLICY"   = CERT."NPOLICY"
+                                      AND C."NCERTIF"   = CERT."NCERTIF"
+                                      JOIN USVTIMG01."POLICY" POL
+                                      ON  POL."SCERTYPE"  = C."SCERTYPE"
+                                      AND POL."NBRANCH"   = C."NBRANCH" 
+                                      AND POL."NPRODUCT"  = C."NPRODUCT"
+                                      AND POL."NPOLICY"   = C."NPOLICY" 
+                                      WHERE POL."SCERTYPE" = '2' 
+                                      AND   POL."SSTATUS_POL" NOT IN ('2','3') 
+                                      AND ((POL."SPOLITYPE" = '1' -- INDIVIDUAL 
+                                      AND POL."DEXPIRDAT" >= '2021-12-31' 
+                                      AND (POL."DNULLDATE" IS NULL OR POL."DNULLDATE" > '2021-12-31'))
+                                      OR 
+                                      (POL."SPOLITYPE" <> '1' -- COLECTIVAS 
+                                      AND CERT."DEXPIRDAT" >= '2021-12-31' 
+                                      AND (CERT."DNULLDATE" IS NULL OR CERT."DNULLDATE" > '2021-12-31')))
+                                      AND POL."DSTARTDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                          ) COV_CERT
+                          where FLAG = 1
+                        ) AS TMP'''
 
   L_DF_ABCOBAP_VTIME_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCOBAP_VTIME_LPG).load()
 
