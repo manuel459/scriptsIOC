@@ -347,7 +347,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                     'LPV' AS DCOMPA,
                     '' AS DMARCA,
                     CAST(CAST (CNP."PRODUCT_CODE" AS INT) AS TEXT) AS KABPRODT,
-                    CAST(CAST (CNC."COVER_LINK_ID" AS INT) AS TEXT) AS KGCTPCBT,
+                    SUBSTRING(CAST(CAST(CNC."COVER_REP_ID" as BIGINT) AS VARCHAR),5,10) AS KGCTPCBT,
                     '' AS KACINDOPS,
                     CASE CNC."MANDATORY"
                     WHEN 'Y' THEN 'SI'
