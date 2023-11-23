@@ -872,7 +872,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                 '' AS PK,
                                 '' AS DTPREG,      --NO
                                 '' AS TIOCPROC,    --no
-                                coalesce(cast((case when p.politype = '1' then P.EFFECDATE else cert.effecdate end) as VARCHAR), '') as TIOCFRM,
+                                COALESCE(CAST((CASE WHEN P.POLITYPE = '1' THEN P.EFFECDATE ELSE CERT.EFFECDATE END) AS VARCHAR), '') AS TIOCFRM,
                                 '' AS TIOCTO,     --NO
                                 'PIG' AS KGIORIGM, --NO
                                 'LPG' AS KACCOMPA, 
@@ -1987,7 +1987,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                         PP."ENG_POL_TYPE",
                         CAST(PP."MASTER_POLICY_ID" AS VARCHAR) DNUMAPO, 
                         PP."POLICY_ID" DNMCERT,
-                        P."ATTR1" || '-' || P."INSR_TYPE" || '-' || PP."MASTER_POLICY_ID" || '-' || PP."MASTER_POLICY_ID" || 0 AS KABAPOL,                      
+                        P."ATTR1" || '-' || P."INSR_TYPE" || '-' || SUBSTRING(cast(PP."MASTER_POLICY_ID"  as varchar),6,12) || '0' AS KABAPOL,                      
                         (SELECT CAST(CAST(GA."INSR_BEGIN" AS DATE) AS VARCHAR)
                         FROM USINSIV01."GEN_ANNEX" GA
                         WHERE GA."POLICY_ID" = P."POLICY_ID"
