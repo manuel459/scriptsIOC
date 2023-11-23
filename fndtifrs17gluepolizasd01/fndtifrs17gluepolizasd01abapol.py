@@ -466,7 +466,9 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                      ) as tmp'''
 
   L_DF_POLIZAS_VTIME_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPG).load()  
-                                                
+
+  print("USVTIMG01 EXITOSO")
+
   L_POLIZAS_VTIME_LPV = f'''
                          (
                           SELECT
@@ -858,7 +860,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 
   L_DF_POLIZAS_VTIME_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_VTIME_LPV).load()  
 
-  print('USVTIMV01 exitoso')
+  print("USVTIMV01 EXITOSO")
   #------------------------------------------------------------------------------------------------------------------#
 
   #DECLARAR CONSULTA INSUNIX
@@ -875,7 +877,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               'PIG' AS KGIORIGM, --NO
                               'LPG' AS KACCOMPA,
                               CAST(P.BRANCH AS VARCHAR) AS KGCRAMO,
-                              CAST(P.BRANCH AS VARCHAR) || '-' || CAST(P.PRODUCT AS VARCHAR) || '-' || CAST(P.SUB_PRODUCT) AS KABPRODT,
+                              CAST(P.BRANCH AS VARCHAR) || '-' || CAST(P.PRODUCT AS VARCHAR) AS KABPRODT,
                               CASE P.POLITYPE
                               WHEN '2' THEN CASE WHEN CERT.CERTIF <> 0 THEN P.BRANCH || '-' || CAST(COALESCE (P.PRODUCT, 0) AS VARCHAR) || '-' || P.POLICY || '-' || '0'
                                             ELSE ''
@@ -1262,6 +1264,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             '''
 
   L_DF_POLIZAS_INSUNIX_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_INSUNIX_LPG).load()                      
+
+  print("USINSUG01 EXITOSO")
 
   L_POLIZAS_INSUNIX_LPV = f'''
                           (
@@ -1655,13 +1659,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
    #Ejecutar consulta
   
   L_DF_POLIZAS_INSUNIX_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_INSUNIX_LPV).load()
-  print('USINSUV01 exitoso')
+  
+  print("USINSUV01 EXITOSO")
 
-    #------------------------------------------------------------------------------------------------------------------#
+  #------------------------------------------------------------------------------------------------------------------#
 
    #Declara consulta INSIS
   L_POLIZAS_INSIS = f'''
-                     (                      SELECT
+                     ( SELECT
                       'D' AS INDDETREC, 
                       'ABAPOL' AS TABLAIFRS17,
                       '' AS PK,
@@ -1672,13 +1677,10 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       'PNV' AS KGIORIGM,
                       'LPV' AS KACCOMPA,
                       COALESCE(P."ATTR1", '0') AS KGCRAMO,
-                      COALESCE(P."ATTR1", '0') || P."INSR_TYPE" AS KABPRODT,
-                      CASE COALESCE(PP."ENG_POL_TYPE", '')
-                      WHEN 'DEPENDENT' THEN P."ATTR1" || '-' || P."ATTR2" || '-' || P."POLICY_NO" || '-' || PP."MASTER_POLICY_ID"
-                      ELSE ''
-                      END KABAPOL,
-                      DNUMAPO,
-                      DNMCERT,
+                      P."INSR_TYPE" AS KABPRODT,
+                      KABAPOL,
+                      SUBSTRING(cast(DNUMAPO as varchar),6,12) DNUMAPO,
+                      SUBSTRING(cast(DNMCERT as varchar),6,12) DNMCERT,
                       '' AS DTERMO, --EN BLANCO
                       COALESCE((
                                 SELECT ILPI."LEGACY_ID" FROM
@@ -1691,20 +1693,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       CAST(CAST(P."INSR_END" AS DATE) AS VARCHAR) AS TTERMO,
                       CAST(CAST(P."INSR_BEGIN" AS DATE) AS VARCHAR) AS TINIANU,
                       CAST(CAST(P."INSR_END" AS DATE) AS VARCHAR)   AS TVENANU,
-                      ( 
-                        SELECT CAST(CAST(GA."INSR_BEGIN" AS DATE) AS VARCHAR)
-                        FROM USINSIV01."GEN_ANNEX" GA
-                        WHERE GA."POLICY_ID" = P."POLICY_ID"
-                        AND GA."ANNEX_TYPE"  = '17'
-                        AND GA."ANNEX_STATE" = 0
-                        AND GA."ANNEX_ID"    = (
-                                                SELECT  MAX(GAX."ANNEX_ID")
-                                                FROM    USINSIV01."GEN_ANNEX" GAX
-                                                WHERE   GAX."POLICY_ID" = P."POLICY_ID"
-                                                AND     GAX."ANNEX_TYPE" = '17'
-                                                AND     GAX."ANNEX_STATE" = 0
-                                              )
-                      ) AS TANSUSP,
+                      TANSUSP,
                       '' AS TESTADO, --EN BLANCO
                       CAST(P."POLICY_STATE" AS VARCHAR) AS  KACESTAP,
                       '' AS KACMOEST, --NO
@@ -1714,12 +1703,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS KACARGES, --NO
                       '' AS KACAGENC, --NO
                       '' AS KACPROTO, --NO
-                      CASE PP."ENG_POL_TYPE"
-                      WHEN 'POLICY'    THEN 'INDIVIDUAL'
-                      WHEN 'MASTER'    THEN 'COLECTIVA'
-                      WHEN 'DEPENDENT' THEN 'COLECTIVA'
-                      ELSE ''
-                      END AS KACTIPAP,
+                      (SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = P."ENG_POL_TYPE" ) AS KACTIPAP,
                       '' AS DFROTA,   --NO
                       '' AS KACTPDUR, --EN BLANCO
                       COALESCE(P."RENEWABLE_FLAG", '') AS KACMODRE,
@@ -1739,13 +1723,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       ) AS KACINDRE,*/
                       '' AS KACINDRE,
                       '' AS KACCDGER, --NO
-                      CASE COALESCE((SELECT DISTINCT COALESCE(IO."AV_CURRENCY", '')
-                                    FROM USINSIV01."INSURED_OBJECT" IO 
-                                    WHERE IO."POLICY_ID" = P."POLICY_ID" LIMIT 1 ),'') 
-                      WHEN 'USD' THEN '2'
-                      WHEN 'PEN' THEN '1'
-                      ELSE '0'
-                      END KACMOEDA,
+                      KACMOEDA,
                       0 AS VCAMBIO,     --EN BLANCO
                       '' AS KACREGCB,   --NO
                       '' AS KCBMED_DRA, --NO
@@ -1826,12 +1804,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS DENTIDSO,    --NO
                       '' AS DARQUIVO,    --NO
                       '' AS TARQUIVO,    --NO
-                      CASE PP."ENG_POL_TYPE"
-                      WHEN 'POLICY'    THEN 'INDIVIDUAL'--1
-                      WHEN 'MASTER'    THEN 'COLECTIVA' --2
-                      WHEN 'DEPENDENT' THEN 'COLECTIVA' --2
-                      ELSE ''
-                      END AS KACTPSUB,
+                      (SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = P."ENG_POL_TYPE" ) AS KACTPSUB,
                       '' AS KACPARES,
                       '' AS KGCRAMO_SAP, --NO
                       '' AS KACTPCRED,   --NO
@@ -1848,6 +1821,126 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS DIDCANVD,    --NO
                       '' AS DNMMULTI,    --NO
                       '' AS DOBSERV,     --NO
+                      DQTDPART,
+                      '' AS TINIPRXANU,
+                      '' AS KACTPREAP,
+                      '' AS DENTCONGE,    --NO
+                      '' AS KCBMED_PARCE, --NO
+                      '' AS DCODPARC,     --NO
+                      '' AS DMODPARC,     --NO
+                      '' AS DTIPSEG,  
+                      '' AS KACTPNEG,     --NO
+                      '' AS DURPAGAPO,
+                      '' AS DNMINTERP,    --NO
+                      '' AS DNUMADES,     --NO
+                      KACTPPRD,
+                      KACSBTPRD,
+                      '' AS KABPRODT_REL,   --NO
+                      '' AS KACTPPARES,     --NO
+                      '' AS KACTIPIFAP,     --NO
+                      '' AS KACTPALT_IFRS17,--NO
+                      '' AS TEFEALTE,       --NO
+                      '' AS TINITARLTA,     --NO
+                      '' AS TFIMTARLTA,     --NO
+                      '' AS DTERMO_IFRS17,  --NO
+                      '' AS TEMISREN        --NO
+                      FROM        
+                      ( SELECT                        
+                        P."INSR_TYPE",
+                        P."CLIENT_ID",
+                        P."POLICY_STATE",
+                        P."DATE_GIVEN",
+                        P."INSR_BEGIN",
+                        P."INSR_END",
+                        P."ATTR1",
+                        P."ATTR2",
+                        P."RENEWABLE_FLAG",
+                        P."REGISTRATION_DATE",                       
+                        P."ATTR5",                        
+                        PP."ENG_POL_TYPE",
+                        CAST(P."POLICY_ID" AS VARCHAR) DNUMAPO,
+                        0  AS DNMCERT,                        
+                        '' AS KABAPOL,
+                        (SELECT CAST(CAST(GA."INSR_BEGIN" AS DATE) AS VARCHAR)
+                        FROM USINSIV01."GEN_ANNEX" GA
+                        WHERE GA."POLICY_ID" = P."POLICY_ID"
+                        AND GA."ANNEX_TYPE"  = '17'
+                        AND GA."ANNEX_STATE" = 0
+                        AND GA."ANNEX_ID"    = (SELECT  MAX(GAX."ANNEX_ID")
+                                                FROM    USINSIV01."GEN_ANNEX" GAX
+                                                WHERE   GAX."POLICY_ID" = P."POLICY_ID"
+                                                AND     GAX."ANNEX_TYPE" = '17'
+                                                AND     GAX."ANNEX_STATE" = 0)) AS TANSUSP,
+                        CASE COALESCE((SELECT DISTINCT COALESCE(IO."AV_CURRENCY", '')
+                        FROM USINSIV01."INSURED_OBJECT" IO 
+                        WHERE IO."POLICY_ID" = P."POLICY_ID" LIMIT 1 ),'') 
+                        WHEN 'USD' THEN '2'
+                        WHEN 'PEN' THEN '1'
+                        ELSE '0'
+                        END KACMOEDA,
+                        (CAST(COALESCE((  SELECT COUNT(DISTINCT PAR."MAN_ID")
+                                    FROM USINSIV01."POLICY_PARTICIPANTS" PAR
+                                        WHERE   PAR."POLICY_ID" = P."POLICY_ID"
+                                        AND     PAR."PARTICPANT_ROLE" = 'PHOLDER'
+                                        AND     PAR."ANNEX_ID" = 0
+                                        AND     DATE_TRUNC('SECOND', PAR."VALID_FROM") <= CAST(P."INSR_BEGIN" AS DATE)
+                                        AND     (PAR."VALID_TO" IS NULL OR DATE_TRUNC('SECOND', PAR."VALID_TO") >= CAST(P."INSR_BEGIN" AS DATE))),
+                                      (  SELECT  COUNT(DISTINCT PAR."MAN_ID") 
+                                        FROM    USINSIV01."POLICY_PARTICIPANTS" PAR
+                                        WHERE   PAR."POLICY_ID" = P."POLICY_ID"
+                                        AND     PAR."PARTICPANT_ROLE" = 'PHOLDER'
+                                        AND     DATE_TRUNC('SECOND', PAR."VALID_FROM") <= CAST(P."INSR_BEGIN" AS DATE)
+                                        AND     (PAR."VALID_TO" IS NULL OR DATE_TRUNC('SECOND', PAR."VALID_TO") >= CAST(P."INSR_BEGIN" AS DATE)))) 
+                        AS VARCHAR)
+                       ) AS DQTDPART,
+                       COALESCE(CAST(P."INSR_TYPE" AS VARCHAR), '') AS KACTPPRD,
+                       (SELECT PC."COND_VALUE" FROM USINSIV01."POLICY_CONDITIONS" PC
+                          WHERE "COND_TYPE" LIKE '%AS_IS%'
+                          AND PC."POLICY_ID" = P."POLICY_ID" 	
+                          AND PC."INSR_TYPE" = P."INSR_TYPE"	
+                          AND PC."ANNEX_ID"  = (SELECT MAX("ANNEX_ID") FROM USINSIV01."POLICY_CONDITIONS" PC 	  
+                                                WHERE "COND_TYPE" LIKE '%AS_IS%'	     				  
+                                                AND PC."POLICY_ID" = P."POLICY_ID" 	    				  
+                                                AND PC."INSR_TYPE" = P."INSR_TYPE" )) AS KACSBTPRD
+                        FROM USINSIV01."POLICY" P 
+                        LEFT JOIN USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID" WHERE PP."ENG_POL_TYPE" = 'POLICY'                       
+                        AND P."INSR_END" >= '2021-12-31'
+
+                        UNION ALL
+
+                        SELECT
+                        P."INSR_TYPE",
+                        P."CLIENT_ID",                         
+                        P."POLICY_STATE",                        
+                        P."DATE_GIVEN",
+                        P."INSR_BEGIN",
+                        P."INSR_END",
+                        P."ATTR1", 
+                        P."ATTR2",
+                        P."RENEWABLE_FLAG",
+                        P."REGISTRATION_DATE",                     
+                        P."ATTR5",
+                        PP."ENG_POL_TYPE",
+                         CAST(P."POLICY_ID" AS VARCHAR) DNUMAPO,
+                        0  AS DNMCERT,                                                 
+                        '' AS KABAPOL,
+                        (SELECT CAST(CAST(GA."INSR_BEGIN" AS DATE) AS VARCHAR)
+                        FROM USINSIV01."GEN_ANNEX" GA
+                        WHERE GA."POLICY_ID" = P."POLICY_ID"
+                        AND GA."ANNEX_TYPE"  = '17'
+                        AND GA."ANNEX_STATE" = 0
+                        AND GA."ANNEX_ID"    = (SELECT  MAX(GAX."ANNEX_ID")
+                                                FROM    USINSIV01."GEN_ANNEX" GAX
+                                                WHERE   GAX."POLICY_ID" = P."POLICY_ID"
+                                                AND     GAX."ANNEX_TYPE" = '17'
+                                                AND     GAX."ANNEX_STATE" = 0)) AS TANSUSP,
+                        CASE COALESCE((SELECT DISTINCT COALESCE(IO."AV_CURRENCY", '')
+                                    FROM USINSIV01."INSURED_OBJECT" IO 
+                                    WHERE IO."POLICY_ID" = P."POLICY_ID" LIMIT 1 ),'') 
+                      WHEN 'USD' THEN '2'
+                      WHEN 'PEN' THEN '1'
+                      ELSE '0'
+                      END KACMOEDA,
                       (
                         CAST(COALESCE((  SELECT COUNT(DISTINCT PAR."MAN_ID")
                                     FROM USINSIV01."POLICY_PARTICIPANTS" PAR
@@ -1864,18 +1957,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                         AND     (PAR."VALID_TO" IS NULL OR DATE_TRUNC('SECOND', PAR."VALID_TO") >= CAST(P."INSR_BEGIN" AS DATE)))) 
                         AS VARCHAR)
                       ) AS DQTDPART,
-                      '' AS TINIPRXANU,
-                      '' AS KACTPREAP,
-                      '' AS DENTCONGE,    --NO
-                      '' AS KCBMED_PARCE, --NO
-                      '' AS DCODPARC,     --NO
-                      '' AS DMODPARC,     --NO
-                      '' AS DTIPSEG,  
-                      '' AS KACTPNEG,     --NO
-                      '' AS DURPAGAPO,
-                      '' AS DNMINTERP,    --NO
-                      '' AS DNUMADES,     --NO
-                      COALESCE(CAST(P."INSR_TYPE" AS VARCHAR), '') AS KACTPPRD,
+                       COALESCE(CAST(P."INSR_TYPE" AS VARCHAR), '') AS KACTPPRD,
                       (	
                           SELECT PC."COND_VALUE" FROM USINSIV01."POLICY_CONDITIONS" PC
                           WHERE "COND_TYPE" LIKE '%AS_IS%'
@@ -1885,99 +1967,87 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                 WHERE "COND_TYPE" LIKE '%AS_IS%'	     				  
                                                 AND PC."POLICY_ID" = P."POLICY_ID" 	    				  
                                                 AND PC."INSR_TYPE" = P."INSR_TYPE" )                   	 
-                      ) AS KACSBTPRD,
-                      '' AS KABPRODT_REL,   --NO
-                      '' AS KACTPPARES,     --NO
-                      '' AS KACTIPIFAP,     --NO
-                      '' AS KACTPALT_IFRS17,--NO
-                      '' AS TEFEALTE,       --NO
-                      '' AS TINITARLTA,     --NO
-                      '' AS TFIMTARLTA,     --NO
-                      '' AS DTERMO_IFRS17,  --NO
-                      '' AS TEMISREN        --NO
-                      FROM        
-                      ( SELECT 
-                        P."POLICY_ID",
-                        P."INSR_BEGIN",
-                        P."ATTR1", 
-                        PP."ENG_POL_TYPE"  
-                        P."ATTR2",
-                        P."POLICY_NO",
-                        P."REGISTRATION_DATE",
-                        P."DATE_GIVEN",
-                        P."INSR_BEGIN",
-                        P."POLICY_ID" ,
-                        P."POLICY_STATE",
-                        P."RENEWABLE_FLAG",
-                        P."ATTR5",
-                        CAST(PP."POLICY_ID" AS VARCHAR) DNUMAPO, 
-                        0 DNMCERT, 
-                        P."CLIENT_ID", 
-                        P."INSR_END"
-                        FROM USINSIV01."POLICY" P 
-                        LEFT JOIN USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID" WHERE PP."ENG_POL_TYPE" = 'POLICY'                       
-                        AND P."INSR_END" >= '2021-12-31'
-
-                        UNION ALL
-
-                        SELECT CAST(P."POLICY_ID" AS VARCHAR) DNUMAPO,
-                        P."POLICY_ID",
-                        P."INSR_BEGIN",
-                        P."ATTR1", 
-                        P."ATTR2",
-                        P."POLICY_NO",
-                        P."REGISTRATION_DATE",
-                        P."DATE_GIVEN",
-                        P."INSR_BEGIN",
-                        P."POLICY_ID" ,
-                        P."POLICY_STATE",
-                        P."RENEWABLE_FLAG",
-                        P."ATTR5",
-                        0 AS DNMCERT, 
-                        P."CLIENT_ID", 
-                        P."INSR_END",                        
-                        PP."ENG_POL_TYPE"  
+                      ) AS KACSBTPRD
                         FROM USINSIV01."POLICY" P 
                         LEFT JOIN  USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID" WHERE PP."ENG_POL_TYPE" = 'MASTER'
                         AND P."INSR_END" >= '2021-12-31'
 
                         UNION ALL
 
-                        SELECT 
-                        CAST(PP."MASTER_POLICY_ID" AS VARCHAR) DNUMAPO, 
-                        PP."POLICY_ID" DNMCERT, 
-                        P."POLICY_ID",
-                        P."INSR_BEGIN",
-                        P."ATTR1", 
-                        P."ATTR2",
-                        P."POLICY_NO",
-                        P."REGISTRATION_DATE",
+                        SELECT                         
+                        P."INSR_TYPE",
+                        P."CLIENT_ID",                        
+                        P."POLICY_STATE", 
                         P."DATE_GIVEN",
                         P."INSR_BEGIN",
-                        P."POLICY_ID" ,
-                        P."POLICY_STATE",
+                        P."INSR_END",
+                        P."ATTR1", 
+                        P."ATTR2",
                         P."RENEWABLE_FLAG",
+                        P."REGISTRATION_DATE",                        
                         P."ATTR5",
-                        0 AS DNMCERT, 
-                        P."CLIENT_ID", 
-                        P."INSR_END",                        
-                        PP."ENG_POL_TYPE"   
+                        PP."ENG_POL_TYPE",
+                        CAST(PP."MASTER_POLICY_ID" AS VARCHAR) DNUMAPO, 
+                        PP."POLICY_ID" DNMCERT,
+                        P."ATTR1" || '-' || P."INSR_TYPE" || '-' || PP."MASTER_POLICY_ID" || '-' || PP."MASTER_POLICY_ID" || 0 AS KABAPOL,                      
+                        (SELECT CAST(CAST(GA."INSR_BEGIN" AS DATE) AS VARCHAR)
+                        FROM USINSIV01."GEN_ANNEX" GA
+                        WHERE GA."POLICY_ID" = P."POLICY_ID"
+                        AND GA."ANNEX_TYPE"  = '17'
+                        AND GA."ANNEX_STATE" = 0
+                        AND GA."ANNEX_ID"    = (SELECT  MAX(GAX."ANNEX_ID")
+                                                FROM    USINSIV01."GEN_ANNEX" GAX
+                                                WHERE   GAX."POLICY_ID" = P."POLICY_ID"
+                                                AND     GAX."ANNEX_TYPE" = '17'
+                                                AND     GAX."ANNEX_STATE" = 0)) AS TANSUSP,
+                        CASE COALESCE((SELECT DISTINCT COALESCE(IO."AV_CURRENCY", '')
+                                    FROM USINSIV01."INSURED_OBJECT" IO 
+                                    WHERE IO."POLICY_ID" = P."POLICY_ID" LIMIT 1 ),'') 
+                        WHEN 'USD' THEN '2'
+                        WHEN 'PEN' THEN '1'
+                        ELSE '0'
+                        END KACMOEDA,
+                        (
+                        CAST(COALESCE((  SELECT COUNT(DISTINCT PAR."MAN_ID")
+                                    FROM USINSIV01."POLICY_PARTICIPANTS" PAR
+                                        WHERE   PAR."POLICY_ID" = P."POLICY_ID"
+                                        AND     PAR."PARTICPANT_ROLE" = 'PHOLDER'
+                                        AND     PAR."ANNEX_ID" = 0
+                                        AND     DATE_TRUNC('SECOND', PAR."VALID_FROM") <= CAST(P."INSR_BEGIN" AS DATE)
+                                        AND     (PAR."VALID_TO" IS NULL OR DATE_TRUNC('SECOND', PAR."VALID_TO") >= CAST(P."INSR_BEGIN" AS DATE))),
+                                      (  SELECT  COUNT(DISTINCT PAR."MAN_ID") 
+                                        FROM    USINSIV01."POLICY_PARTICIPANTS" PAR
+                                        WHERE   PAR."POLICY_ID" = P."POLICY_ID"
+                                        AND     PAR."PARTICPANT_ROLE" = 'PHOLDER'
+                                        AND     DATE_TRUNC('SECOND', PAR."VALID_FROM") <= CAST(P."INSR_BEGIN" AS DATE)
+                                        AND     (PAR."VALID_TO" IS NULL OR DATE_TRUNC('SECOND', PAR."VALID_TO") >= CAST(P."INSR_BEGIN" AS DATE)))) 
+                        AS VARCHAR)
+                      ) AS DQTDPART,
+                       COALESCE(CAST(P."INSR_TYPE" AS VARCHAR), '') AS KACTPPRD,
+                      (	
+                          SELECT PC."COND_VALUE" FROM USINSIV01."POLICY_CONDITIONS" PC
+                          WHERE "COND_TYPE" LIKE '%AS_IS%'
+                          AND PC."POLICY_ID" = P."POLICY_ID" 	
+                          AND PC."INSR_TYPE" = P."INSR_TYPE"	
+                          AND PC."ANNEX_ID"  = (SELECT MAX("ANNEX_ID") FROM USINSIV01."POLICY_CONDITIONS" PC 	  
+                                                WHERE "COND_TYPE" LIKE '%AS_IS%'	     				  
+                                                AND PC."POLICY_ID" = P."POLICY_ID" 	    				  
+                                                AND PC."INSR_TYPE" = P."INSR_TYPE" )                   	 
+                      ) AS KACSBTPRD
                         FROM USINSIV01."POLICY" P
-                        LEFT JOIN  USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID" WHERE PP."ENG_POL_TYPE" = 'DEPENDENT'
-                        AND P."INSR_END" >= '2021-12-31'                    
-                      ) P 
-                      LEFT JOIN USINSIV01."P_CLIENTS" PC ON P."CLIENT_ID" = PC."CLIENT_ID"
-                      WHERE P."INSR_END" >= '2021-12-31' AND P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100) AS TMP
+                        LEFT JOIN  USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID" WHERE PP."ENG_POL_TYPE" = 'DEPENDENT' AND P."INSR_END" >= '2021-12-31')P
+                        LEFT JOIN USINSIV01."P_CLIENTS" PC ON P."CLIENT_ID" = PC."CLIENT_ID"
+                        WHERE P."INSR_END" >= '2021-12-31' AND P."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100) AS TMP
                      '''
 
    #Ejecutar consulta
   
   L_DF_POLIZAS_INSIS = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable",L_POLIZAS_INSIS).load()
 
-  print('EXITOSO USINSIV01')
+  print('USINSIV01 EXITOSO')
 
   L_DF_POLIZAS = L_DF_POLIZAS_VTIME_LPG.union(L_DF_POLIZAS_VTIME_LPV).union(L_DF_POLIZAS_INSUNIX_LPG).union(L_DF_POLIZAS_INSUNIX_LPV).union(L_DF_POLIZAS_INSIS)
 
-  L_DF_POLIZAS = L_DF_POLIZAS.withColumn("VCAMBIO", col("VCAMBIO").cast(DecimalType(7, 4))).withColumn("VTXCOMCB", col("VTXCOMCB").cast(DecimalType(7, 4))).withColumn("VMTCOMCB", col("VMTCOMCB").cast(DecimalType(12, 2))).withColumn("VTXCOMMD", col("VTXCOMMD").cast(DecimalType(7, 4))).withColumn("VMTCOMMD", col("VMTCOMMD").cast(DecimalType(12, 2))).withColumn("VCAPITAL", col("VCAPITAL").cast(DecimalType(14, 2))).withColumn("VMTCOMR", col("VMTCOMR").cast(DecimalType(12, 2))).withColumn("VMTCMNQP", col("VMTCMNQP").cast(DecimalType(12, 2))).withColumn("VMTPRMBR", col("VMTPRMBR").cast(DecimalType(12, 2))).withColumn("VTXCOSSG", col("VTXCOSSG").cast(DecimalType(7, 4))).withColumn("VTXRETEN", col("VTXRETEN").cast(DecimalType(7, 4))).withColumn("VMTCAPRE", col("VMTCAPRE").cast(DecimalType(12, 2))).withColumn("DQTDPART", col("DQTDPART").cast(DecimalType(5, 0)))
+  L_DF_POLIZAS = L_DF_POLIZAS.withColumn("VCAMBIO", coalesce(col("VCAMBIO").cast(DecimalType(7, 4)), '')).withColumn("VTXCOMCB", col("VTXCOMCB").cast(DecimalType(7, 4))).withColumn("VMTCOMCB", col("VMTCOMCB").cast(DecimalType(12, 2))).withColumn("VTXCOMMD", col("VTXCOMMD").cast(DecimalType(7, 4))).withColumn("VMTCOMMD", col("VMTCOMMD").cast(DecimalType(12, 2))).withColumn("VCAPITAL", col("VCAPITAL").cast(DecimalType(14, 2))).withColumn("VMTCOMR", col("VMTCOMR").cast(DecimalType(12, 2))).withColumn("VMTCMNQP", col("VMTCMNQP").cast(DecimalType(12, 2))).withColumn("VMTPRMBR", col("VMTPRMBR").cast(DecimalType(12, 2))).withColumn("VTXCOSSG", col("VTXCOSSG").cast(DecimalType(7, 4))).withColumn("VTXRETEN", col("VTXRETEN").cast(DecimalType(7, 4))).withColumn("VMTCAPRE", col("VMTCAPRE").cast(DecimalType(12, 2))).withColumn("DQTDPART", col("DQTDPART").cast(DecimalType(5, 0)))
 
   return L_DF_POLIZAS
