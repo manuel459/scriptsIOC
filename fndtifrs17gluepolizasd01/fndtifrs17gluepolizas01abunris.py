@@ -730,7 +730,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCPROC,
                               cast(cast(io."INSR_BEGIN" as date)as varchar) as TIOCFRM,                        
                               '' as TIOCTO,
-                              'PVV' KGIORIGM,                                         
+                              'PNV' KGIORIGM,                                         
                               cast(io."POLICY_ID" as varchar)  KABAPOL,                      
                               '' KACTPRIS,     
                               '' DUNIRIS,                                                                     
