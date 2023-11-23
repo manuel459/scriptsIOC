@@ -235,7 +235,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                         'LPV' AS DCOMPA,
                         '' AS DMARCA,
                         CAST(CNP."PRODUCT_CODE" AS VARCHAR) AS KABPRODT,
-                        CAST(CNC."COVER_LINK_ID" AS VARCHAR(10)) AS KGCTPCBT,
+                        SUBSTRING(CAST(CAST(CNC."COVER_REP_ID" as BIGINT) AS VARCHAR),5,10) AS KGCTPCBT,
                         '' AS KACCDFDO,
                         '' AS KACFUNAU,
                         '' AS KGCRAMO_SAP,
