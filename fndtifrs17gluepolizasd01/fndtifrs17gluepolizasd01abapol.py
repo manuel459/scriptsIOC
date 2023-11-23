@@ -1372,31 +1372,29 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                 SELECT COALESCE(TRUNC(DX.PERCENT, 4), 0) 
                                 FROM USINSUV01.DISC_XPREM DX 
                                 JOIN USINSUV01.DISCO_EXPR DE 
-                                  ON  DX.USERCOMP = DE.USERCOMP 
-                                  AND DX.COMPANY = DE.COMPANY
-                                  AND DX.CERTYPE = dx.certype 
-                                  AND DX.BRANCH    = DE.BRANCH
-                                  AND DX.CODE = DE.DISEXPRC
-                                WHERE DX.usercomp = p.usercomp
-                                  and dx.company = p.company
-                                  and dx.branch  = p.branch
-                                  and DE.PRODUCT = P.PRODUCT
-                                  AND DX.POLICY  = P.POLICY
-                                  AND DX.CERTIF  = CERT.CERTIF 
-                                  AND DX.EFFECDATE <= P.EFFECDATE
-                                  AND (DX.NULLDATE IS NULL OR DX.NULLDATE > P.EFFECDATE)
-                                  AND DE.BILL_ITEM = 4
-                                  and de.currency = (select cp.currency from usinsuv01.curren_pol cp
-                                                      where cp.usercomp = p.usercomp 
-                                                        and cp.company = p.company
-                                                        and cp.certype = p.certype
-                                                        and cp.branch = p.branch
-                                                        and cp."policy" = p."policy"
-                                                        and cp.certif = cert.certif
-                                                        and cp.effecdate <= p.effecdate
-                                                        and (cp.nulldate is null or cp.nulldate > p.effecdate) limit 1
-                                                    ) limit 1
-                              ), 0)
+                                ON  DX.USERCOMP = DE.USERCOMP 
+                                AND DX.COMPANY  = DE.COMPANY
+                                AND DX.CERTYPE  = '2' 
+                                AND DX.BRANCH   = DE.BRANCH
+                                AND DX.CODE     = DE.DISEXPRC
+                                WHERE DX.USERCOMP = P.USERCOMP
+                                AND DX.COMPANY = P.COMPANY
+                                AND DX.BRANCH  = P.BRANCH
+                                AND DE.PRODUCT = P.PRODUCT
+                                AND DX.POLICY  = P.POLICY
+                                AND DX.CERTIF  = CERT.CERTIF 
+                                AND DX.EFFECDATE <= P.EFFECDATE
+                                AND (DX.NULLDATE IS NULL OR DX.NULLDATE > P.EFFECDATE)
+                                AND DE.BILL_ITEM = 4
+                                AND DE.CURRENCY = (SELECT CP.CURRENCY FROM USINSUV01.CURREN_POL CP
+                                                   WHERE CP.USERCOMP = P.USERCOMP 
+                                                   AND CP.COMPANY    = P.COMPANY
+                                                   AND CP.CERTYPE    = P.CERTYPE
+                                                   AND CP.BRANCH     = P.BRANCH
+                                                   AND CP.POLICY     = P.POLICY
+                                                   AND CP.CERTIF     = CERT.CERTIF
+                                                   AND CP.EFFECDATE <= P.EFFECDATE
+                                                   AND (CP.NULLDATE IS NULL OR CP.NULLDATE > P.EFFECDATE) LIMIT 1) LIMIT 1), 0)
                               ) AS VTXCOMCB,  --ACLARAR  
                               '' AS VMTCOMCB, --EN BLANCO
                               '' AS KCBMED_PD,--NO

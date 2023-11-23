@@ -187,7 +187,13 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              	   AND PSP.BRANCH   = P.BRANCH		   
                              	   AND PSP.PRODUCT  = P.PRODUCT
                              	   AND PSP.POLICY   = P.POLICY	
-                             	   JOIN USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" RTR ON RTR."BRANCHCOM" = P.BRANCH AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usinsug01'
+                             	   JOIN /*USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO"*/
+                                 (SELECT  unnest(ARRAY['usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01',
+					                         'usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01',
+					                         'usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01',
+					                         'usinsug01','usinsug01','usinsug01']) AS "SOURCESCHEMA",  
+						      unnest(ARRAY[5,21,22,23,24,25,27,31,32,33,34,35,36,37,40,41,42,59,68,71,75,77,91,99]) AS "BRANCHCOM",
+							unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR ON RTR."BRANCHCOM" = P.BRANCH AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usinsug01'
                              	   WHERE P.CERTYPE = '2' 
                                     AND P.STATUS_POL NOT IN ('2','3') 
                                     AND ( (P.POLITYPE = '1' -- INDIVIDUAL 
@@ -394,7 +400,13 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                           AND P.CERTYPE = CERT.CERTYPE 
                                           AND P.BRANCH  = CERT.BRANCH 
                                           AND P.POLICY  = CERT.policy	
-                                          JOIN USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" RTR ON RTR."BRANCHCOM" = P.BRANCH AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usinsuv01'
+                                          JOIN /*USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO"*/
+                                          (SELECT unnest(ARRAY['usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01',
+					                                 'usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01',
+					                                 'usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01',
+					                                 'usinsuv01','usinsuv01','usinsuv01']) AS "SOURCESCHEMA",  
+						      unnest(ARRAY[5,21,22,23,24,25,27,31,32,33,34,35,36,37,40,41,42,59,68,71,75,77,91,99]) AS "BRANCHCOM",
+							unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR ON RTR."BRANCHCOM" = P.BRANCH AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usinsuv01'
                                           WHERE P.CERTYPE = '2' 
                                           AND P.STATUS_POL NOT IN ('2','3') 
                                           AND ( (P.POLITYPE = '1' -- INDIVIDUAL 
@@ -574,7 +586,11 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                           AND P."NBRANCH"  = CERT."NBRANCH"
                                           AND P."NPRODUCT" = CERT."NPRODUCT"
                                           AND P."NPOLICY"  = CERT."NPOLICY"
-                                          JOIN USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" RTR ON RTR."BRANCHCOM" = P."NBRANCH" AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usvtimg01'
+                                          JOIN /*USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO"*/
+                                          (SELECT unnest(ARRAY['usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01',
+                                                               'usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01']) AS "SOURCESCHEMA",  
+						               unnest(ARRAY[21, 23, 24, 27, 31, 32, 33, 34, 35, 36, 37, 40, 42, 64, 71, 75, 91]) AS "BRANCHCOM",
+							         unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR ON RTR."BRANCHCOM" = P."NBRANCH" AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usvtimg01'
                                           WHERE P."SCERTYPE" = '2' 
                                           AND P."SSTATUS_POL" NOT IN ('2','3') 
                                           AND ( (P."SPOLITYPE" = '1' -- INDIVIDUAL 
@@ -750,7 +766,11 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                            	   AND P."NBRANCH"  = CERT."NBRANCH"
                            	   AND P."NPRODUCT" = CERT."NPRODUCT"
                            	   AND P."NPOLICY"  = CERT."NPOLICY"
-                           	   JOIN USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" RTR ON RTR."BRANCHCOM" = P."NBRANCH" AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usvtimv01'
+                           	   JOIN /*USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO"*/
+                                 (SELECT unnest(ARRAY['usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01',
+                                                      'usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01']) AS "SOURCESCHEMA",  
+						     unnest(ARRAY[21, 23, 24, 27, 31, 32, 33, 34, 35, 36, 37, 40, 42, 64, 71, 75, 91]) AS "BRANCHCOM",
+						     unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR ON RTR."BRANCHCOM" = P."NBRANCH" AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usvtimv01'
                            	   WHERE P."SCERTYPE" = '2' 
                                   AND P."SSTATUS_POL" NOT IN ('2','3') 
                                   AND ( (P."SPOLITYPE" = '1' -- INDIVIDUAL 
