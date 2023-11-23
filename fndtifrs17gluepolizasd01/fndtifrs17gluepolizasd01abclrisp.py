@@ -611,7 +611,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     AND R."NCERTIF"   = PC."NCERTIF"  
                                     AND R."DEFFECDATE" <= PC."DSTARTDATE" 
                                     AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > PC."DSTARTDATE")
-                                    WHERE R."NROLE" IN (2,8)  
+                                    WHERE R."NROLE" IN (2,8) LIMIT 100
                               ) as tmp
                             '''
     
