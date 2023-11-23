@@ -1,3 +1,6 @@
+from pyspark.sql.types import *
+from pyspark.sql.functions import col
+
 def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
     L_ABCLRISP_INSUNIX_LPG = f'''
                              (SELECT

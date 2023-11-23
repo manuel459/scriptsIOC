@@ -739,7 +739,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TSITRIS,                                                  
                               io."INSURED_OBJ_ID"  as KACSITUR,                                                 
                               '' as KACESQM,
-                              'LPG' as DCOMPA,                                                
+                              'LPV' as DCOMPA,                                                
                               '' as DMARCA,
                               '' as DCREHIP,
                               '' as DCDLCRIS,
