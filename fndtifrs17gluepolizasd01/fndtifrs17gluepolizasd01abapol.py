@@ -867,397 +867,397 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
   L_POLIZAS_INSUNIX_LPG = f'''
                             (
                               SELECT 
-                              'D' AS INDDETREC, 
-                              'ABAPOL' AS TABLAIFRS17,
-                              '' AS PK,
-                              '' AS DTPREG,      --NO
-                              '' AS TIOCPROC,    --NO
-                              COALESCE(CAST(P.EFFECDATE AS VARCHAR), '') AS TIOCFRM,
-                              '' AS TIOCTO,      --NO
-                              'PIG' AS KGIORIGM, --NO
-                              'LPG' AS KACCOMPA,
-                              CAST(P.BRANCH AS VARCHAR) AS KGCRAMO,
-                              CAST(P.BRANCH AS VARCHAR) || '-' || CAST(P.PRODUCT AS VARCHAR) AS KABPRODT,
-                              CASE P.POLITYPE
-                              WHEN '2' THEN CASE WHEN CERT.CERTIF <> 0 THEN P.BRANCH || '-' || CAST(COALESCE (P.PRODUCT, 0) AS VARCHAR) || '-' || P.POLICY || '-' || '0'
-                                            ELSE ''
-                                            END
-                              ELSE '' 
-                              END AS KABAPOL,
-                              P.BRANCH || '-' || CAST(COALESCE (P.PRODUCT, 0) AS VARCHAR) || '-' || P.POLICY AS DNUMAPO,
-                              CAST(CERT.CERTIF AS VARCHAR) AS DNMCERT,
-                              '' AS DTERMO,     --BLANCO
-                              COALESCE((
-                                SELECT SCOD_VT FROM USINSUG01.EQUI_VT_INX EVI
-                                WHERE EVI.SCOD_INX = P.TITULARC
-                              ), '') AS KEBENTID_TO,
-                              COALESCE(CAST(P.DATE_ORIGI AS VARCHAR), '') AS TCRIAPO,
-                              COALESCE(CAST(P.ISSUEDAT  AS VARCHAR) , '') AS TEMISSAO,
-                              COALESCE(CAST(P.EFFECDATE AS VARCHAR) , '') AS TINICIO,
-                              '' AS DHORAINI, --NO
-                              COALESCE(CAST(P.EXPIRDAT  AS VARCHAR) , '')  AS TTERMO,
-                              COALESCE(CAST(P.EFFECDATE AS VARCHAR) , '')  AS TINIANU,
-                              COALESCE(CAST(P.EXPIRDAT  AS VARCHAR) , '')  AS TVENANU,
-                              COALESCE(CAST(P.NULLDATE  AS VARCHAR) , '')  AS TANSUSP,
-                              '' AS TESTADO,
-                              COALESCE(P.STATUS_POL, '') AS KACESTAP,
-                              '' AS KACMOEST, --NO
-                              COALESCE(CAST(P.EFFECDATE AS VARCHAR), '') AS TEFEACTA,
-                              '' AS DULTACTA,--NO
-                              '' AS KACCNEMI,--NO
-                              '' AS KACARGES,--NO
-                              '' AS KACAGENC,--NO
-                              '' AS KACPROTO,--NO
-                              COALESCE(P.POLITYPE, '') AS KACTIPAP,
-                              '' AS DFROTA,  --NO
-                              '' AS KACTPDUR,--EN BLANCO
-                              COALESCE(P.RENEWAL, '')  AS KACMODRE,
-                              '' AS KACMTNRE,--NO
-                              '' AS KACTPCOB,--NO
-                              COALESCE(P.PAYFREQ, '')  AS KACTPFRC,
-                              (
-                                CASE P.BUSSITYP  
-                                  WHEN '2' THEN  '2' 
-                                  WHEN '1' THEN COALESCE(( SELECT '1' 
-                                                          FROM USINSUG01.COINSURAN C
-                                                          WHERE C.USERCOMP = 1
-                                                          AND C.COMPANY = 1
-                                                          AND C.CERTYPE = '2'
-                                                          AND C.BRANCH = P.BRANCH
-                                                          AND C.POLICY = P.POLICY
-                                                          AND C.EFFECDATE <= P.EFFECDATE
-                                                          AND ( C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
-                                                          LIMIT 1), '')
-                                  ELSE ''
-                                  END                                                       
-                              ) AS KACTPCSG,
-                              COALESCE(P.REINTYPE,'') AS KACINDRE,
-                              '' AS KACCDGER,--NO
-                              COALESCE ((
-                                SELECT CAST(CURRENCY AS VARCHAR) FROM USINSUG01.CURREN_POL CP 
-                                WHERE CP.USERCOMP = P.USERCOMP 
-                                AND   CP.COMPANY = P.COMPANY 
-                                AND   CP.CERTYPE = P.CERTYPE
-                                AND   CP.BRANCH  = P.BRANCH
-                                AND   CP.POLICY  = P.POLICY
-                                AND   CP.CERTIF  = CERT.CERTIF 
-                                AND   CP.EFFECDATE <= P.EFFECDATE 
-                                AND   ( CP.NULLDATE IS NULL OR CP.NULLDATE > P.EFFECDATE) LIMIT 1
-                              ), '0') AS KACMOEDA,
-                              COALESCE((
-                                SELECT COALESCE(E.EXCHANGE, 0)
-                                FROM USINSUG01.EXCHANGE E
-                                WHERE E.USERCOMP = 1
-                                AND   E.COMPANY = 1 
-                                AND   E.CURRENCY = (   SELECT CP.CURRENCY 
-                                                        FROM USINSUG01.CURREN_POL CP
-                                                        WHERE USERCOMP = 1 
-                                                        AND COMPANY = 1 
-                                                        AND CERTYPE = '2'
-                                                        AND BRANCH  = P.BRANCH
-                                                        AND POLICY  = P.POLICY
-                                                        AND CERTIF  = 0
-                                                        AND CP.EFFECDATE <= P.EFFECDATE 
-                                                        AND (CP.NULLDATE IS NULL OR CP.NULLDATE > P.EFFECDATE) limit 1
-                                                    )
-                                  AND E.EFFECDATE <= P.EFFECDATE
-                                  AND (E.NULLDATE IS NULL OR E.NULLDATE > P.EFFECDATE)
-                              ), 0) AS VCAMBIO,
-                              '' AS KACREGCB,  --NO
-                              '' AS KCBMED_DRA,--NO
-                              '' AS KCBMED_CB, --NO
-                              COALESCE((
-                                SELECT COALESCE(TRUNC(DX.PERCENT, 4), 0) 
-                                  FROM USINSUG01.DISC_XPREM DX 
-                                  JOIN USINSUG01.DISCO_EXPR DE 
-                                    ON  DX.USERCOMP = DE.USERCOMP 
-                                    AND DX.COMPANY = DE.COMPANY
-                                    AND DX.CERTYPE = dx.certype 
-                                    AND DX.BRANCH    = DE.BRANCH
-                                    AND DX.CODE = DE.DISEXPRC
-                                  WHERE DX.usercomp = p.usercomp
-                                    and dx.company = p.company
-                                    and dx.branch  = p.branch
-                                    and DE.PRODUCT = P.PRODUCT
-                                    AND DX.POLICY  = P.POLICY
-                                    AND DX.CERTIF  = CERT.CERTIF 
-                                    AND DX.EFFECDATE <= P.EFFECDATE
-                                    AND (DX.NULLDATE IS NULL OR DX.NULLDATE > P.EFFECDATE)
-                                    AND DE.BILL_ITEM = 4
-                                    and de.currency = (select cp.currency from USINSUG01.curren_pol cp
-                                                        where cp.usercomp = p.usercomp 
-                                                          and cp.company = p.company
-                                                          and cp.certype = p.certype
-                                                          and cp.branch = p.branch
-                                                          and cp."policy" = p."policy"
-                                                          and cp.certif = cert.certif
-                                                          and cp.effecdate <= p.effecdate
-                                                          and (cp.nulldate is null or cp.nulldate > p.effecdate) limit 1
-                                                      ) limit 1
-                              ), 0) AS VTXCOMCB, 
-                              '' AS VMTCOMCB,  --EN BLANCO
-                              '' AS KCBMED_PD, --NO
-                              COALESCE (COALESCE(
-                                      (SELECT COALESCE(PERCENT, 0)
-                                      FROM USINSUG01.COMMISSION C 
-                                      WHERE C.USERCOMP = P.USERCOMP 
-                                      AND   C.COMPANY  = P.COMPANY 
-                                      AND   C.CERTYPE  = P.CERTYPE
-                                      AND   C.BRANCH   = P.BRANCH
-                                      AND   C.POLICY   = P.POLICY 
-                                      AND   C.CERTIF   = CERT.CERTIF 
-                                      AND   C.EFFECDATE <= P.EFFECDATE
-                                      AND  (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
-                                      AND   C.ROLE <> 1 LIMIT 1),
-                                    (SELECT COALESCE(PERCENT, 0) 
-                                      FROM USINSUG01.COMMISSION C 
-                                      WHERE C.USERCOMP = P.USERCOMP 
-                                      AND   C.COMPANY  = P.COMPANY 
-                                      AND   C.CERTYPE  = P.CERTYPE
-                                      AND   C.BRANCH   = P.BRANCH
-                                      AND   C.POLICY   = P.POLICY 
-                                      AND   C.CERTIF   = 0 
-                                      AND   C.EFFECDATE <= P.EFFECDATE
-                                      AND  (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
-                                      AND   C.ROLE <> 1 LIMIT 1)
-                              ), 0) AS VTXCOMMD,
-                              COALESCE (COALESCE(
+                                'D' AS INDDETREC, 
+                                'ABAPOL' AS TABLAIFRS17,
+                                '' AS PK,
+                                '' AS DTPREG,      --NO
+                                '' AS TIOCPROC,    --no
+                                coalesce(cast((case when p.politype = '1' then P.EFFECDATE else cert.effecdate end) as VARCHAR), '') as TIOCFRM,
+                                '' AS TIOCTO,     --NO
+                                'PIG' AS KGIORIGM, --NO
+                                'LPG' AS KACCOMPA, 
+                                CAST(P.BRANCH AS VARCHAR) AS KGCRAMO,
+                                CAST(P.BRANCH AS VARCHAR) || '-' || CAST(P.PRODUCT AS VARCHAR) AS KABPRODT,
+                                CASE P.POLITYPE
+                                WHEN '2' THEN CASE WHEN CERT.CERTIF <> 0 THEN P.BRANCH || '-' || CAST(COALESCE (P.PRODUCT, 0) AS VARCHAR) || '-' || P.POLICY || '-' || '0'
+                                              ELSE ''
+                                              END
+                                ELSE '' 
+                                END AS KABAPOL,
+                                P.BRANCH || '-' || CAST(COALESCE (P.PRODUCT, 0) AS VARCHAR) || '-' || P.POLICY AS DNUMAPO,
+                                CAST(CERT.CERTIF AS VARCHAR) AS DNMCERT,
+                                '' AS DTERMO,     --BLANCO
+                                COALESCE((
+                                  SELECT SCOD_VT FROM USINSUG01.EQUI_VT_INX EVI
+                                  WHERE EVI.SCOD_INX =  (case when p.politype = '1' then P.TITULARC else cert.titularc end)
+                                ), '') AS KEBENTID_TO,
+                                coalesce(cast((case when p.politype = '1' then P.DATE_ORIGI else cert.date_origi end) as VARCHAR), '') as TCRIAPO, 
+                                coalesce(cast((case when p.politype = '1' then P.ISSUEDAT else cert.issuedat end) as VARCHAR) , '') as TEMISSAO,
+                                coalesce(cast((case when p.politype = '1' then P.EFFECDATE else cert.effecdate end) as VARCHAR) , '') as TINICIO,
+                                '' AS DHORAINI, --NO
+                                COALESCE(CAST((case when p.politype = '1' then P.EXPIRDAT else cert.expirdat end) AS VARCHAR) , '')  AS TTERMO,
+                                COALESCE(CAST((case when p.politype = '1' then P.EFFECDATE else cert.effecdate end) AS VARCHAR) , '')  AS TINIANU,
+                                COALESCE(CAST((case when p.politype = '1' then P.EXPIRDAT else cert.expirdat end)  AS VARCHAR) , '')  AS TVENANU,
+                                COALESCE(CAST((case when p.politype = '1' then P.NULLDATE else cert.nulldate end) AS VARCHAR) , '')  AS TANSUSP,
+                                '' AS TESTADO,
+                                COALESCE((case when p.politype = '1' then P.STATUS_POL else cert.statusva end) , '') AS KACESTAP,
+                                '' AS KACMOEST, --NO
+                                COALESCE(CAST((case when p.politype = '1' then P.EFFECDATE else cert.effecdate end) AS VARCHAR), '') AS TEFEACTA,
+                                '' AS DULTACTA,--NO
+                                '' AS KACCNEMI,--NO
+                                '' AS KACARGES,--NO
+                                '' AS KACAGENC,--NO
+                                '' AS KACPROTO,--NO
+                                COALESCE(P.POLITYPE, '') AS KACTIPAP,
+                                '' AS DFROTA,  --NO
+                                '' AS KACTPDUR,--EN BLANCO
+                                COALESCE(P.RENEWAL, '')  AS KACMODRE,
+                                '' AS KACMTNRE,--NO
+                                '' AS KACTPCOB,--NO
+                                COALESCE(P.PAYFREQ, '')  AS KACTPFRC,
+                                (
+                                  CASE P.BUSSITYP  
+                                    WHEN '2' THEN  '2' 
+                                    WHEN '1' THEN COALESCE(( SELECT '1' 
+                                                            FROM USINSUG01.COINSURAN C
+                                                            WHERE C.USERCOMP = 1
+                                                            AND C.COMPANY = 1
+                                                            AND C.CERTYPE = '2'
+                                                            AND C.BRANCH = P.BRANCH
+                                                            AND C.POLICY = P.POLICY
+                                                            AND C.EFFECDATE <= P.EFFECDATE
+                                                            AND ( C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
+                                                            LIMIT 1), '') 
+                                    ELSE ''
+                                    END                                                       
+                                ) AS KACTPCSG,
+                                COALESCE(P.REINTYPE,'') AS KACINDRE,
+                                '' AS KACCDGER,--NO
+                                COALESCE ((
+                                  SELECT CAST(CURRENCY AS VARCHAR) FROM USINSUG01.CURREN_POL CP 
+                                  WHERE CP.USERCOMP = P.USERCOMP 
+                                  AND   CP.COMPANY = P.COMPANY 
+                                  AND   CP.CERTYPE = P.CERTYPE
+                                  AND   CP.BRANCH  = P.BRANCH
+                                  AND   CP.POLICY  = P.POLICY
+                                  AND   CP.CERTIF  = CERT.CERTIF 
+                                  AND   CP.EFFECDATE <= P.EFFECDATE 
+                                  AND   ( CP.NULLDATE IS NULL OR CP.NULLDATE > P.EFFECDATE) LIMIT 1
+                                ), '0') AS KACMOEDA,
+                                COALESCE((
+                                  SELECT COALESCE(E.EXCHANGE, 0)
+                                  FROM USINSUG01.EXCHANGE E
+                                  WHERE E.USERCOMP = 1
+                                  AND   E.COMPANY = 1 
+                                  AND   E.CURRENCY = (   SELECT CP.CURRENCY 
+                                                          FROM USINSUG01.CURREN_POL CP
+                                                          WHERE USERCOMP = 1 
+                                                          AND COMPANY = 1 
+                                                          AND CERTYPE = '2'
+                                                          AND BRANCH  = P.BRANCH
+                                                          AND POLICY  = P.POLICY
+                                                          AND CERTIF  = 0
+                                                          AND CP.EFFECDATE <= P.EFFECDATE 
+                                                          AND (CP.NULLDATE IS NULL OR CP.NULLDATE > P.EFFECDATE) limit 1
+                                                      )
+                                    AND E.EFFECDATE <= P.EFFECDATE
+                                    AND (E.NULLDATE IS NULL OR E.NULLDATE > P.EFFECDATE)
+                                ), 0) AS VCAMBIO,
+                                '' AS KACREGCB,  --NO
+                                '' AS KCBMED_DRA,--NO
+                                '' AS KCBMED_CB, --NO
+                                COALESCE((
+                                  SELECT COALESCE(TRUNC(DX.PERCENT, 4), 0) 
+                                    FROM USINSUG01.DISC_XPREM DX 
+                                    JOIN USINSUG01.DISCO_EXPR DE 
+                                      ON  DX.USERCOMP = DE.USERCOMP 
+                                      AND DX.COMPANY = DE.COMPANY
+                                      AND DX.CERTYPE = '2'
+                                      AND DX.BRANCH    = DE.BRANCH
+                                      AND DX.CODE = DE.DISEXPRC
+                                    WHERE DX.usercomp = p.usercomp
+                                      and dx.company = p.company
+                                      and dx.branch  = p.branch
+                                      and DE.PRODUCT = P.PRODUCT
+                                      AND DX.POLICY  = P.POLICY
+                                      AND DX.CERTIF  = CERT.CERTIF 
+                                      AND DX.EFFECDATE <= P.EFFECDATE
+                                      AND (DX.NULLDATE IS NULL OR DX.NULLDATE > P.EFFECDATE)
+                                      AND DE.BILL_ITEM = 4
+                                      and de.currency = (select cp.currency from USINSUG01.curren_pol cp
+                                                          where cp.usercomp = p.usercomp 
+                                                            and cp.company = p.company
+                                                            and cp.certype = p.certype
+                                                            and cp.branch = p.branch
+                                                            and cp."policy" = p."policy"
+                                                            and cp.certif = cert.certif
+                                                            and cp.effecdate <= p.effecdate
+                                                            and (cp.nulldate is null or cp.nulldate > p.effecdate) limit 1
+                                                        ) limit 1
+                                ), 0) AS VTXCOMCB, 
+                                '' AS VMTCOMCB,  --EN BLANCO
+                                '' AS KCBMED_PD, --NO
+                                COALESCE (COALESCE(
+                                        (SELECT COALESCE(PERCENT, 0)
+                                        FROM USINSUG01.COMMISSION C 
+                                        WHERE C.USERCOMP = P.USERCOMP 
+                                        AND   C.COMPANY  = P.COMPANY 
+                                        AND   C.CERTYPE  = P.CERTYPE
+                                        AND   C.BRANCH   = P.BRANCH
+                                        AND   C.POLICY   = P.POLICY 
+                                        AND   C.CERTIF   = CERT.CERTIF 
+                                        AND   C.EFFECDATE <= P.EFFECDATE
+                                        AND  (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
+                                        AND   C.ROLE <> 1 LIMIT 1),
+                                      (SELECT COALESCE(PERCENT, 0) 
+                                        FROM USINSUG01.COMMISSION C 
+                                        WHERE C.USERCOMP = P.USERCOMP 
+                                        AND   C.COMPANY  = P.COMPANY 
+                                        AND   C.CERTYPE  = P.CERTYPE
+                                        AND   C.BRANCH   = P.BRANCH
+                                        AND   C.POLICY   = P.POLICY 
+                                        AND   C.CERTIF   = 0 
+                                        AND   C.EFFECDATE <= P.EFFECDATE
+                                        AND  (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
+                                        AND   C.ROLE <> 1 LIMIT 1)
+                                ), 0) AS VTXCOMMD,
+                                COALESCE (COALESCE(
+                                        (SELECT COALESCE(C.AMOUNT, 0) 
+                                        FROM USINSUG01.COMMISSION C 
+                                        WHERE C.USERCOMP = P.USERCOMP 
+                                        AND   C.COMPANY  = P.COMPANY 
+                                        AND   C.CERTYPE  = P.CERTYPE
+                                        AND   C.BRANCH   = P.BRANCH
+                                        AND   C.POLICY   = P.POLICY 
+                                        AND   C.CERTIF   = CERT.CERTIF 
+                                        AND   C.EFFECDATE <= P.EFFECDATE
+                                        AND  (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
+                                        AND   C.ROLE <> 1 LIMIT 1),
                                       (SELECT COALESCE(C.AMOUNT, 0) 
-                                      FROM USINSUG01.COMMISSION C 
-                                      WHERE C.USERCOMP = P.USERCOMP 
-                                      AND   C.COMPANY  = P.COMPANY 
-                                      AND   C.CERTYPE  = P.CERTYPE
-                                      AND   C.BRANCH   = P.BRANCH
-                                      AND   C.POLICY   = P.POLICY 
-                                      AND   C.CERTIF   = CERT.CERTIF 
-                                      AND   C.EFFECDATE <= P.EFFECDATE
-                                      AND  (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
-                                      AND   C.ROLE <> 1 LIMIT 1),
-                                    (SELECT COALESCE(C.AMOUNT, 0) 
-                                      FROM USINSUG01.COMMISSION C 
-                                      WHERE C.USERCOMP = P.USERCOMP 
-                                      AND   C.COMPANY  = P.COMPANY
-                                      AND   C.CERTYPE  = P.CERTYPE
-                                      AND   C.BRANCH   = P.BRANCH
-                                      AND   C.POLICY   = P.POLICY 
-                                      AND   C.CERTIF   = 0 
-                                      AND   C.EFFECDATE <= P.EFFECDATE
-                                      AND  (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
-                                      AND   C.ROLE <> 1 LIMIT 1) 
-                              ), 0) AS VMTCOMMD, 
-                              '' AS KCBMED_P2, --NO
-                              '' AS VTXCOMME,  --NO
-                              '' AS VMTCOMME,  --NO
-                              COALESCE((
-                              SELECT SUM(COALESCE(C.CAPITAL, 0)) FROM USINSUG01.COVER C 
-                              WHERE C.USERCOMP = P.USERCOMP 
-                              AND   C.COMPANY  = P.COMPANY 
-                              AND   C.CERTYPE  = P.CERTYPE
-                              AND   C.BRANCH   = P.BRANCH
-                              AND   C.POLICY   = P.POLICY 
-                              AND   C.CERTIF   = CERT.CERTIF 
-                              AND   C.EFFECDATE <= P.EFFECDATE
-                              AND   (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
-                              ), 0) AS VCAPITAL,
-                              '' AS VMTPRMSP, --NO
-                              COALESCE(P.PREMIUM, 0) AS VMTCOMR,
-                              COALESCE ((
-                                SELECT COALESCE (C.SHARE, 0) * COALESCE (P.PREMIUM, 0)
-                                FROM USINSUG01.COINSURAN C
-                                WHERE C.USERCOMP = 1
-                                AND C.COMPANY = 1 -- VALOR DE LA COMPANIA
-                                AND C.CERTYPE = '2'
-                                AND C.BRANCH = P.BRANCH 
-                                AND C.POLICY = P.POLICY
-                                AND C.EFFECDATE <= P.EFFECDATE
-                                AND (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
-                                AND C.companyc = 1
-                              ), 0)AS VMTCMNQP,
-                              '' AS VMTBOMAT,--NO
-                              '' AS VTXBOMAT,--NO
-                              '' AS VMTBOCOM,--NO
-                              '' AS VTXBOCOM,--NO
-                              '' AS VMTDECOM,--NO
-                              '' AS VTXDECOM,--NO
-                              '' AS VMTDETEC,--NO
-                              '' AS VTXDETEC,--NO
-                              '' AS VMTAGRAV,--NO
-                              '' AS VTXAGRAV,--NO
-                              '' AS VMTCSAP, --NO
-                              '' AS VMTPRMIN,--NO
-                              '' AS VMTPRMTR,--NO
-                              '' AS VMTPRLIQ,--NO
-                              COALESCE(P.PREMIUM, 0) AS VMTPRMBR,
-                              COALESCE((
-                                SELECT COALESCE(C.SHARE, 0)
-                                FROM USINSUG01.COINSURAN C
-                                WHERE C.USERCOMP = 1
-                                AND C.COMPANY = 1 -- VALOR DE LA COMPANIA
-                                AND C.CERTYPE = '2'
-                                AND C.BRANCH  = P.BRANCH 
-                                AND C.POLICY  = P.POLICY
-                                AND C.EFFECDATE <= P.EFFECDATE
-                                AND (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
-                                AND C.companyc = 1
-                              ), 0) AS VTXCOSSG,
-                              COALESCE ((    
-                                SELECT (TRUNC(COALESCE(SHARE, 0),4) /100)
-                                FROM USINSUG01.REINSURAN R
-                                WHERE R.USERCOMP = 1
-                                AND R.COMPANY = 1
-                                AND R.CERTYPE =  '2'
-                                AND R.BRANCH = P.BRANCH
-                                AND R.POLICY = P.POLICY
-                                AND R.CERTIF = CERT.CERTIF
-                                AND EFFECDATE <= P.EFFECDATE
-                                AND (R.NULLDATE IS NULL OR R.NULLDATE > P.EFFECDATE)
-                                AND R.TYPE = 1
-                              ), 0) AS VTXRETEN,
-                              COALESCE(((SELECT (TRUNC(COALESCE(SHARE, 0),4)/100)
-                                FROM USINSUG01.REINSURAN R
-                                WHERE R.USERCOMP = 1
-                                AND R.COMPANY = 1
-                                AND R.CERTYPE =  '2'
-                                AND R.BRANCH = P.BRANCH
-                                AND R.POLICY = P.POLICY
-                                AND R.CERTIF = CERT.CERTIF
-                                AND EFFECDATE <= P.EFFECDATE
-                                AND (R.NULLDATE IS NULL OR R.NULLDATE > P.EFFECDATE)
-                                AND R.TYPE = 1) *
-                              (SELECT SUM(COALESCE (CAPITAL, 0))
-                                FROM USINSUG01.COVER C
-                                WHERE C.USERCOMP = 1
-                                AND C.COMPANY = 1
-                                AND C.CERTYPE =  '2'
-                                AND C.BRANCH = P.BRANCH
-                                AND C.POLICY = P.POLICY
-                                AND C.CERTIF = CERT.CERTIF
-                                AND EFFECDATE <= P.EFFECDATE
-                                AND (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)	
-                              )), 0) AS VMTCAPRE,
-                              '' AS DNUMVIAS,    --NO
-                              '' AS DQTCRED,     --NO
-                              '' AS DNIB,        --NO
-                              '' AS DLOCREF,     --NO
-                              '' AS KEBMORAD,    --NO
-                              '' AS DLOCCOBR,    --NO
-                              '' AS TULTMALT,    --NO
-                              '' AS DUSRUPD,     --NO
-                              '' AS VMIPRMTR,    --NO
-                              '' AS VMIPRLIQ,    --NO
-                              '' AS VMIPRMBR,    --NO
-                              '' AS VMIRPMSP,    --NO
-                              '' AS VMIAGRAV,    --NO
-                              '' AS VMIDETEC,    --NO
-                              '' AS VMIDECOM,    --NO
-                              '' AS VMIBOCOM,    --NO
-                              '' AS VMIBOMAT,    --NO
-                              '' AS VMICOMR,     --NO
-                              '' AS VMICMNQP,    --NO
-                              '' AS VMICOMME,    --NO
-                              '' AS VMICOMMD,    --NO
-                              '' AS VMICOMCB,    --NO
-                              'LPG' AS DCOMPA,
-                              '' AS DMARCA,      --NO
-                              '' AS KACRGMCB,    --NO
-                              '' AS KABAPOL_MP,  --NO
-                              '' AS TMIGPARA,    --NO
-                              '' AS KABAPOL_MD,  --NO
-                              '' AS TMIGDE,      --NO
-                              '' AS KACPGPRE,    --EN BLANCO
-                              '' AS TDPGPRE,     --EN BLANCO
-                              '' AS TINIPGPR,    --EN BLANCO
-                              '' AS TFIMPGPR,    --EN BLANCO
-                              '' AS KABAPOL_ESQ, --NO
-                              '' AS KABAPOL_EFT, --NO
-                              '' AS DSUBSCR,     --NO
-                              '' AS DNUAPLI,     --NO
-                              '' AS DINDINIB,    --EN BLANCO
-                              '' AS DLOCRECB,    --NO
-                              '' AS KACCLCLI,    --NO
-                              COALESCE(CAST(P.NULLCODE AS VARCHAR), '') AS KACMTALT,
-                              COALESCE((
-                                SELECT CAST(COALESCE(PH.TYPE, 0) AS VARCHAR) FROM 
-                                  USINSUG01.POLICY_HIS PH
-                                  WHERE PH.USERCOMP = P.USERCOMP
-                                  AND   PH.COMPANY  = P.COMPANY
-                                  AND   PH.CERTYPE  = P.CERTYPE
-                                  AND   PH.BRANCH   = P.BRANCH
-                                  AND   PH.POLICY   = P.POLICY
-                                  AND   PH.CERTIF   = CERT.CERTIF
-                                  AND   PH.EFFECDATE <= P.EFFECDATE
-                                  AND  (PH.NULLDATE IS NULL OR PH.NULLDATE > P.EFFECDATE)
-                                  AND   PH.TYPE = 1
-                              ), '0') AS KACTPTRA,  
-                              '' AS TEMICANC,    --NO
-                              '' AS DENTIDSO,    --NO
-                              '' AS DARQUIVO,    --NO
-                              '' AS TARQUIVO,    --NO
-                              COALESCE(P.POLITYPE, '') AS KACTPSUB,
-                              '' AS KACPARES,
-                              '' AS KGCRAMO_SAP, --NO
-                              '' AS KACTPCRED,   --NO
-                              '' AS DIBAN,       --NO
-                              '' AS DSWIFT,      --NO
-                              '' AS KARMODALID,  --NO
-                              '' AS DUSREMIS,    --NO
-                              '' AS KCBMED_VENDA,--NO
-                              '' AS DUSRACEIT,   --NO
-                              '' AS DCANALOPE,   --NO
-                              '' AS KAICANEM,    --NO
-                              '' AS DIDCANEM,    --NO
-                              '' AS KAICANVD,    --NO
-                              '' AS DIDCANVD,    --NO
-                              '' AS DNMMULTI,    --NO
-                              '' AS DOBSERV,     --NO
-                              (
-                                SELECT CAST(COUNT(*) AS VARCHAR) FROM USINSUG01.ROLES R 
-                                WHERE R.USERCOMP = P.USERCOMP 
-                                AND R.COMPANY 	 = P.COMPANY 
-                                AND R.CERTYPE 	 = P.CERTYPE 
-                                AND R.BRANCH 	 = P.BRANCH 
-                                AND R.POLICY 	 = P.POLICY 
-                                AND R.CERTIF 	 = CERT.CERTIF 
-                              ) AS DQTDPART,
-                              coalesce(cast(to_date(P.YEAR_MONTH::text, 'YYYYMM') as VARCHAR),'') AS TINIPRXANU,
-                              '' AS KACTPREAP,    --EN BLANCO
-                              '' AS DENTCONGE,    --NO
-                              '' AS KCBMED_PARCE, --NO
-                              '' AS DCODPARC,  	--NO
-                              '' AS DMODPARC,  	--NO
-                              COALESCE(P.BUSSITYP, '') AS DTIPSEG,
-                              '' AS KACTPNEG,  	--NO
-                              '' AS DURPAGAPO,    --EN BLANCO
-                              '' AS DNMINTERP, 	--NO
-                              '' AS DNUMADES,  	--NO
-                              '' AS KACTPPRD,  	--ACLARAR
-                              '' AS KACSBTPRD, 	--ACLARAR
-                              '' AS KABPRODT_REL, --NO
-                              '' AS KACTPPARES, 	--NO
-                              '' AS KACTIPIFAP, 	   --NO
-                              '' AS KACTPALT_IFRS17, --NO
-                              '' AS TEFEALTE, 	   --NO
-                              '' AS TINITARLTA,      --NO
-                              '' AS TFIMTARLTA,      --NO
-                              '' AS DTERMO_IFRS17,   --NO
-                              '' AS TEMISREN		   --NO
-                              FROM USINSUG01.POLICY P 
-                              LEFT JOIN USINSUG01.CERTIFICAT CERT 
-                              ON  CERT.USERCOMP = P.USERCOMP  
-                              AND CERT.COMPANY = P.COMPANY   
-                              AND CERT.CERTYPE = P.CERTYPE 
-                              AND CERT.BRANCH  = P.BRANCH
-                              AND CERT.POLICY  = P.POLICY 
-                              AND CERT.PRODUCT = P.PRODUCT
-                              WHERE P.CERTYPE  = '2'
-                              AND P.STATUS_POL NOT IN ('2','3') 
-                              AND ((P.POLITYPE = '1' -- INDIVIDUAL 
-                                    AND P.EXPIRDAT >= '2021-12-31' 
-                                    AND (P.NULLDATE IS NULL OR P.NULLDATE > '2021-12-31'))
-                                    OR 
-                                  (P.POLITYPE <> '1' -- COLECTIVAS 
-                                    AND CERT.EXPIRDAT >= '2021-12-31' 
-                              AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
+                                        FROM USINSUG01.COMMISSION C 
+                                        WHERE C.USERCOMP = P.USERCOMP 
+                                        AND   C.COMPANY  = P.COMPANY
+                                        AND   C.CERTYPE  = P.CERTYPE
+                                        AND   C.BRANCH   = P.BRANCH
+                                        AND   C.POLICY   = P.POLICY 
+                                        AND   C.CERTIF   = 0 
+                                        AND   C.EFFECDATE <= P.EFFECDATE
+                                        AND  (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
+                                        AND   C.ROLE <> 1 LIMIT 1) 
+                                ), 0) AS VMTCOMMD, 
+                                '' AS KCBMED_P2, --NO
+                                '' AS VTXCOMME,  --NO
+                                '' AS VMTCOMME,  --NO
+                                COALESCE((
+                                SELECT SUM(COALESCE(C.CAPITAL, 0)) FROM USINSUG01.COVER C 
+                                WHERE C.USERCOMP = P.USERCOMP 
+                                AND   C.COMPANY  = P.COMPANY 
+                                AND   C.CERTYPE  = P.CERTYPE
+                                AND   C.BRANCH   = P.BRANCH
+                                AND   C.POLICY   = P.POLICY 
+                                AND   C.CERTIF   = CERT.CERTIF 
+                                AND   C.EFFECDATE <= P.EFFECDATE
+                                AND   (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
+                                ), 0) AS VCAPITAL,
+                                '' AS VMTPRMSP, --NO
+                                COALESCE(P.PREMIUM, 0) AS VMTCOMR,
+                                COALESCE ((
+                                  SELECT COALESCE (C.SHARE, 0) * COALESCE (P.PREMIUM, 0)
+                                  FROM USINSUG01.COINSURAN C
+                                  WHERE C.USERCOMP = 1
+                                  AND C.COMPANY = 1 -- VALOR DE LA COMPANIA
+                                  AND C.CERTYPE = '2'
+                                  AND C.BRANCH = P.BRANCH 
+                                  AND C.POLICY = P.POLICY
+                                  AND C.EFFECDATE <= P.EFFECDATE
+                                  AND (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
+                                  AND C.companyc = 1
+                                ), 0)AS VMTCMNQP,
+                                '' AS VMTBOMAT,--NO
+                                '' AS VTXBOMAT,--NO
+                                '' AS VMTBOCOM,--NO
+                                '' AS VTXBOCOM,--NO
+                                '' AS VMTDECOM,--NO
+                                '' AS VTXDECOM,--NO
+                                '' AS VMTDETEC,--NO
+                                '' AS VTXDETEC,--NO
+                                '' AS VMTAGRAV,--NO
+                                '' AS VTXAGRAV,--NO
+                                '' AS VMTCSAP, --NO
+                                '' AS VMTPRMIN,--NO
+                                '' AS VMTPRMTR,--NO
+                                '' AS VMTPRLIQ,--NO
+                                COALESCE(P.PREMIUM, 0) AS VMTPRMBR,
+                                COALESCE((
+                                  SELECT COALESCE(C.SHARE, 0)
+                                  FROM USINSUG01.COINSURAN C
+                                  WHERE C.USERCOMP = 1
+                                  AND C.COMPANY = 1 -- VALOR DE LA COMPANIA
+                                  AND C.CERTYPE = '2'
+                                  AND C.BRANCH  = P.BRANCH 
+                                  AND C.POLICY  = P.POLICY
+                                  AND C.EFFECDATE <= P.EFFECDATE
+                                  AND (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)
+                                  AND C.companyc = 1
+                                ), 0) AS VTXCOSSG,
+                                COALESCE ((    
+                                  SELECT (TRUNC(COALESCE(SHARE, 0),4) /100)
+                                  FROM USINSUG01.REINSURAN R
+                                  WHERE R.USERCOMP = 1
+                                  AND R.COMPANY = 1
+                                  AND R.CERTYPE =  '2'
+                                  AND R.BRANCH = P.BRANCH
+                                  AND R.POLICY = P.POLICY
+                                  AND R.CERTIF = CERT.CERTIF
+                                  AND EFFECDATE <= P.EFFECDATE
+                                  AND (R.NULLDATE IS NULL OR R.NULLDATE > P.EFFECDATE)
+                                  AND R.TYPE = 1
+                                ), 0) AS VTXRETEN,
+                                COALESCE(((SELECT (TRUNC(COALESCE(SHARE, 0),4)/100)
+                                  FROM USINSUG01.REINSURAN R
+                                  WHERE R.USERCOMP = 1
+                                  AND R.COMPANY = 1
+                                  AND R.CERTYPE =  '2'
+                                  AND R.BRANCH = P.BRANCH
+                                  AND R.POLICY = P.POLICY
+                                  AND R.CERTIF = CERT.CERTIF
+                                  AND EFFECDATE <= P.EFFECDATE
+                                  AND (R.NULLDATE IS NULL OR R.NULLDATE > P.EFFECDATE)
+                                  AND R.TYPE = 1) *
+                                (SELECT SUM(COALESCE (CAPITAL, 0))
+                                  FROM USINSUG01.COVER C
+                                  WHERE C.USERCOMP = 1
+                                  AND C.COMPANY = 1
+                                  AND C.CERTYPE =  '2'
+                                  AND C.BRANCH = P.BRANCH
+                                  AND C.POLICY = P.POLICY
+                                  AND C.CERTIF = CERT.CERTIF
+                                  AND EFFECDATE <= P.EFFECDATE
+                                  AND (C.NULLDATE IS NULL OR C.NULLDATE > P.EFFECDATE)	
+                                )), 0) AS VMTCAPRE,
+                                '' AS DNUMVIAS,    --NO
+                                '' AS DQTCRED,     --NO
+                                '' AS DNIB,        --NO
+                                '' AS DLOCREF,     --NO
+                                '' AS KEBMORAD,    --NO
+                                '' AS DLOCCOBR,    --NO
+                                '' AS TULTMALT,    --NO
+                                '' AS DUSRUPD,     --NO
+                                '' AS VMIPRMTR,    --NO
+                                '' AS VMIPRLIQ,    --NO
+                                '' AS VMIPRMBR,    --NO
+                                '' AS VMIRPMSP,    --NO
+                                '' AS VMIAGRAV,    --NO
+                                '' AS VMIDETEC,    --NO
+                                '' AS VMIDECOM,    --NO
+                                '' AS VMIBOCOM,    --NO
+                                '' AS VMIBOMAT,    --NO
+                                '' AS VMICOMR,     --NO
+                                '' AS VMICMNQP,    --NO
+                                '' AS VMICOMME,    --NO
+                                '' AS VMICOMMD,    --NO
+                                '' AS VMICOMCB,    --NO
+                                'LPG' AS DCOMPA,
+                                '' AS DMARCA,      --NO
+                                '' AS KACRGMCB,    --NO
+                                '' AS KABAPOL_MP,  --NO
+                                '' AS TMIGPARA,    --NO
+                                '' AS KABAPOL_MD,  --NO
+                                '' AS TMIGDE,      --NO
+                                '' AS KACPGPRE,    --EN BLANCO
+                                '' AS TDPGPRE,     --EN BLANCO
+                                '' AS TINIPGPR,    --EN BLANCO
+                                '' AS TFIMPGPR,    --EN BLANCO
+                                '' AS KABAPOL_ESQ, --NO
+                                '' AS KABAPOL_EFT, --NO
+                                '' AS DSUBSCR,     --NO
+                                '' AS DNUAPLI,     --NO
+                                '' AS DINDINIB,    --EN BLANCO
+                                '' AS DLOCRECB,    --NO
+                                '' AS KACCLCLI,    --NO
+                                COALESCE(CAST(P.NULLCODE AS VARCHAR), '') AS KACMTALT,
+                                COALESCE((
+                                  SELECT CAST(COALESCE(PH.TYPE, 0) AS VARCHAR) FROM 
+                                    USINSUG01.POLICY_HIS PH
+                                    WHERE PH.USERCOMP = P.USERCOMP
+                                    AND   PH.COMPANY  = P.COMPANY
+                                    AND   PH.CERTYPE  = P.CERTYPE
+                                    AND   PH.BRANCH   = P.BRANCH
+                                    AND   PH.POLICY   = P.POLICY
+                                    AND   PH.CERTIF   = CERT.CERTIF
+                                    AND   PH.EFFECDATE <= P.EFFECDATE
+                                    AND  (PH.NULLDATE IS NULL OR PH.NULLDATE > P.EFFECDATE)
+                                    AND   PH.TYPE = 1
+                                ), '0') AS KACTPTRA,  
+                                '' AS TEMICANC,    --NO
+                                '' AS DENTIDSO,    --NO
+                                '' AS DARQUIVO,    --NO
+                                '' AS TARQUIVO,    --NO
+                                COALESCE(P.POLITYPE, '') AS KACTPSUB,
+                                '' AS KACPARES,
+                                '' AS KGCRAMO_SAP, --NO
+                                '' AS KACTPCRED,   --NO
+                                '' AS DIBAN,       --NO
+                                '' AS DSWIFT,      --NO
+                                '' AS KARMODALID,  --NO
+                                '' AS DUSREMIS,    --NO
+                                '' AS KCBMED_VENDA,--NO
+                                '' AS DUSRACEIT,   --NO
+                                '' AS DCANALOPE,   --NO
+                                '' AS KAICANEM,    --NO
+                                '' AS DIDCANEM,    --NO
+                                '' AS KAICANVD,    --NO
+                                '' AS DIDCANVD,    --NO
+                                '' AS DNMMULTI,    --NO
+                                '' AS DOBSERV,     --NO
+                                (
+                                  SELECT CAST(COUNT(*) AS VARCHAR) FROM USINSUG01.ROLES R 
+                                  WHERE R.USERCOMP = P.USERCOMP 
+                                  AND R.COMPANY 	 = P.COMPANY 
+                                  AND R.CERTYPE 	 = P.CERTYPE 
+                                  AND R.BRANCH 	 = P.BRANCH 
+                                  AND R.POLICY 	 = P.POLICY 
+                                  AND R.CERTIF 	 = CERT.CERTIF 
+                                ) AS DQTDPART,
+                                (case when P.YEAR_MONTH > 3 then coalesce(cast(to_date(P.YEAR_MONTH::text, 'YYYYMM') as VARCHAR),'') else '' end) AS TINIPRXANU,
+                                '' AS KACTPREAP,    --EN BLANCO
+                                '' AS DENTCONGE,    --NO
+                                '' AS KCBMED_PARCE, --NO
+                                '' AS DCODPARC,  	--NO
+                                '' AS DMODPARC,  	--NO
+                                COALESCE(P.BUSSITYP, '') AS DTIPSEG,
+                                '' AS KACTPNEG,  	--NO
+                                '' AS DURPAGAPO,    --EN BLANCO
+                                '' AS DNMINTERP, 	--NO
+                                '' AS DNUMADES,  	--NO
+                                '' AS KACTPPRD,  	--ACLARAR
+                                '' AS KACSBTPRD, 	--ACLARAR
+                                '' AS KABPRODT_REL, --NO
+                                '' AS KACTPPARES, 	--NO
+                                '' AS KACTIPIFAP, 	   --NO
+                                '' AS KACTPALT_IFRS17, --NO
+                                '' AS TEFEALTE, 	   --NO
+                                '' AS TINITARLTA,      --NO
+                                '' AS TFIMTARLTA,      --NO
+                                '' AS DTERMO_IFRS17,   --NO
+                                '' AS TEMISREN		   --NO
+                                FROM USINSUG01.POLICY P 
+                                LEFT JOIN USINSUG01.CERTIFICAT CERT 
+                                ON  CERT.USERCOMP = P.USERCOMP  
+                                AND CERT.COMPANY = P.COMPANY   
+                                AND CERT.CERTYPE = P.CERTYPE 
+                                AND CERT.BRANCH  = P.BRANCH
+                                AND CERT.POLICY  = P.POLICY 
+                                AND CERT.PRODUCT = P.PRODUCT
+                                WHERE P.CERTYPE  = '2'
+                                AND P.STATUS_POL NOT IN ('2','3') 
+                                AND ((P.POLITYPE = '1' -- INDIVIDUAL 
+                                      AND P.EXPIRDAT >= '2021-12-31' 
+                                      AND (P.NULLDATE IS NULL OR P.NULLDATE > '2021-12-31'))
+                                      OR 
+                                    (P.POLITYPE <> '1' -- COLECTIVAS 
+                                      AND CERT.EXPIRDAT >= '2021-12-31' 
+                                AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31')))
                               AND P.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100
                               /*WHERE P.CERTYPE = '2' AND P.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' limit 100*/
                             ) as tmp 
@@ -1275,7 +1275,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               '' AS PK,
                               '' AS DTPREG,      --NO
                               '' AS TIOCPROC,    --NO
-                              COALESCE(CAST(P.EFFECDATE AS VARCHAR), '') AS TIOCFRM,
+                              COALESCE(CAST((case when p.politype = '1' then P.EFFECDATE else cert.effecdate end) AS VARCHAR), '') AS TIOCFRM,
                               '' AS TIOCTO,      --NO
                               'PIV' AS KGIORIGM, --NO
                               'LPV' AS KACCOMPA, --NO
@@ -1292,21 +1292,21 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               '' AS DTERMO,
                               COALESCE((
                                 SELECT SCOD_VT FROM USINSUG01.EQUI_VT_INX EVI
-                                WHERE EVI.SCOD_INX = P.TITULARC
+                                WHERE EVI.SCOD_INX = (case when p.politype = '1' then P.TITULARC else cert.titularc end)
                               ), '')
                               AS KEBENTID_TO,
-                              COALESCE(CAST(P.DATE_ORIGI AS VARCHAR), '') AS TCRIAPO,
-                              COALESCE(CAST(P.ISSUEDAT AS VARCHAR), '') AS TEMISSAO,
-                              COALESCE(CAST(P.EFFECDATE AS VARCHAR), '') AS TINICIO,
+                              COALESCE(CAST((case when p.politype = '1' then P.DATE_ORIGI else cert.date_origi end) AS VARCHAR), '') AS TCRIAPO,
+                              COALESCE(CAST((case when p.politype = '1' then P.ISSUEDAT else cert.issuedat end) AS VARCHAR), '') AS TEMISSAO,
+                              COALESCE(CAST((case when P.politype = '1' then p.effecdate else cert.effecdate end) AS VARCHAR), '') AS TINICIO,
                               '' AS DHORAINI, --NO
-                              COALESCE(CAST(P.EXPIRDAT  AS VARCHAR), '') AS TTERMO,
-                              COALESCE(CAST(P.EFFECDATE AS VARCHAR), '') AS TINIANU,
-                              COALESCE(CAST(P.EXPIRDAT  AS VARCHAR), '') AS TVENANU,
-                              COALESCE(CAST(P.NULLDATE  AS VARCHAR), '') AS TANSUSP,
+                              COALESCE(CAST((case when p.politype = '1' then P.EXPIRDAT else cert.expirdat end) AS VARCHAR), '') AS TTERMO,
+                              COALESCE(CAST((case when p.politype = '1' then P.EFFECDATE else cert.effecdate end) AS VARCHAR), '') AS TINIANU,
+                              COALESCE(CAST((case when p.politype = '1' then P.EXPIRDAT else cert.expirdat end) AS VARCHAR), '') AS TVENANU,
+                              COALESCE(CAST((case when p.politype = '1' then P.NULLDATE else cert.nulldate end)  AS VARCHAR), '') AS TANSUSP,
                               '' AS TESTADO, --EN BLANCO
-                              COALESCE(P.STATUS_POL, '') AS KACESTAP,
+                              COALESCE((case when p.politype = '1' then P.STATUS_POL else cert.statusva end), '') AS KACESTAP,
                               '' AS KACMOEST, --NO
-                              COALESCE(CAST(P.EFFECDATE AS VARCHAR), '') AS TEFEACTA,
+                              COALESCE(CAST((case when p.politype = '1' then P.EFFECDATE else cert.effecdate end) AS VARCHAR), '') AS TEFEACTA,
                               '' AS DULTACTA,--NO
                               '' AS KACCNEMI,--NO
                               '' AS KACARGES,--NO
@@ -1613,7 +1613,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                 AND R.POLICY 	 = P.POLICY 
                                 AND R.CERTIF 	 = CERT.CERTIF 
                               ) AS VARCHAR) AS DQTDPART,
-                              coalesce(cast(to_date(P.YEAR_MONTH::text, 'YYYYMM') as VARCHAR),'') AS TINIPRXANU,
+                              (case when P.YEAR_MONTH > 3 then coalesce(cast(to_date(P.YEAR_MONTH::text, 'YYYYMM') as VARCHAR),'') else '' end) AS TINIPRXANU,
                               '' AS KACTPREAP,    --EN BLANCO
                               '' AS DENTCONGE,    --NO
                               '' AS KCBMED_PARCE, --NO
