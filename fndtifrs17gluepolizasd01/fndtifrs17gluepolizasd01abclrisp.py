@@ -14,7 +14,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              'PIG' AS KGIORIGM,
                              PC.BRANCH ||'-'|| COALESCE (PC.PRODUCT, 0) ||'-'|| PC.POLICY ||'-'|| PC.CERTIF AS KABAPOL,
                              PC.BRANCH ||'-'|| COALESCE (PC.PRODUCT, 0) ||'-'|| PC.POLICY ||'-'|| PC.CERTIF || '-' || (SELECT EVI.SCOD_VT  FROM USINSUG01.EQUI_VT_INX EVI WHERE EVI.SCOD_INX = R.CLIENT)  AS KABUNRIS,
-                             COALESCE(( SELECT COALESCE(GC.COVERGEN, 0)           
+                             (SELECT COALESCE(GC.COVERGEN, 0) ||'-'|| coalesce(GC.CURRENCY,0)
                                         FROM USINSUG01.GEN_COVER GC 
                                         JOIN USINSUG01.COVER C  
                                         ON  GC.USERCOMP = C.USERCOMP 
@@ -36,7 +36,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                         AND   C.EFFECDATE <= PC.EFFECDATE
                                         AND  (C.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE)
                                         AND  C.COVER = 1
-                             ) ,'0') AS KGCTPCBT,
+                             ) AS KGCTPCBT,
                              ROW_NUMBER () OVER (PARTITION  BY PC.BRANCH, COALESCE (PC.PRODUCT, 0), PC.POLICY, PC.CERTIF ORDER BY R.CLIENT) AS DNPESEG,
                              (SELECT EVI.SCOD_VT  FROM USINSUG01.EQUI_VT_INX EVI WHERE EVI.SCOD_INX  = R.CLIENT) AS KEBENTID_PS,
                              (SELECT DATE_PART('YEAR', AGE(CURRENT_DATE, CLI.BIRTHDAT)) FROM USINSUG01.CLIENT CLI WHERE CLI.CODE = R.CLIENT) AS DIDADEAC,
@@ -234,20 +234,19 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     'PIV' AS KGIORIGM,
                                     PC.BRANCH ||'-'|| COALESCE (PC.PRODUCT, 0) ||'-'|| PC.POLICY ||'-'|| PC.CERTIF AS KABAPOL,
                                     '' AS KABUNRIS, --PENDIENTE
-                                    COALESCE(( SELECT COALESCE(GC.COVERGEN, 0)           
-                                          FROM USINSUV01.life_cover GC 
-                                          JOIN USINSUV01.COVER C  
-                                          ON  GC.USERCOMP = C.USERCOMP 
-                                          AND GC.COMPANY  = C.COMPANY 
-                                          AND GC.BRANCH   = C.BRANCH
-                                          AND GC.PRODUCT  = PC.PRODUCT
-                                          --AND GC.SUB_PRODUCT = PC.SUB_PRODUCT
-                                          AND GC.CURRENCY = C.CURRENCY
-                                          --AND GC.MODULEC =  C.MODULEC
-                                          AND GC.COVER   =  C.COVER
-                                          AND GC.EFFECDATE <= PC.EFFECDATE
-                                          AND (GC.NULLDATE IS NULL OR GC.NULLDATE > PC.EFFECDATE)		       		   
-                                          WHERE C.USERCOMP   = PC.USERCOMP 
+                                    (SELECT COALESCE(CAST(GLC.COVERGEN AS VARCHAR), '0')  ||'-'|| COALESCE(CAST(GLC.CURRENCY AS VARCHAR), '0')
+                                           FROM USBI01.IFRS170_V_GEN_LIFE_COVER_INXLPV GLC 
+                                           JOIN USINSUV01.COVER C
+                                           ON GLC.USERCOMP = C.USERCOMP 
+                                           AND GLC.COMPANY = C.COMPANY 
+                                           AND GLC.BRANCH = C.BRANCH 
+                                           AND GLC.PRODUCT = PC.PRODUCT
+                                           AND GLC.CURRENCY = C.CURRENCY
+                                           AND GLC.MODULEC = C.MODULEC
+                                           AND GLC.COVER = C.COVER 
+                                           AND GLC.EFFECDATE <= C.EFFECDATE
+                                           AND (GLC.NULLDATE IS NULL OR GLC.NULLDATE > C.EFFECDATE) 
+                                       WHERE C.USERCOMP   = PC.USERCOMP 
                                           AND   C.COMPANY    = PC.COMPANY 
                                           AND   C.CERTYPE    = '2' 
                                           AND   C.BRANCH     = PC.BRANCH 
@@ -256,7 +255,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                           AND   C.EFFECDATE <= PC.EFFECDATE
                                           AND  (C.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE)
                                           AND  C.COVER = 1 limit 1
-                                    ) ,'0') AS KGCTPCBT,
+                                           ) AS KGCTPCBT,
                                     ROW_NUMBER () OVER ( PARTITION  BY PC.BRANCH, COALESCE (PC.PRODUCT, 0), PC.POLICY, PC.CERTIF order by R.CLIENT) AS DNPESEG, --PENDIENTE
                                     '' AS KEBENTID_PS,
                                     (SELECT (CURRENT_DATE - CLI.BIRTHDAT)/365 FROM USINSUG01.CLIENT CLI WHERE CLI.CODE = PC.TITULARC) AS DIDADEAC,
@@ -439,8 +438,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
     #----------------------------------------------------------------------------------------------------------------------------------#
 
     L_ABCLRISP_VTIME_LPG = f'''
-                              (
-                                  SELECT
+                              ( SELECT
                                     'D' INDDETREC, 
                                     'ABCLRISP' TABLAIFRS17, 
                                     '' AS PK,
@@ -451,7 +449,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     'PVG' AS KGIORIGM,
                                     PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" AS KABAPOL,
                                     PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" || '-' || R."SCLIENT"  AS KABUNRIS,
-                                    COALESCE((SELECT COALESCE(GLC."NCOVERGEN", 0)           
+                                    (SELECT COALESCE(GLC."NCOVERGEN", 0) ||'-'|| COALESCE(GLC."NCURRENCY", 0)
                                               FROM USBI01.IFRS170_V_GEN_LIFE_COVER GLC
                                               JOIN USVTIMG01."COVER" C  
                                               ON  GLC."NBRANCH"   = C."NBRANCH"
@@ -469,7 +467,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                               AND   C."DEFFECDATE" <= PC."DSTARTDATE"
                                               AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE")
                                               AND  C."NCOVER" = 1
-                                    ) ,'0') AS KGCTPCBT,
+                                    )AS KGCTPCBT,
                                     ROW_NUMBER () OVER (PARTITION  BY PC."NBRANCH", PC."NPRODUCT", PC."NPOLICY", PC."NCERTIF" ORDER BY R."SCLIENT") AS DNPESEG,
                                     R."SCLIENT" AS KEBENTID_PS,
                                     (SELECT DATE_PART('YEAR', AGE(CURRENT_DATE, CLI."DBIRTHDAT")) FROM USVTIMG01."CLIENT" CLI WHERE CLI."SCLIENT" = R."SCLIENT") AS DIDADEAC,
@@ -631,7 +629,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                            'PVV' AS KGIORIGM,
                            PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" AS KABAPOL,
                            PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" || '-' || R."SCLIENT"  AS KABUNRIS,
-                           COALESCE(( SELECT COALESCE(GC."NCOVERGEN", 0)           
+                           ( SELECT COALESCE(GC."NCOVERGEN", 0) ||'-'|| GC."NCURRENCY"
                                       FROM USVTIMV01."LIFE_COVER" GC 
                                       JOIN USVTIMV01."COVER" C  
                                       ON  GC."NBRANCH"   = C."NBRANCH"
@@ -649,7 +647,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                       AND   C."DEFFECDATE" <= PC."DSTARTDATE"
                                       AND  (C."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE")
                                       AND  C."NCOVER" = 1 LIMIT 1                                      
-                           ) ,'0') AS KGCTPCBT,
+                           )AS KGCTPCBT,
                            ROW_NUMBER () OVER (PARTITION  BY PC."NBRANCH", PC."NPRODUCT", PC."NPOLICY", PC."NCERTIF" ORDER BY R."SCLIENT") AS DNPESEG,
                            R."SCLIENT" AS KEBENTID_PS,
                            (SELECT DATE_PART('YEAR', AGE(CURRENT_DATE, CLI."DBIRTHDAT")) FROM USVTIMG01."CLIENT" CLI WHERE CLI."SCLIENT" = R."SCLIENT") AS DIDADEAC,
