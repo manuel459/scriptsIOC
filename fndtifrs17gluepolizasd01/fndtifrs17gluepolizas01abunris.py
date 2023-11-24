@@ -15,7 +15,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCTO,
                               'PIG' KGIORIGM,                                                  -- Indicador
                               coalesce(cast(rol.branch as varchar),'') || '-' || coalesce(cast(rol.policy as varchar),'') ||  '-' || coalesce(cast(rol.certif as varchar),'') KABAPOL,  -- Numero de Poliza
-                              (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = rol.branch  and "SOURCESCHEMA" = 'usinsug01') KACTPRIS ,           -- Codigo del Tipo de riesgo
+                              /*(select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = rol.branch  and "SOURCESCHEMA" = 'usinsug01')*/'PES' KACTPRIS ,           -- Codigo del Tipo de riesgo
                               (select evi.scod_vt  FROM usinsug01.equi_vt_inx evi  WHERE evi.scod_inx  = rol.client)  DUNIRIS,                                                          -- Codigo de unidad de riesgo 
                               coalesce(cast(rol.EFFECDATE as varchar),'')TINCRIS,             -- Fecha de inicio de riesgo
                               coalesce(cast(rol.NULLDATE  as varchar),'') TVENCRI,            -- Fecha de fin de riesgo
@@ -79,7 +79,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               where rol.usercomp = 1
                               and rol.company = 1
                               and rol.certype  = '2'
-                              and rol.branch in  (select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usinsug01' and  "RISKTYPEN" = 1 )
+                              and rol.branch in (select unnest(array[5,21,22,23,24,25,27,31,32,33,34,35,36,37,40,41,42,59,68,71,75,77,91,99]) as "BRANCHCOM") /*(select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usinsug01' and  "RISKTYPEN" = 1 )*/
                               and rol.role in (2,8) -- Asegurado , Asegurado adicional
                               and rol.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                               limit 100
@@ -104,7 +104,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCTO,
                               'PIG' KGIORIGM,                                                  -- Indicador
                               coalesce(cast(ad.branch as varchar),'') || '-' || coalesce(cast(ad.policy as varchar),'') ||  '-' || coalesce(cast(ad.certif as varchar),'') KABAPOL,  -- Numero de Poliza
-                              (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = ad.branch  and "SOURCESCHEMA" = 'usinsug01') KACTPRIS ,           -- Codigo del Tipo de riesgo
+                              /*(select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = ad.branch  and "SOURCESCHEMA" = 'usinsug01')*/'PAT' KACTPRIS ,           -- Codigo del Tipo de riesgo
                               coalesce(cast(ad.branch as varchar),'') || '-' || coalesce(cast(ad.policy as varchar),'') ||  '-' || coalesce(cast(ad.certif as varchar),'')  DUNIRIS,                                                          -- Codigo de unidad de riesgo 
                               coalesce(cast(p.EFFECDATE as varchar),'')TINCRIS,             -- Fecha de inicio de riesgo
                               coalesce(cast(p.NULLDATE  as varchar),'') TVENCRI,            -- Fecha de fin de riesgo
@@ -178,7 +178,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                            and c.branch = ad.branch 
                                            and c.policy = ad.policy
                                            and c.certif = ad.certif
-                              where ad.branch in (select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usinsug01' and "RISKTYPEN" = 2)
+                              where ad.branch in (select unnest(ARRAY[1,2,3,4,7,8,9,10,11,12,13,14,16,17,18,19,28,30,38,39,55,57,58]) "BRANCHCOM") /*(select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usinsug01' and "RISKTYPEN" = 2)*/
                               and ad.compdate between  '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                               limit 100
                              )
@@ -201,7 +201,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCTO,
                               'PIG' KGIORIGM,                                                  -- Indicador
                               coalesce(cast(tnb.branch as varchar),'') || '-' || coalesce(cast(tnb.policy as varchar),'') ||  '-' || coalesce(cast(tnb.certif as varchar),'') KABAPOL,  --Numero de Poliza
-                              (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = tnb.branch  and "SOURCESCHEMA" = 'usinsug01') KACTPRIS ,     -- Codigo del Tipo de riesgo 
+                              /*(select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = tnb.branch  and "SOURCESCHEMA" = 'usinsug01')*/'PAT' KACTPRIS ,     -- Codigo del Tipo de riesgo 
                               trim(TNB.REGIST)|| '-' || trim(TNB.CHASSIS)  DUNIRIS,           -- Codigo de Unidad de riesgo,                                                          -- Codigo de unidad de riesgo 
                               coalesce(cast(TNB.STARTDATE as varchar),'') TINCRIS,            -- Fecha de inicio del riesgo
                               coalesce(cast(TNB.EXPIRDAT as varchar),'')TVENCRI,              -- Fecha de vencimiento del riesgo
@@ -289,7 +289,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCTO,
                               'PIV' KGIORIGM,                                                  -- Indicador
                               coalesce(cast(rol.branch as varchar),'') || '-' || coalesce(cast(rol.policy as varchar),'') ||  '-' || coalesce(cast(rol.certif as varchar),'') KABAPOL,  --Numero de Poliza
-                              (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = rol.branch  and "SOURCESCHEMA" = 'usinsug01') KACTPRIS ,           -- Codigo del Tipo de riesgo 
+                              /*(select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = rol.branch  and "SOURCESCHEMA" = 'usinsug01')*/'PES' KACTPRIS ,           -- Codigo del Tipo de riesgo 
                               (select evi.scod_vt  FROM usinsug01.equi_vt_inx evi  WHERE evi.scod_inx  = rol.client)  DUNIRIS,                                                          -- Codigo de unidad de riesgo 
                               coalesce(cast(rol.effecdate as varchar),'') TINCRIS,            -- Fecha de inicio de riesgo
                               coalesce(cast(rol.NULLDATE  as varchar),'') TVENCRI,            -- Fecha de fin de riesgo
@@ -353,7 +353,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              where rol.usercomp = 1
                              and rol.company = 1
                              and rol.certype  = '2'
-                             and rol.branch in  (select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usinsuv01' and  "RISKTYPEN" = 1 )
+                             and rol.branch in (select unnest(ARRAY[5,21,22,23,24,25,27,31,32,33,34,35,36,37,40,41,42,59,68,71,75,77,91,99]) as "BRANCHCOM") /*(select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usinsuv01' and  "RISKTYPEN" = 1 )*/
                              and rol.role in (2,8) -- Asegurado , Asegurado adicional
                              and rol.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                              limit 100
@@ -378,7 +378,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCTO,
                               'PVG' KGIORIGM,                                                                                -- Indicador
                               rol."NBRANCH" || '-' || rol."NPOLICY"  ||  '-' || rol."NCERTIF"  KABAPOL,                      -- Numero de Poliza
-                              (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = rol."NBRANCH" and "SOURCESCHEMA" = 'usvtimg01'  ) KACTPRIS ,     -- Codigo del Tipo de riesgo 
+                              /*(select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = rol."NBRANCH" and "SOURCESCHEMA" = 'usvtimg01')*/'PES' KACTPRIS ,     -- Codigo del Tipo de riesgo 
                               rol."SCLIENT" DUNIRIS,                                                                         -- Codigo de unidad de riesgo 
                               coalesce(cast(cast(rol."DEFFECDATE" as date) as varchar),'')  TINCRIS,                         -- Fecha de inicio de riesgo
                               coalesce(cast(cast(rol."DNULLDATE" as date) as VARCHAR),'')TVENCRI,                            -- Fecha de fin de riesgo
@@ -440,7 +440,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as DINREGFL
                              from usvtimg01."ROLES" rol
                              where rol."SCERTYPE" = '2'
-                             and rol."NBRANCH"  in  (select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usvtimg01' and  "RISKTYPEN" = 1 )
+                             and rol."NBRANCH"  in (select unnest(ARRAY[27,35,75,91,23,24,42,21,31,33,34,36,37,40,71,32,64]) as "BRANCHCOM") /*(select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usvtimg01' and  "RISKTYPEN" = 1 )*/
                              and rol."NROLE" in (2,8) -- Asegurado , Asegurado adicional
                              and cast(rol."DCOMPDATE" as date)  between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                              limit 100
@@ -465,7 +465,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCTO,
                               'PVG' KGIORIGM,                                                                                -- Indicador
                               ad."NBRANCH" || '-' || ad."NPOLICY" ||  '-' || ad."NCERTIF"  KABAPOL,                          -- Numero de Poliza
-                              (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = ad."NBRANCH" and "SOURCESCHEMA" = 'usvtimg01' ) KACTPRIS ,     -- Codigo del Tipo de riesgo 
+                              /*(select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = ad."NBRANCH" and "SOURCESCHEMA" = 'usvtimg01' )*/'PAT' KACTPRIS ,     -- Codigo del Tipo de riesgo 
                               ad."SKEYADDRESS" DUNIRIS,                                                                      -- Codigo de unidad de riesgo  
                               coalesce(cast(cast(ad."DEFFECDATE" as date) as varchar),'')  TINCRIS,                          -- Fecha de Inicio del riesgo
                               coalesce(cast(ad."DNULLDATE" as VARCHAR),'')  TVENCRI,                                         -- Fecha de vencimiento del riesgo 
@@ -535,7 +535,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                          and c."NPRODUCT" = AD."NPRODUCT"
                                          and c."NPOLICY"  = ad."NPOLICY"
                                          and c."NCERTIF"  = ad."NCERTIF"
-                            where ad."NBRANCH"  in (select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usvtimg01' and "RISKTYPEN" = 2 )
+                            where ad."NBRANCH"  in (select unnest(ARRAY[13,4,5,30,38,39,55,17,1,58,10,29,11,18,45,8,19,28,57,921,63,3,7,9,59,60,61,12,14,2]) as "BRANCHCOM")/*(select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usvtimg01' and "RISKTYPEN" = 2 )*/
                             and cast(ad."DCOMPDATE" as date)  between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                             )
                             ) AS TMP
@@ -558,7 +558,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCTO,
                               'PVG' KGIORIGM,                                                                               -- Indicador
                               aut."NBRANCH"  || '-' || aut."NPOLICY" ||  '-' || aut."NCERTIF" KABAPOL,                      -- Numero de Poliza
-                              (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = aut."NBRANCH" and "SOURCESCHEMA" = 'usvtimg01') KACTPRIS ,     -- Codigo del Tipo de riesgo
+                              /*(select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = aut."NBRANCH" and "SOURCESCHEMA" = 'usvtimg01')*/ 'AUT' KACTPRIS ,     -- Codigo del Tipo de riesgo
                               coalesce(trim(aut."SREGIST"),'') || '-' || coalesce(trim(aut."SCHASSIS"),'')  DUNIRIS,        -- Codigo de Unidad de riesgo
                               coalesce(cast(cast(aut."DSTARTDATE"as date)as varchar),'')  TINCRIS,                          -- Fecha de inicio del riesgo
                               coalesce(cast(aut."DEXPIRDAT" as varchar),'')  TVENCRI,                                       -- Fecha de vencimiento del riesgo
@@ -645,14 +645,14 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as TIOCTO,
                               'PVV' KGIORIGM,                                                                               -- Indicador
                               rol."NBRANCH"  || '-' || rol."NPOLICY" ||  '-' || rol."NCERTIF" KABAPOL,                      -- Numero de Poliza
-                              (select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = rol."NBRANCH" and "SOURCESCHEMA" = 'usvtimv01' ) KACTPRIS ,     -- Codigo del Tipo de riesgo  
+                              /*(select "RISKTYPEL"  from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "BRANCHCOM" = rol."NBRANCH" and "SOURCESCHEMA" = 'usvtimv01' )*/ 'PES' KACTPRIS ,     -- Codigo del Tipo de riesgo  
                               rol."SCLIENT"    DUNIRIS,                                                                     -- Codigo de unidad de riesgo 
                               coalesce(cast(cast(rol."DEFFECDATE" as date) as varchar),'') TINCRIS,                         -- Fecha de inicio de riesgo
                               coalesce(cast(rol."DNULLDATE" as VARCHAR),'')  TVENCRI,                                       -- Fecha de vencimiento del riesgo
                               '' as TSITRIS,                                                  -- Fecha de estado de la unidad del riesgo
                               '' as KACSITUR,                                                 -- Codigo de estad de la unidad del riesgo
                               '' as KACESQM,
-                              'LPG' as DCOMPA,                                                -- Empresa a la que pertenece la informacion
+                              'LPV' as DCOMPA,                                                -- Empresa a la que pertenece la informacion
                               '' as DMARCA,
                               '' as DCREHIP,
                               '' as DCDLCRIS,
@@ -707,7 +707,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' as DINREGFL
                              from usvtimv01."ROLES" rol
                              where rol."SCERTYPE"  = '2'
-                             and rol."NBRANCH"  in  (select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usvtimv01' and "RISKTYPEN" = 1 )
+                             and rol."NBRANCH"  in  (select unnest(ARRAY[27,35,75,91,23,24,42,21,31,33,34,36,37,40,71,32,64]) as "BRANCHCOM") /*(select "BRANCHCOM" from USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" where "SOURCESCHEMA" = 'usvtimv01' and "RISKTYPEN" = 1 )*/
                              and rol."NROLE"  in (2,8) -- Asegurado , Asegurado adicional
                              and cast(rol."DCOMPDATE" as date)  between  '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                              limit 100
@@ -814,4 +814,3 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
     print(L_DF_ABUNRIS.count())
 
     return L_DF_ABUNRIS
-
