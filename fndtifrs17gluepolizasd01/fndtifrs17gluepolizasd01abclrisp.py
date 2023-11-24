@@ -240,7 +240,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                            ON GLC.USERCOMP = C.USERCOMP 
                                            AND GLC.COMPANY = C.COMPANY 
                                            AND GLC.BRANCH = C.BRANCH 
-                                           --AND GLC.PRODUCT = PC.PRODUCT
+                                           AND GLC.PRODUCT = PC.PRODUCT
                                            AND GLC.CURRENCY = C.CURRENCY
                                            AND GLC.MODULEC = C.MODULEC
                                            AND GLC.COVER = C.COVER 
