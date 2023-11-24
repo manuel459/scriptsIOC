@@ -332,7 +332,30 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                                 AND P.POLICY = C.POLICY*/
                                  || '-' ||  COALESCE(C.POLICY, 0)|| '-' || COALESCE(C.CERTIF, 0)  AS KABAPOL,
                                  '' AS KABUNRIS,
-                                 COALESCE((SELECT COALESCE(CAST(GLC.COVERGEN AS VARCHAR), '0') FROM USBI01.IFRS170_V_GEN_LIFE_COVER_INXLPV GLC 
+                                 COALESCE((SELECT COALESCE(CAST(GLC.COVERGEN AS VARCHAR), '0') FROM /*USBI01.IFRS170_V_GEN_LIFE_COVER_INXLPV*/
+                                           (SELECT GC.USERCOMP,
+										                        GC.COMPANY,
+										                        GC.BRANCH,
+										                        GC.PRODUCT,
+										                        GC.CURRENCY,
+										                        GC.MODULEC,
+										                        GC.COVER,
+										                        GC.EFFECDATE,
+										                        GC.NULLDATE,
+										                        GC.COVERGEN
+										                        FROM USINSUV01.GEN_COVER GC
+										                        UNION 
+										                        SELECT LC.USERCOMP,
+										                        LC.COMPANY,
+										                        LC.BRANCH,
+										                        LC.PRODUCT,
+										                        LC.CURRENCY,
+										                        0 AS MODULEC,
+										                        LC.COVER,
+										                        LC.EFFECDATE,
+										                        LC.NULLDATE,
+										                        LC.COVERGEN
+										                       FROM USINSUV01.LIFE_COVER LC) GLC 
                                            WHERE GLC.USERCOMP = C.USERCOMP 
                                            AND GLC.COMPANY = C.COMPANY 
                                            AND GLC.BRANCH = C.BRANCH 
@@ -642,7 +665,26 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                   COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TIOCFRM,
                                   C."NBRANCH" ||'-'|| C."NPRODUCT" ||'-'|| C."NPOLICY" ||'-'|| C."NCERTIF" AS KABAPOL,
                                   COALESCE((SELECT CAST(GLC."NCOVERGEN" AS VARCHAR) || '-' || GLC."NCURRENCY" 
-                                            FROM USBI01.IFRS170_V_GEN_LIFE_COVER_VTIMELPG GLC 
+                                            FROM /*USBI01.IFRS170_V_GEN_LIFE_COVER_VTIMELPG*/
+                                            (SELECT GC."NBRANCH",
+                                            GC."NPRODUCT",
+                                            GC."NMODULEC",
+                                            GC."NCOVER",
+                                            GC."DEFFECDATE",
+                                            GC."DNULLDATE",
+                                            GC."NCOVERGEN",
+                                            GC."NCURRENCY"
+                                            FROM USVTIMG01."GEN_COVER" GC
+                                            UNION ALL
+                                            SELECT LC."NBRANCH",
+                                            LC."NPRODUCT",
+                                            LC."NMODULEC",
+                                            LC."NCOVER",
+                                            LC."DEFFECDATE",
+                                            LC."DNULLDATE",
+                                            LC."NCOVERGEN",
+                                            LC."NCURRENCY"
+                                            FROM USVTIMG01."LIFE_COVER" LC)  GLC 
                                             WHERE GLC."NBRANCH" = C."NBRANCH" 
                                             AND   GLC."NPRODUCT"  = C."NPRODUCT"
                                             AND   GLC."NMODULEC"  = C."NMODULEC"
@@ -1056,9 +1098,9 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS VTXAJTBUA,   --NO
                       '' AS VMTCAPREM    --NO
                       FROM USINSIV01."GEN_RISK_COVERED" GRC
-                      JOIN USINSIV01."POLICY" POL on POL."POLICY_ID" = GRC."POLICY_ID"
+                      JOIN USINSIV01."POLICY" POL ON POL."POLICY_ID" = GRC."POLICY_ID" AND POL."INSR_TYPE" = GRC."INSR_TYPE"
                       WHERE POL."INSR_END" >= '2021-12-31'
-                      AND POL."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}'
+                      AND POL."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' LIMIT 100
                     ) AS TMP
                     '''
     
