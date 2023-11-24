@@ -877,7 +877,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                 'PIG' AS KGIORIGM, --NO
                                 'LPG' AS KACCOMPA, 
                                 CAST(P.BRANCH AS VARCHAR) AS KGCRAMO,
-                                CAST(P.BRANCH AS VARCHAR) || '-' || CAST(P.PRODUCT AS VARCHAR) AS KABPRODT,
+                                COALESCE(P.BRANCH, 0) || '-' || COALESCE(P.PRODUCT, 0) || '-' || COALESCE(pol.SUBPRODUCT, 0) KABPRODT,
                                 CASE P.POLITYPE
                                 WHEN '2' THEN CASE WHEN CERT.CERTIF <> 0 THEN P.BRANCH || '-' || CAST(COALESCE (P.PRODUCT, 0) AS VARCHAR) || '-' || P.POLICY || '-' || '0'
                                               ELSE ''
@@ -1249,6 +1249,13 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                 AND CERT.BRANCH  = P.BRANCH
                                 AND CERT.POLICY  = P.POLICY 
                                 AND CERT.PRODUCT = P.PRODUCT
+                                JOIN USINSUG01.POL_SUBPRODUCT pol
+                                on pol.usercomp = p.usercomp
+                                and pol.company = p.company
+                                and pol.certype = p.certype
+                                and pol.branch = p.branch
+                                and pol."policy" = p."policy"
+                                and pol.product = p.product
                                 WHERE P.CERTYPE  = '2'
                                 AND P.STATUS_POL NOT IN ('2','3') 
                                 AND ((P.POLITYPE = '1' -- INDIVIDUAL 
