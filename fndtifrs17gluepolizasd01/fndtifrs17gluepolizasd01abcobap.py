@@ -99,31 +99,17 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           		 SELECT 
                                COALESCE (CAST(C.EFFECDATE AS VARCHAR),'')  AS TIOCFRM,
                                CAST(COALESCE(C.BRANCH, 0) AS VARCHAR) ||'-'|| POL.PRODUCT
-                                                                              /*(SELECT  COALESCE(P.PRODUCT, 0)
-                                                                                FROM  USINSUG01.POLICY P
-                                                                                WHERE P.USERCOMP = C.USERCOMP
-                                                                                AND P.COMPANY = C.COMPANY
-                                                                                AND P.CERTYPE = C.CERTYPE
-                                                                                AND P.BRANCH = C.BRANCH
-                                                                                AND P.POLICY = C.POLICY)*/
                                || '-' || COALESCE(C.POLICY, 0) || '-' || COALESCE(C.CERTIF, 0) AS KABAPOL,
-                               COALESCE(( SELECT CAST(COALESCE(GC.COVERGEN, 0) AS VARCHAR) FROM USINSUG01.GEN_COVER GC 
+                               COALESCE(( SELECT COALESCE(GC.COVERGEN, 0) || '-' || COALESCE(GC.CURRENCY, 0) FROM USINSUG01.GEN_COVER GC 
                                  WHERE GC.USERCOMP = C.USERCOMP 
                                  AND GC.COMPANY = C.COMPANY 
                                  AND GC.BRANCH = C.BRANCH 
                                  AND GC.PRODUCT = POL.PRODUCT
-                                                  /*(SELECT P.PRODUCT  FROM USINSUG01.POLICY P
-                                                   WHERE P.USERCOMP = C.USERCOMP
-                                                   AND P.COMPANY = C.COMPANY
-                                                   AND P.CERTYPE = C.CERTYPE
-                                                   AND P.BRANCH = C.BRANCH
-                                                   AND P.POLICY = C.POLICY
-                                                  )*/
                                  AND GC.CURRENCY = C.CURRENCY
                                  AND GC.MODULEC = C.MODULEC
                                  AND GC.COVER =C.COVER 
-                                 AND GC.EFFECDATE <= C.EFFECDATE
-                                 AND (GC.NULLDATE IS NULL OR GC.NULLDATE > C.EFFECDATE) LIMIT 1
+                                 AND GC.EFFECDATE <= (case when POL.politype = '1' then POL.EFFECDATE else CERT.EFFECDATE end)
+                                 AND (GC.NULLDATE IS NULL OR GC.NULLDATE > (case when pol.politype = '1' then POL.EFFECDATE else cert.EFFECDATE end)) LIMIT 1
                                ) ,'0') AS KGCTPCBT,
                                COALESCE (CAST(C.EFFECDATE AS VARCHAR),'')  AS TINICIO,
                                COALESCE (CAST(C.NULLDATE  AS VARCHAR),'') AS TTERMO,
@@ -332,7 +318,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                                 AND P.POLICY = C.POLICY*/
                                  || '-' ||  COALESCE(C.POLICY, 0)|| '-' || COALESCE(C.CERTIF, 0)  AS KABAPOL,
                                  '' AS KABUNRIS,
-                                 COALESCE((SELECT COALESCE(CAST(GLC.COVERGEN AS VARCHAR), '0') FROM USBI01.IFRS170_V_GEN_LIFE_COVER_INXLPV GLC 
+                                 COALESCE((SELECT COALESCE(GLC.COVERGEN, 0) || '-' || COALESCE(GLC.CURRENCY, 0) FROM USBI01.IFRS170_V_GEN_LIFE_COVER_INXLPV GLC 
                                            WHERE GLC.USERCOMP = C.USERCOMP 
                                            AND GLC.COMPANY = C.COMPANY 
                                            AND GLC.BRANCH = C.BRANCH 
@@ -340,8 +326,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                            AND GLC.CURRENCY = C.CURRENCY
                                            AND GLC.MODULEC = C.MODULEC
                                            AND GLC.COVER = C.COVER 
-                                           AND GLC.EFFECDATE <= C.EFFECDATE
-                                           AND (GLC.NULLDATE IS NULL OR GLC.NULLDATE > C.EFFECDATE) LIMIT 1), '0') AS KGCTPCBT,
+                                           AND GLC.EFFECDATE <= (CASE WHEN POL.POLITYPE = '1' THEN POL.EFFECDATE ELSE CERT.EFFECDATE END)
+                                           AND (GLC.NULLDATE IS NULL OR GLC.NULLDATE > (CASE WHEN POL.POLITYPE = '1' THEN POL.EFFECDATE ELSE CERT.EFFECDATE END)) LIMIT 1), '0') AS KGCTPCBT,
                                  COALESCE (CAST(C.EFFECDATE AS VARCHAR),'')  AS TINICIO,
                                  COALESCE (CAST(C.NULLDATE AS VARCHAR),'') AS TTERMO,
                                  COALESCE(C.PREMIUM, 0) AS VMTCOMR,
@@ -641,15 +627,15 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                   SELECT 
                                   COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TIOCFRM,
                                   C."NBRANCH" ||'-'|| C."NPRODUCT" ||'-'|| C."NPOLICY" ||'-'|| C."NCERTIF" AS KABAPOL,
-                                  COALESCE((SELECT CAST(GLC."NCOVERGEN" AS VARCHAR) || '-' || GLC."NCURRENCY" 
+                                  COALESCE((SELECT COALESCE(GLC."NCOVERGEN", 0) || '-' || COALESCE(GLC."NCURRENCY", 0) 
                                             FROM USBI01.IFRS170_V_GEN_LIFE_COVER_VTIMELPG GLC 
                                             WHERE GLC."NBRANCH" = C."NBRANCH" 
                                             AND   GLC."NPRODUCT"  = C."NPRODUCT"
                                             AND   GLC."NMODULEC"  = C."NMODULEC"
                                             AND   GLC."NCOVER"    = C."NCOVER"
                                             AND   GLC."NCURRENCY" = C."NCURRENCY"
-                                            AND   GLC."DEFFECDATE" <= C."DEFFECDATE" 
-                                            AND (GLC."DNULLDATE" IS NULL OR GLC."DNULLDATE" > C."DEFFECDATE")), '') AS KGCTPCBT,
+                                            AND   GLC."DEFFECDATE" <= (case when pol."SPOLITYPE" = '1' then pol."DSTARTDATE" else cert."DSTARTDATE" end) 
+                                            AND (GLC."DNULLDATE" IS NULL OR GLC."DNULLDATE" > (case when pol."SPOLITYPE" = '1' then pol."DSTARTDATE" else cert."DSTARTDATE" end) )), '') AS KGCTPCBT,
                                   COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TINICIO,
                                   COALESCE(CAST(CAST(C."DNULLDATE" AS DATE) AS VARCHAR),'') AS TTERMO,
                                   COALESCE(C."NPREMIUM_O",0) AS VMTCOMR,
@@ -882,13 +868,13 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                          FROM (SELECT                       
                                COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE ) AS VARCHAR),'') AS TIOCFRM,
                                C."NBRANCH" ||'-'|| C."NPRODUCT" ||'-'|| C."NPOLICY" ||'-'|| C."NCERTIF" AS KABAPOL,
-                               COALESCE((SELECT CAST(LC."NCOVERGEN" AS VARCHAR)  FROM USVTIMV01."LIFE_COVER" LC 
+                               COALESCE((SELECT COALESCE(LC."NCOVERGEN",0) || '-' || COALESCE(LC."NCURRENCY", 0) FROM USVTIMV01."LIFE_COVER" LC 
                                  WHERE LC."NBRANCH" = C."NBRANCH" 
                                  AND LC."NPRODUCT" = C."NPRODUCT"
                                  AND LC."NMODULEC" = C."NMODULEC"
                                  AND LC."NCOVER" = C."NCOVER"
-                                 AND LC."DEFFECDATE" <= C."DEFFECDATE" 
-                                 AND (LC."DNULLDATE" IS NULL OR LC."DNULLDATE" > C."DEFFECDATE")
+                                 AND LC."DEFFECDATE" <= (case when pol."SPOLITYPE" = '1' then pol."DSTARTDATE" else cert."DSTARTDATE" end)
+                                 AND (LC."DNULLDATE" IS NULL OR LC."DNULLDATE" > (case when pol."SPOLITYPE" = '1' then pol."DSTARTDATE" else cert."DSTARTDATE" end))
                                ), '0') AS KGCTPCBT,
                                COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE )AS VARCHAR),'') AS TINICIO,
                                COALESCE(CAST(CAST(C."DNULLDATE" AS DATE )AS VARCHAR),'') AS TTERMO,

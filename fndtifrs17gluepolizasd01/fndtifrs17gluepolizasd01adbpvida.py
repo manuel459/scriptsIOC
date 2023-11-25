@@ -4,7 +4,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    (select 
                                    'D' as INDDETREC,
                                    'ABDPVIDA' as TABLAIFRS17, 
-                                   '' as KABAPOL,
+                                   a.branch || '-' || a.product || '-' || a.policy || '-' || a.certif as KABAPOL,
                                    '' as DTPREG,
                                    '' as TIOCPROC,
                                    cast(l.effecdate as varchar) as TIOCFRM,
@@ -123,7 +123,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    (select 
                                    'D' as INDDETREC,
                                    'ABDPVIDA' as TABLAIFRS17, 
-                                   '' as KABAPOL,
+                                   a.branch || '-' || a.product || '-' || a.policy || '-' || a.certif as KABAPOL,
                                    '' as DTPREG,
                                    '' as TIOCPROC,
                                    cast(lp.effecdate as varchar) as TIOCFRM,
@@ -239,7 +239,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    (select 
                                     'D' as INDDETREC,
                                     'ABDPVIDA' as TABLAIFRS17, 
-                                    '' as KABAPOL,
+                                    a."NBRANCH" || '-' || a."NPRODUCT" || '-' || a."NPOLICY" || '-' || a."NCERTIF" as KABAPOL,
                                     '' as DTPREG,
                                     '' as TIOCPROC,
                                     cast(cast(l."DEFFECDATE" as date)as varchar) as TIOCFRM,
