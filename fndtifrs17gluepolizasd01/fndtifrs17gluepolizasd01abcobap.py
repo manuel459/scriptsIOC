@@ -98,15 +98,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           FROM(
                           		 SELECT 
                                COALESCE (CAST(C.EFFECDATE AS VARCHAR),'')  AS TIOCFRM,
-                               CAST(COALESCE(C.BRANCH, 0) AS VARCHAR) ||'-'|| POL.PRODUCT
-                                                                              /*(SELECT  COALESCE(P.PRODUCT, 0)
-                                                                                FROM  USINSUG01.POLICY P
-                                                                                WHERE P.USERCOMP = C.USERCOMP
-                                                                                AND P.COMPANY = C.COMPANY
-                                                                                AND P.CERTYPE = C.CERTYPE
-                                                                                AND P.BRANCH = C.BRANCH
-                                                                                AND P.POLICY = C.POLICY)*/
-                               || '-' || COALESCE(C.POLICY, 0) || '-' || COALESCE(C.CERTIF, 0) AS KABAPOL,
+                               CAST(COALESCE(C.BRANCH, 0) AS VARCHAR) ||'-'|| POL.PRODUCT || '-' || COALESCE(PSP.SUB_PRODUCT, 0) || '-' || COALESCE(C.POLICY, 0) || '-' || COALESCE(C.CERTIF, 0) AS KABAPOL,
                                COALESCE(( SELECT CAST(COALESCE(GC.COVERGEN, 0) AS VARCHAR) FROM USINSUG01.GEN_COVER GC 
                                  WHERE GC.USERCOMP = C.USERCOMP 
                                  AND GC.COMPANY = C.COMPANY 
@@ -212,7 +204,14 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                AND POL.COMPANY  = C.COMPANY  
                                AND POL.CERTYPE  = C.CERTYPE
                                AND POL.BRANCH   = C.BRANCH 
-                               AND POL.POLICY   = C.POLICY 
+                               AND POL.POLICY   = C.POLICY
+                               JOIN USINSUG01.POL_SUBPRODUCT PSP
+                             	 ON  PSP.USERCOMP = POL.USERCOMP
+                             	 AND PSP.COMPANY  = POL.COMPANY
+                             	 AND PSP.CERTYPE  = POL.CERTYPE
+                             	 AND PSP.BRANCH   = POL.BRANCH		   
+                             	 AND PSP.PRODUCT  = POL.PRODUCT
+                             	 AND PSP.POLICY   = POL.POLICY 
                                WHERE C.CERTYPE  = '2'
                                AND POL.STATUS_POL NOT IN ('2','3') 
                                AND ((POL.POLITYPE = '1' -- INDIVIDUAL 
