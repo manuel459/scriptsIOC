@@ -15,7 +15,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               COALESCE(CAST(C.EFFECDATE AS varchar), '') AS TIOCFRM,
                               '' AS TIOCTO, --NO
                               'PIG' AS KGIORIGM, --NO
-                               C.BRANCH || '-' ||  P.PRODUCT ||  '-' ||  C.POLICY  AS KABAPOL,
+                               C.BRANCH || '-' ||  PC.PRODUCT ||  '-' || PC.SUB_PRODUCT ||  '-' ||  C.POLICY ||  '-' || PC.CERTIF AS KABAPOL,
                               'LPG' AS DCOMPA,
                               '' AS DMARCA, --NO
                               '' AS TDPLANO,--NO
@@ -50,15 +50,48 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' AS DNUMDIST, --NO
                               '' AS KACTPDIS,
                               '' AS TULTALT, --NO
-                              '' AS DUSRUPD --NO
+                              '' AS DUSRUPD --no
                               FROM USINSUG01.COINSURAN C
-                              LEFT JOIN USINSUG01.POLICY P
-                              ON C.USERCOMP = P.USERCOMP
-                              AND C.COMPANY = P.COMPANY
-                              AND C.CERTYPE = P.CERTYPE
-                              AND C.BRANCH = P.BRANCH
-                              AND C.POLICY = P.policy --1994-03-05	2020-04-06
-                              where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                              JOIN ( SELECT P.USERCOMP, P.COMPANY, P.CERTYPE, P.BRANCH, P.PRODUCT, PSP.SUB_PRODUCT, P.POLICY, CERT.CERTIF, P.TITULARC, P.EFFECDATE ,P.POLITYPE , CERT.EFFECDATE as EFFECDATE_CERT
+                                    FROM USINSUG01.POLICY P 
+                             	   LEFT JOIN USINSUG01.CERTIFICAT CERT 
+                             	   ON P.USERCOMP = CERT.USERCOMP 
+                             	   AND P.COMPANY = CERT.COMPANY 
+                             	   AND P.CERTYPE = CERT.CERTYPE 
+                             	   AND P.BRANCH  = CERT.BRANCH 
+                             	   AND P.POLICY  = CERT.policy
+                             	   JOIN USINSUG01.POL_SUBPRODUCT PSP
+                             	   ON  PSP.USERCOMP = P.USERCOMP
+                             	   AND PSP.COMPANY  = P.COMPANY
+                             	   AND PSP.CERTYPE  = P.CERTYPE
+                             	   AND PSP.BRANCH   = P.BRANCH		   
+                             	   AND PSP.PRODUCT  = P.PRODUCT
+                             	   AND PSP.POLICY   = P.POLICY	
+                             	   JOIN /*USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO"*/
+                                 (SELECT  unnest(ARRAY['usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01',
+					                         'usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01',
+					                         'usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01',
+					                         'usinsug01','usinsug01','usinsug01']) AS "SOURCESCHEMA",  
+						      unnest(ARRAY[5,21,22,23,24,25,27,31,32,33,34,35,36,37,40,41,42,59,68,71,75,77,91,99]) AS "BRANCHCOM",
+							unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR ON RTR."BRANCHCOM" = P.BRANCH AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usinsug01'
+                             	   WHERE P.CERTYPE = '2' 
+                                    AND P.STATUS_POL NOT IN ('2','3') 
+                                    AND ( (P.POLITYPE = '1' -- INDIVIDUAL 
+                                        AND P.EXPIRDAT >= '2021-12-31' 
+                                        AND (P.NULLDATE IS NULL OR P.NULLDATE > '2021-12-31') )
+                                        OR 
+                                        (P.POLITYPE <> '1' -- COLECTIVAS 
+                                        AND CERT.EXPIRDAT >= '2021-12-31' 
+                                        AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2021-12-31'))
+                                   )) AS PC	
+                             ON  C.USERCOMP = PC.USERCOMP 
+                             AND C.COMPANY  = PC.COMPANY 
+                             AND C.CERTYPE  = PC.CERTYPE
+                             AND C.BRANCH   = PC.BRANCH 
+                             AND C.POLICY   = PC.POLICY 
+                             AND C.EFFECDATE <= PC.EFFECDATE 
+                             AND (C.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE)
+                             AND C.EFFECDATE BETWEEN '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                               limit 100
                              )
                              ) AS TMP
@@ -79,7 +112,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               COALESCE(CAST(C.EFFECDATE AS varchar), '') AS TIOCFRM,
                               '' AS TIOCTO, --NO
                               'PIV' AS KGIORIGM, --NO
-                               C.BRANCH || '-' ||  P.PRODUCT ||  '-' ||  C.POLICY  AS KABAPOL,
+                               C.BRANCH || '-' ||  PC.PRODUCT ||  '-' ||  C.POLICY ||  '-' || PC.CERTIF AS KABAPOL,
                               'LPV' AS DCOMPA,
                               '' AS DMARCA, --NO
                               '' AS TDPLANO,--NO
@@ -116,13 +149,39 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               '' AS TULTALT, --NO
                               '' AS DUSRUPD --NO
                               FROM usinsuv01.COINSURAN C
-                              LEFT JOIN usinsuv01.POLICY P
-                              ON C.USERCOMP = P.USERCOMP
-                              AND C.COMPANY = P.COMPANY
-                              AND C.CERTYPE = P.CERTYPE
-                              AND C.BRANCH = P.BRANCH
-                              AND C.POLICY = P.policy --1997-10-02	2020-11-02
-                             where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                              JOIN ( SELECT P.USERCOMP, P.COMPANY, P.CERTYPE, P.BRANCH, P.PRODUCT, P.POLICY, CERT.CERTIF, P.TITULARC, P.EFFECDATE , P.POLITYPE, CERT.EFFECDATE as EFFECDATE_CERT
+                                          FROM USINSUV01.POLICY P 
+                                          LEFT JOIN USINSUV01.CERTIFICAT CERT 
+                                          ON P.USERCOMP = CERT.USERCOMP 
+                                          AND P.COMPANY = CERT.COMPANY 
+                                          AND P.CERTYPE = CERT.CERTYPE 
+                                          AND P.BRANCH  = CERT.BRANCH 
+                                          AND P.POLICY  = CERT.policy	
+                                          JOIN /*USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO"*/
+                                          (SELECT unnest(ARRAY['usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01',
+					                                 'usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01',
+					                                 'usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01',
+					                                 'usinsuv01','usinsuv01','usinsuv01']) AS "SOURCESCHEMA",  
+						      unnest(ARRAY[5,21,22,23,24,25,27,31,32,33,34,35,36,37,40,41,42,59,68,71,75,77,91,99]) AS "BRANCHCOM",
+							unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR ON RTR."BRANCHCOM" = P.BRANCH AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usinsuv01'
+                                          WHERE P.CERTYPE = '2' 
+                                          AND P.STATUS_POL NOT IN ('2','3') 
+                                          AND ( (P.POLITYPE = '1' -- INDIVIDUAL 
+                                          AND P.EXPIRDAT >= '2010-12-31' 
+                                          AND (P.NULLDATE IS NULL OR P.NULLDATE > '2010-12-31') )
+                                          OR 
+                                          (P.POLITYPE <> '1' -- COLECTIVAS 
+                                          AND CERT.EXPIRDAT >= '2010-12-31' 
+                                          AND (CERT.NULLDATE IS NULL OR CERT.NULLDATE > '2010-12-31'))
+                                    )) AS PC	
+                                    ON  C.USERCOMP = PC.USERCOMP 
+                             AND C.COMPANY  = PC.COMPANY 
+                             AND C.CERTYPE  = PC.CERTYPE
+                             AND C.BRANCH   = PC.BRANCH 
+                             AND C.POLICY   = PC.POLICY 
+                             AND C.EFFECDATE <= PC.EFFECDATE 
+                             AND (C.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE) --1997-10-02	2020-11-02
+                             AND C.EFFECDATE BETWEEN '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                              limit 100
                              )
                              ) AS TMP
@@ -144,7 +203,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                        COALESCE(CAST (cast(C."DEFFECDATE"  AS date)AS varchar) , '' ) AS TIOCFRM,
 	                        '' AS TIOCTO, --NO
 	                        'PVG' AS KGIORIGM, --NO	
-	                        C."NBRANCH" || '-' || C."NPRODUCT"  || '-' || C."NPOLICY" AS KABAPOL,
+	                        PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" AS KABAPOL,
 	                        'LPG' AS DCOMPA,
 	                        '' AS DMARCA, --NO
 	                        '' AS TDPLANO,--NO
@@ -176,7 +235,35 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                          '' AS KACTPDIS,
 	                          '' AS TULTALT, --NO
 	                          '' AS DUSRUPD --NO
-                            FROM USVTIMG01."COINSURAN" C --0029-09-20	2019-12-17
+                            FROM USVTIMG01."COINSURAN" C
+                            JOIN ( SELECT P."SCERTYPE", P."NBRANCH", P."NPRODUCT", P."NPOLICY", CERT."NCERTIF", P."SCLIENT", P."DSTARTDATE" ,P."SPOLITYPE" ,CERT."DSTARTDATE" as "DSTARTDATE_CERT"
+                                          FROM USVTIMG01."POLICY" P 
+                                          LEFT JOIN USVTIMG01."CERTIFICAT" CERT 
+                                          ON  P."SCERTYPE" = CERT."SCERTYPE" 
+                                          AND P."NBRANCH"  = CERT."NBRANCH"
+                                          AND P."NPRODUCT" = CERT."NPRODUCT"
+                                          AND P."NPOLICY"  = CERT."NPOLICY"
+                                          JOIN /*USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO"*/
+                                          (SELECT unnest(ARRAY['usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01',
+                                                               'usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01','usvtimg01']) AS "SOURCESCHEMA",  
+						               unnest(ARRAY[21, 23, 24, 27, 31, 32, 33, 34, 35, 36, 37, 40, 42, 64, 71, 75, 91]) AS "BRANCHCOM",
+							         unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR ON RTR."BRANCHCOM" = P."NBRANCH" AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usvtimg01'
+                                          WHERE P."SCERTYPE" = '2' 
+                                          AND P."SSTATUS_POL" NOT IN ('2','3') 
+                                          AND ( (P."SPOLITYPE" = '1' -- INDIVIDUAL 
+                                                AND P."DEXPIRDAT" >= '2018-12-31' 
+                                                AND (P."DNULLDATE" IS NULL OR P."DNULLDATE" > '2018-12-31') )
+                                                OR 
+                                                (P."SPOLITYPE" <> '1' -- COLECTIVAS 
+                                                AND CERT."DEXPIRDAT" >= '2018-12-31' 
+                                                AND (CERT."DNULLDATE" IS NULL OR CERT."DNULLDATE" > '2018-12-31'))
+                                          )) AS PC	
+                                    ON  C."SCERTYPE"  = PC."SCERTYPE"
+                                    AND C."NBRANCH"   = PC."NBRANCH" 
+                                    AND C."NPRODUCT"  = PC."NPRODUCT"
+                                    AND C."NPOLICY"   = PC."NPOLICY"
+                                    AND C."DEFFECDATE" <= PC."DSTARTDATE" 
+                                    AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE") --0029-09-20	2019-12-17
                             where cast(c."DCOMPDATE" as date) between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
                             limit 100
                             )
@@ -198,7 +285,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                        COALESCE(CAST (cast(C."DEFFECDATE"  AS date)AS varchar) , '' ) AS TIOCFRM,
 	                        '' AS TIOCTO, --NO
 	                        'PVV' AS KGIORIGM, --NO	
-	                        C."NBRANCH" || '-' || C."NPRODUCT"  || '-' || C."NPOLICY" AS KABAPOL,
+	                        PC."NBRANCH" ||'-'|| PC."NPRODUCT" ||'-'|| PC."NPOLICY" ||'-'|| PC."NCERTIF" AS KABAPOL,
 	                        'LPV' AS DCOMPA,
 	                        '' AS DMARCA, --NO
 	                        '' AS TDPLANO,--NO
@@ -230,9 +317,37 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
 	                          '' AS KACTPDIS,
 	                          '' AS TULTALT, --NO
 	                          '' AS DUSRUPD --NO
-                            FROM USVTIMV01."COINSURAN" C --'2013-12-05'  '2013-12-10'
-                            where cast(c."DCOMPDATE" as date) between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
-                            limit 100
+                            FROM USVTIMV01."COINSURAN" C 
+                            JOIN ( SELECT P."SCERTYPE", P."NBRANCH", P."NPRODUCT", P."NPOLICY", CERT."NCERTIF", P."SCLIENT", P."DSTARTDATE" ,P."SPOLITYPE" ,CERT."DSTARTDATE" as "DSTARTDATE_CERT"
+                                  FROM USVTIMV01."POLICY" P 
+                           	   LEFT JOIN USVTIMV01."CERTIFICAT" CERT 
+                           	   ON  P."SCERTYPE" = CERT."SCERTYPE" 
+                           	   AND P."NBRANCH"  = CERT."NBRANCH"
+                           	   AND P."NPRODUCT" = CERT."NPRODUCT"
+                           	   AND P."NPOLICY"  = CERT."NPOLICY"
+                           	   JOIN /*USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO"*/
+                                 (SELECT unnest(ARRAY['usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01',
+                                                      'usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01','usvtimv01']) AS "SOURCESCHEMA",  
+						     unnest(ARRAY[21, 23, 24, 27, 31, 32, 33, 34, 35, 36, 37, 40, 42, 64, 71, 75, 91]) AS "BRANCHCOM",
+						     unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR ON RTR."BRANCHCOM" = P."NBRANCH" AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usvtimv01'
+                           	   WHERE P."SCERTYPE" = '2' 
+                                  AND P."SSTATUS_POL" NOT IN ('2','3') 
+                                  AND ( (P."SPOLITYPE" = '1' -- INDIVIDUAL 
+                                      AND P."DEXPIRDAT" >= '2021-12-31' 
+                                      AND (P."DNULLDATE" IS NULL OR P."DNULLDATE" > '2021-12-31') )
+                                      OR 
+                                      (P."SPOLITYPE" <> '1' -- COLECTIVAS 
+                                      AND CERT."DEXPIRDAT" >= '2021-12-31' 
+                                      AND (CERT."DNULLDATE" IS NULL OR CERT."DNULLDATE" > '2021-12-31'))
+                                      AND P."DSTARTDATE" between '{P_FECHA_INICIO}' and '{P_FECHA_FIN}'
+                                 )) AS PC	
+                           ON  C."SCERTYPE"  = PC."SCERTYPE"
+                           AND C."NBRANCH"   = PC."NBRANCH" 
+                           AND C."NPRODUCT"  = PC."NPRODUCT"
+                           AND C."NPOLICY"   = PC."NPOLICY"  
+                           AND C."DEFFECDATE" <= PC."DSTARTDATE" 
+                           AND (C."DNULLDATE" IS NULL OR C."DNULLDATE" > PC."DSTARTDATE") --'2013-12-05'  '2013-12-10'
+                           limit 100
                             )
                             ) AS TMP
                            '''
