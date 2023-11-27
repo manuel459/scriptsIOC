@@ -1,5 +1,5 @@
-from pyspark.sql.types import *
-from pyspark.sql.functions import col
+from pyspark.sql.types import StringType , DateType
+from pyspark.sql.functions import col , coalesce , lit , format_number
 
 def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
     L_ABCLRISP_INSUNIX_LPG = f'''
@@ -147,7 +147,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              '' AS DNCLICGD,
                              '' AS DCERTIFC,
                              R.EFFECDATE AS TINICIO,
-                            coalesce(cast(cast(R.NULLDATE as date) as varchar), '') AS TTERMO,
+                             R.NULLDATE  AS TTERMO,
                              '' AS DNOMEPAR,
                              '' AS KACPROF,
                              '' AS KACACTIV,
@@ -243,7 +243,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              AND R.EFFECDATE <= PC.EFFECDATE 
                              AND (R.NULLDATE IS NULL OR R.NULLDATE > PC.EFFECDATE)
                              AND R.ROLE IN (2,8)
-                             AND PC.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' LIMIT 100) AS PIG
+                             AND PC.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' 
+                             LIMIT 100) AS PIG
                              '''
     
     L_DF_ABCLRISP_INSUNIX_LPG = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCLRISP_INSUNIX_LPG).load()
@@ -505,7 +506,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     AND R.EFFECDATE <= PC.EFFECDATE 
                                     AND (R.NULLDATE IS NULL OR R.NULLDATE > PC.EFFECDATE)
                                     WHERE R.ROLE IN (2,8)
-                                    AND PC.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' LIMIT 100
+                                    AND PC.EFFECDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' 
+                                    LIMIT 100
                                  ) as tmp
                               '''
     
@@ -593,7 +595,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     (SELECT DATE_PART('YEAR', AGE(CURRENT_DATE, CLI."DBIRTHDAT")) FROM USVTIMG01."CLIENT" CLI WHERE CLI."SCLIENT" = R."SCLIENT") AS DIDADEAC,
                                     '' AS DANOREF, --EN BLANCO
                                     '' AS KACEMPR,
-                                    '' AS VMTSALAR,
+                                    0 AS VMTSALAR,
                                     '' AS KACTPSAL,
                                     '' AS TADMEMP,
                                     '' AS TADMGRP,
@@ -660,8 +662,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     '' AS DCONTCGD,
                                     '' AS DNCLICGD,
                                     '' AS DCERTIFC,
-                                    R."DEFFECDATE" AS TINICIO,
-                                    coalesce(cast(cast(R."DNULLDATE"as date) as varchar), '') AS TTERMO,
+                                    coalesce(cast(cast(R."DEFFECDATE" as date) as varchar), '') AS TINICIO,
+                                    coalesce(cast(cast(R."DNULLDATE" as date) as varchar), '') AS TTERMO,
                                     '' AS DNOMEPAR,
                                     '' AS KACPROF,
                                     '' AS KACACTIV,
@@ -729,7 +731,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     AND R."NCERTIF"   = PC."NCERTIF"  
                                     AND R."DEFFECDATE" <= PC."DSTARTDATE" 
                                     AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > PC."DSTARTDATE")
-                                    WHERE R."NROLE" IN (2,8) LIMIT 100
+                                    WHERE R."NROLE" IN (2,8) 
+                                    LIMIT 100
                               ) as tmp
                             '''
     
@@ -794,7 +797,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                            (SELECT DATE_PART('YEAR', AGE(CURRENT_DATE, CLI."DBIRTHDAT")) FROM USVTIMG01."CLIENT" CLI WHERE CLI."SCLIENT" = R."SCLIENT") AS DIDADEAC,
                            '' AS DANOREF, --EN BLANCO
                            '' AS KACEMPR,
-                           '' AS VMTSALAR,
+                           0 AS VMTSALAR,
                            '' AS KACTPSAL,
                            '' AS TADMEMP,
                            '' AS TADMGRP,
@@ -931,7 +934,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                            AND R."NCERTIF"   = PC."NCERTIF"  
                            AND R."DEFFECDATE" <= PC."DSTARTDATE" 
                            AND (R."DNULLDATE" IS NULL OR R."DNULLDATE" > PC."DSTARTDATE")
-                           WHERE R."NROLE" IN (2,8) LIMIT 100) AS VTIME_LPV
+                           WHERE R."NROLE" IN (2,8) 
+                           LIMIT 100) AS VTIME_LPV
                            '''
     
     L_DF_ABCLRISP_VTIME_LPV = GLUE_CONTEXT.read.format('jdbc').options(**CONNECTION).option("dbtable", L_ABCLRISP_VTIME_LPV).load()
@@ -967,7 +971,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               '' AS DIDADEAC, --PENDIENTE
                               '' AS DANOREF,  --EN BLANCO
                               '' AS KACEMPR,
-                              OA."OAIP1" AS VMTSALAR,
+                              cast(OA."OAIP1" as numeric(12,2)) AS VMTSALAR,
                               '' AS KACTPSAL,
                               '' AS TADMEMP,
                               IO."INSR_BEGIN" AS TADMGRP,
@@ -1078,6 +1082,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               JOIN USINSIV01."POLICY" P on P."POLICY_ID" = IO."POLICY_ID" and P."INSR_TYPE" = IO."INSR_TYPE"
                               LEFT JOIN USINSIV01."POLICY_ENG_POLICIES" PP ON P."POLICY_ID" = PP."POLICY_ID"
                               WHERE P."INSR_END" >= '2021-12-31'
+                              LIMIT 100 
                            ) AS PNV
                            '''
     
@@ -1086,5 +1091,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
     print("INSIS LPV")
     
     L_DF_ABCLRISP = L_DF_ABCLRISP_INSUNIX_LPG.union(L_DF_ABCLRISP_INSUNIX_LPV).union(L_DF_ABCLRISP_VTIME_LPG).union(L_DF_ABCLRISP_VTIME_LPV).union(L_DF_ABCLRISP_INSIS_LPV)
+
+    L_DF_ABCLRISP = L_DF_ABCLRISP.withColumn("KGCTPCBT" , coalesce(col("KGCTPCBT"),lit("").cast(StringType()))).withColumn("DNPESEG", coalesce(col("DNPESEG"),lit("").cast(StringType()))).withColumn("DIDADEAC", coalesce(col("DIDADEAC"),lit("").cast(StringType()))).withColumn("VMTSALAR", format_number("VMTSALAR",2)).withColumn("KACTPPES", coalesce(col("KACTPPES"),lit("").cast(StringType()))).withColumn("TINICIO", coalesce(col("TINICIO"),lit("").cast(DateType()))).withColumn("TTERMO", coalesce(col("TTERMO"),lit("").cast(StringType())))
 
     return L_DF_ABCLRISP
