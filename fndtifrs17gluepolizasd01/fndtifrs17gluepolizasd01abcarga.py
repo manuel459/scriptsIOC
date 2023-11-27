@@ -187,7 +187,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                   coalesce(cast(cast(dx.effecdate as date) as varchar),'') TIOCFRM,--PENDIENTE
                                   '' TIOCTO,--NO
                                   'PIG' KGIORIGM,
-                                  dx.branch || '-' || dx."policy" || '-' || dx.code KABAPOL,--FK pendiente
+                                  p.branch || '-' || p.product || '-' || PSP.sub_product || '-' || p.policy || '-' || cert.certif KABAPOL,--FK pendiente
                                   '' KABUNRIS,--valor vacio
                                   '' KGCTPCBT,--valor vacio
                                   '' KACCDFDO,-- valor vacio
@@ -223,6 +223,13 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     AND CERT.BRANCH  = P.BRANCH
                                     AND CERT.POLICY  = P.POLICY 
                                     AND CERT.PRODUCT = P.PRODUCT
+                                  JOIN USINSUG01.POL_SUBPRODUCT PSP
+                             	      ON  PSP.USERCOMP = P.USERCOMP
+                             	      AND PSP.COMPANY  = P.COMPANY
+                             	      AND PSP.CERTYPE  = P.CERTYPE
+                             	      AND PSP.BRANCH   = P.BRANCH		   
+                             	      AND PSP.PRODUCT  = P.PRODUCT
+                             	      AND PSP.POLICY   = P.POLICY
                                   left join USINSUG01.DISC_XPREM DX
                                     on dx.usercomp = p.usercomp
                                     and dx.company = p.company
@@ -257,7 +264,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                     coalesce(cast(CAST(DX.EFFECDATE AS DATE) as varchar), '') TIOCFRM, --PENDIENTE
                                     '' TIOCTO, --NO
                                     'PIV' KGIORIGM, 
-                                    dx.branch || '-' || dx."policy" || '-' || dx.code KABAPOL, --FK
+                                    p.branch || '-' || p.product || '-' || p."policy" || '-' || cert.certif KABAPOL, --FK
                                     '' KABUNRIS, --valor vacio
                                     /*
                                     DE ACUERDO A JAOS el dato se pudiera obtener en base a la primera covertura pero los sistemas 

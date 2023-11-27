@@ -12,7 +12,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              '' AS TIOCFRM, --PENDIENTE
                              '' AS TIOCTO,
                              'PIG' AS KGIORIGM,
-                             PC.BRANCH ||'-'|| COALESCE (PC.PRODUCT, 0) ||'-'|| PC.POLICY ||'-'|| PC.CERTIF AS KABAPOL,
+                             PC.BRANCH ||'-'|| COALESCE (PC.PRODUCT, 0) ||'-'|| PC.SUB_PRODUCT ||'-'|| PC.POLICY ||'-'|| PC.CERTIF AS KABAPOL,
                              PC.BRANCH ||'-'|| COALESCE (PC.PRODUCT, 0) ||'-'|| PC.POLICY ||'-'|| PC.CERTIF || '-' || (SELECT EVI.SCOD_VT  FROM USINSUG01.EQUI_VT_INX EVI WHERE EVI.SCOD_INX = R.CLIENT)  AS KABUNRIS,
                              CASE PC.POLITYPE
                              WHEN '1' THEN ( SELECT COALESCE(GC.COVERGEN, 0) ||'-'|| GC.CURRENCY
@@ -36,7 +36,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                     AND   C.CERTIF     = PC.CERTIF  
                                                     AND   C.EFFECDATE <= PC.EFFECDATE
                                                     AND  (C.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE)
-                                                    AND  C.COVER = 1) 
+                                                    AND  C.COVER = 1 LIMIT 1) 
                              ELSE   ( SELECT COALESCE(GC.COVERGEN, 0) ||'-'|| GC.CURRENCY
                                                     FROM USINSUG01.GEN_COVER GC 
                                                     JOIN USINSUG01.COVER C  
@@ -48,7 +48,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                     AND GC.CURRENCY = C.CURRENCY
                                                     AND GC.MODULEC =  C.MODULEC
                                                     AND GC.COVER   =  C.COVER
-                                                    AND GC.EFFECDATE <= PC.EFFECDATE
+                                                    AND GC.EFFECDATE <= PC.EFFECDATE_CERT
                              	            	    AND (GC.NULLDATE IS NULL OR GC.NULLDATE > PC.EFFECDATE_CERT)		       		   
                                                     WHERE C.USERCOMP   = PC.USERCOMP 
                                                     AND   C.COMPANY    = PC.COMPANY 
@@ -56,9 +56,9 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                     AND   C.BRANCH     = PC.BRANCH 
                                                     AND   C.POLICY     = PC.POLICY
                                                     AND   C.CERTIF     = PC.CERTIF  
-                                                    AND   C.EFFECDATE <= PC.EFFECDATE
+                                                    AND   C.EFFECDATE <= PC.EFFECDATE_CERT
                                                     AND  (C.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE_CERT)
-                                                    AND  C.COVER = 1
+                                                    AND  C.COVER = 1 LIMIT 1
                                           )
                              END AS KGCTPCBT,
                              ROW_NUMBER () OVER (PARTITION  BY PC.BRANCH, COALESCE (PC.PRODUCT, 0), PC.POLICY, PC.CERTIF ORDER BY R.CLIENT) AS DNPESEG,
@@ -220,7 +220,10 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 					                         'usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01','usinsug01',
 					                         'usinsug01','usinsug01','usinsug01']) AS "SOURCESCHEMA",  
 						      unnest(ARRAY[5,21,22,23,24,25,27,31,32,33,34,35,36,37,40,41,42,59,68,71,75,77,91,99]) AS "BRANCHCOM",
-							unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR ON RTR."BRANCHCOM" = P.BRANCH AND  RTR."RISKTYPEN" = 1 AND RTR."SOURCESCHEMA" = 'usinsug01'
+							unnest(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) AS "RISKTYPEN") RTR 
+                                 ON RTR."BRANCHCOM" = P.BRANCH 
+                                 AND  RTR."RISKTYPEN" = 1 
+                                 AND RTR."SOURCESCHEMA" = 'usinsug01'
                              	   WHERE P.CERTYPE = '2' 
                                     AND P.STATUS_POL NOT IN ('2','3') 
                                     AND ( (P.POLITYPE = '1' -- INDIVIDUAL 
