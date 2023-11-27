@@ -355,8 +355,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                            AND GLC.CURRENCY = C.CURRENCY
                                            AND GLC.MODULEC = C.MODULEC
                                            AND GLC.COVER = C.COVER 
-                                           AND GLC.EFFECDATE <= (CASE WHEN POL.POLITYPE = '1' THEN POL.EFFECDATE ELSE CERT.EFFECDATE END)
-                                           AND (GLC.NULLDATE IS NULL OR GLC.NULLDATE > (CASE WHEN POL.POLITYPE = '1' THEN POL.EFFECDATE ELSE CERT.EFFECDATE END)) LIMIT 1), '0') AS KGCTPCBT,
+                                           AND GLC.EFFECDATE <= (CASE WHEN C.POLITYPE = '1' THEN C.EFFECDATE_POL ELSE C.EFFECDATE_CERT END)
+                                           AND (GLC.NULLDATE IS NULL OR GLC.NULLDATE > (CASE WHEN C.POLITYPE = '1' THEN C.EFFECDATE_POL ELSE C.EFFECDATE_CERT END)) LIMIT 1), '0') AS KGCTPCBT,
                                  COALESCE (CAST(C.EFFECDATE AS VARCHAR),'')  AS TINICIO,
                                  COALESCE (CAST(C.NULLDATE AS VARCHAR),'') AS TTERMO,
                                  COALESCE(C.PREMIUM, 0) AS VMTCOMR,
@@ -448,8 +448,11 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                    C.MODULEC,
                                    C.COVER,
                                    C.EFFECDATE,
+                                   POL.EFFECDATE as EFFECDATE_POL,
+                                   CERT.EFFECDATE as EFFECDATE_CERT,
                                    C.NULLDATE,                                   
                                    C.POLICY,
+                                   POL.POLITYPE,
                                    C.CERTIF, 
                                    C.PREMIUM,
                                    C.RATECOVE,
