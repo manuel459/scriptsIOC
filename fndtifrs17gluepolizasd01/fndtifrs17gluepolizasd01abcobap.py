@@ -994,8 +994,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
   #-------------------------------------------------------------------------------------------------------------------------------#
 
   L_ABCOBAP_INSIS = f'''
-                    (
-                      SELECT 
+                    ( SELECT 
                       'D' AS INDDETREC,
                       'ABCOBAP' AS TABLAIFRS17,
                       '' AS PK,
@@ -1004,12 +1003,12 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       CAST(CAST(GRC."INSR_BEGIN" AS DATE)AS VARCHAR) AS TIOCFRM, --BEGIN OF INSURING.
                       '' AS TIOCTO,
                       'PNV' AS KGIORIGM,
-                        (
+                      (
                       	SELECT P."POLICY_NAME" FROM USINSIV01."POLICY" P
                       	WHERE P."POLICY_ID" = GRC."POLICY_ID"
                       ) AS KABAPOL,
                       GRC."INSURED_OBJ_ID" ||'-'|| GRC."ANNEX_ID"  AS KABUNRIS,
-                      GRC."COVER_TYPE"  AS KGCTPCBT,
+                      (SELECT SUBSTRING(CAST(CAST("COVER_CPR_ID" AS BIGINT) AS VARCHAR), 5, 10) FROM USINSIV01."CPR_COVER" CC WHERE CC."COVER_TYPE" = GRC."COVER_TYPE" ) AS KGCTPCBT,
                       CAST(CAST(GRC."INSR_BEGIN" AS DATE) AS VARCHAR) AS TINICIO,
                       CAST(CAST(GRC."INSR_END" AS DATE)AS VARCHAR)  AS TTERMO,
                       '' AS TSITCOB,
@@ -1092,8 +1091,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       FROM USINSIV01."GEN_RISK_COVERED" GRC
                       JOIN USINSIV01."POLICY" POL ON POL."POLICY_ID" = GRC."POLICY_ID" AND POL."INSR_TYPE" = GRC."INSR_TYPE"
                       WHERE POL."INSR_END" >= '2021-12-31'
-                      AND POL."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' LIMIT 100
-                    ) AS TMP
+                      AND POL."REGISTRATION_DATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}' LIMIT 100) AS TMP
                     '''
     
     #EJECUTAR CONSULTA
