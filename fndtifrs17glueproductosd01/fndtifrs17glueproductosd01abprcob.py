@@ -12,8 +12,8 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               'PIG' AS KGIORIGM,  
                               'LPG' AS DCOMPA,
                               '' AS DMARCA,       
-                              COALESCE(P.BRANCH, 0) || '-' || COALESCE (P.PRODUCT, 0) || '-' ||coalesce(p.sub_product,0) AS KABPRODT,
-                              coalesce(gc.covergen, 0) || '-' || coalesce(gc.currency, 0) as KGCTPCBT,
+                              COALESCE(P.BRANCH, 0) || '-' || COALESCE (P.PRODUCT, 0) || '-' ||COALESCE(P.SUB_PRODUCT,0) AS KABPRODT,
+                              COALESCE(CAST(GC.COVERGEN AS VARCHAR), '') || '-' || COALESCE(GC.CURRENCY, 0)  AS KGCTPCBT,
                               '' AS KACINDOPS,    
                               '' AS KACTIPCB,
                               '' AS KACTCOMP,     
@@ -85,7 +85,9 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
 	                                  WHERE PRO.CTID = PR0.PRO_ID) P
                               ON GC.BRANCH = P.BRANCH  AND GC.PRODUCT  = P.PRODUCT   
                               WHERE GC.COMPDATE BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
+
                               UNION ALL
+
                               (SELECT 
                               'D' INDDETREC,
                               'ABPRCOB' TABLAIFRS17,
@@ -98,7 +100,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               'LPV' AS DCOMPA,   
                               '' AS DMARCA,       
                               COALESCE(LC.BRANCH, 0) || '-' || COALESCE (LC.PRODUCT, 0)  AS KABPRODT,
-                              coalesce(lc.covergen, 0) || '-' || coalesce(lc.currency, 0) AS KGCTPCBT,
+                              COALESCE(CAST(LC.COVERGEN as VARCHAR), '') || '-' || COALESCE(LC.CURRENCY, 0) AS KGCTPCBT,
                               '' AS KACINDOPS,    
                               '' AS KACTIPCB,    
                               '' AS KACTCOMP,     
@@ -187,7 +189,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             'LPG' AS DCOMPA,
                             '' AS DMARCA,
                             COALESCE(P."NBRANCH", 0) || '-' || COALESCE(P."NPRODUCT", 0) AS KABPRODT,
-                            coalesce(GC."NCOVERGEN", 0) || '-' || coalesce (GC."NCURRENCY", 0) AS KGCTPCBT,
+                            COALESCE(CAST(GC."NCOVERGEN" AS VARCHAR), '') || '-' || COALESCE(GC."NCURRENCY", 0) AS KGCTPCBT,
                             '' AS KACINDOPS,
                             '' AS KACTIPCB,
                             '' AS KACTCOMP,
@@ -253,7 +255,9 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                           		    FROM	USVTIMG01."PRODUCT" PRO) PR0, USVTIMG01."PRODUCT" PRO
                           	WHERE PRO.CTID = PR0.PRO_ID) P ON GC."NBRANCH" = P."NBRANCH" AND GC."NPRODUCT"  = P."NPRODUCT"
                             WHERE GC."DCOMPDATE" BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
+
                             UNION ALL
+
                             (SELECT 
                              'D' AS INDDETREC,
                              'ABPRCOB' AS TABLAIFRS17,
@@ -266,7 +270,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              'LPV' AS DCOMPA,
                              '' AS DMARCA,
                              COALESCE(P."NBRANCH", 0) || '-' || COALESCE(P."NPRODUCT", 0) AS KABPRODT,
-                             coalesce(GC."NCOVERGEN", 0) || '-' || coalesce (GC."NCURRENCY", 0) AS KGCTPCBT,
+                             COALESCE(CAST(LC."NCOVERGEN" AS VARCHAR), '') || COALESCE(LC."NCURRENCY", 0) AS KGCTPCBT,
                              '' AS KACINDOPS,
                              '' AS KACTIPCB,
                              '' AS KACTCOMP,
@@ -300,17 +304,16 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              '' AS DINDLIBTAR
                              FROM USVTIMV01."LIFE_COVER" LC  
                              LEFT JOIN (
-                          	SELECT	
-                          	PRO."DEFFECDATE",
-                          	PRO."NPRODUCT",
-                          	PRO."NBRANCH",
-                          	PRO."DNULLDATE",
-                            CASE WHEN PRO."DNULLDATE" IS NOT NULL THEN 1 ELSE 0 END FLAG_NULLDATE
-                            FROM (	
-                                  SELECT	PRO.*,
-                                  CASE	
-                                  WHEN PRO."DNULLDATE" IS NULL THEN	PRO.CTID
-                          		 	  ELSE	CASE	
+                          	 SELECT	
+                          	 PRO."DEFFECDATE",
+                          	 PRO."NPRODUCT",
+                          	 PRO."NBRANCH",
+                          	 PRO."DNULLDATE",
+                             CASE WHEN PRO."DNULLDATE" IS NOT NULL THEN 1 ELSE 0 END FLAG_NULLDATE
+                             FROM (SELECT	PRO.*,
+                                   CASE	
+                                   WHEN PRO."DNULLDATE" IS NULL THEN	PRO.CTID
+                          		 	   ELSE	CASE	
                                         WHEN EXISTS (	SELECT	1
                           		 				              	FROM	USVTIMV01."PRODUCT" PR1
                           		 				              	WHERE PR1."NBRANCH"  = PRO."NBRANCH"
@@ -325,9 +328,9 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                               END 
                                         END 
                                   END PRO_ID
-                          		    FROM	USVTIMV01."PRODUCT" PRO) PR0, USVTIMV01."PRODUCT" PRO
-                          	WHERE PRO.CTID = PR0.PRO_ID) P ON LC."NBRANCH" = P."NBRANCH" AND LC."NPRODUCT"  = P."NPRODUCT"
-                            WHERE LC."DCOMPDATE"  BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
+                          		    FROM	USVTIMV01."PRODUCT" PRO) PR0, USVTIMV01."PRODUCT" PRO WHERE PRO.CTID = PR0.PRO_ID) P 
+                             ON LC."NBRANCH" = P."NBRANCH" AND LC."NPRODUCT"  = P."NPRODUCT"
+                             WHERE LC."DCOMPDATE"  BETWEEN '{P_FECHA_INICIO}' AND '{P_FECHA_FIN}')
                      ) AS TMP
                      '''
   

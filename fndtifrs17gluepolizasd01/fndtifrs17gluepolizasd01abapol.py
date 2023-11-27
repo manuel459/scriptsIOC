@@ -877,9 +877,9 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                 'PIG' AS KGIORIGM, --NO
                                 'LPG' AS KACCOMPA, 
                                 CAST(P.BRANCH AS VARCHAR) AS KGCRAMO,
-                                COALESCE(P.BRANCH, 0) || '-' || COALESCE(P.PRODUCT, 0) || '-' || COALESCE(pol.SUBPRODUCT, 0) KABPRODT,
+                                COALESCE(P.BRANCH, 0) || '-' || COALESCE(P.PRODUCT, 0) || '-' || COALESCE(POL.SUBPRODUCT, 0) KABPRODT,
                                 CASE P.POLITYPE
-                                WHEN '2' THEN CASE WHEN CERT.CERTIF <> 0 THEN P.BRANCH || '-' || CAST(COALESCE (P.PRODUCT, 0) AS VARCHAR) || '-' || P.POLICY || '-' || '0'
+                                WHEN '2' THEN CASE WHEN CERT.CERTIF <> 0 THEN P.BRANCH || '-' || CAST(COALESCE (P.PRODUCT, 0) AS VARCHAR) || '-' || COALESCE(POL.SUBPRODUCT, 0) || '-' || P.POLICY || '-' || '0'
                                               ELSE ''
                                               END
                                 ELSE '' 
@@ -1708,7 +1708,12 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS KACARGES, --NO
                       '' AS KACAGENC, --NO
                       '' AS KACPROTO, --NO
-                      (SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = P."ENG_POL_TYPE" ) AS KACTIPAP,
+                      CASE P."ENG_POL_TYPE"
+                      WHEN 'POLICY'    THEN 1
+                      WHEN 'MASTER'    THEN 2
+                      WHEN 'DEPENDENT' THEN 2
+                      END KACTIPAP,
+                      /*(SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = P."ENG_POL_TYPE" ) AS KACTIPAP,*/
                       '' AS DFROTA,   --NO
                       '' AS KACTPDUR, --EN BLANCO
                       COALESCE(P."RENEWABLE_FLAG", '') AS KACMODRE,
@@ -1809,7 +1814,12 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                       '' AS DENTIDSO,    --NO
                       '' AS DARQUIVO,    --NO
                       '' AS TARQUIVO,    --NO
-                      (SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = P."ENG_POL_TYPE" ) AS KACTPSUB,
+                      /*(SELECT TP."COD_TIPO_POLIZA" FROM USBI01."IFRS170_T_TIPO_POLIZA" TP WHERE TP."NOM_TIPO_POLIZA" = P."ENG_POL_TYPE" ) AS KACTPSUB,*/
+                      CASE P."ENG_POL_TYPE"
+                      WHEN 'POLICY' THEN 1
+                      WHEN 'MASTER' THEN 2
+                      WHEN 'DEPENDENT' THEN 2
+                      END KACTPSUB,
                       '' AS KACPARES,
                       '' AS KGCRAMO_SAP, --NO
                       '' AS KACTPCRED,   --NO
@@ -1994,7 +2004,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                         PP."ENG_POL_TYPE",
                         CAST(PP."MASTER_POLICY_ID" AS VARCHAR) DNUMAPO, 
                         PP."POLICY_ID" DNMCERT,
-                        P."ATTR1" || '-' || P."INSR_TYPE" || '-' || SUBSTRING(cast(PP."MASTER_POLICY_ID"  as varchar),6,12) || '0' AS KABAPOL,                      
+                        P."ATTR1" || '-' || P."INSR_TYPE" || '-' || SUBSTRING(CAST(PP."MASTER_POLICY_ID" AS VARCHAR),6,12) || '-' || '0' AS KABAPOL,                      
                         (SELECT CAST(CAST(GA."INSR_BEGIN" AS DATE) AS VARCHAR)
                         FROM USINSIV01."GEN_ANNEX" GA
                         WHERE GA."POLICY_ID" = P."POLICY_ID"
