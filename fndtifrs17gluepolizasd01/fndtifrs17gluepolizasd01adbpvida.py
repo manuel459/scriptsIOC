@@ -3,7 +3,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                               ((SELECT 
                               'D' AS INDDETREC,
                               'ABDPVIDA' AS TABLAIFRS17, 
-                              COALESCE(A.BRANCH, 0) || '-' || COALESCE(A.PRODUCT, 0) || '-' || COALESCE(A.POLICY, 0) || '-' || COALESCE(A.CERTIF) AS KABAPOL,
+                              COALESCE(A.BRANCH, 0) || '-' || COALESCE(A.PRODUCT, 0) || '-' || COALESCE(A.POLICY, 0) || '-' || COALESCE(A.CERTIF, 0) AS KABAPOL,
                               '' AS DTPREG,
                               '' AS TIOCPROC,
                               CAST(L.EFFECDATE AS VARCHAR) AS TIOCFRM,
@@ -109,7 +109,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    AND L.COMPANY   = A.COMPANY
                                    AND L.CERTYPE   = A.CERTYPE
                                    AND L.BRANCH    = A.BRANCH
-                                   AND L."POLICY"  = A.POLICY 
+                                   AND L.POLICY  = A.POLICY 
                                    AND L.CERTIF    = A.CERTIF
                                    )) AS TMP         
                           '''
@@ -124,7 +124,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    (select 
                                    'D' as INDDETREC,
                                    'ABDPVIDA' as TABLAIFRS17, 
-                                   a.branch || '-' || a.product || '-' || a.policy || '-' || a.certif as KABAPOL,
+                                   coalesce(a.branch, 0) || '-' || coalesce(a.product, 0) || '-' || coalesce(a.policy, 0) || '-' || coalesce(a.certif,0) as KABAPOL,
                                    '' as DTPREG,
                                    '' as TIOCPROC,
                                    cast(lp.effecdate as varchar) as TIOCFRM,
@@ -207,10 +207,16 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    	   AND P.CERTYPE = CERT.CERTYPE 
                                    	   AND P.BRANCH  = CERT.BRANCH 
                                    	   AND P.POLICY  = CERT.policy
-                                   	   JOIN USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO" RTR 
+                                   	   JOIN /*USBI01."IFRS170_T_RAMOS_POR_TIPO_RIESGO"*/
+                                       ((SELECT UNNEST(ARRAY['usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01',
+					                                           'usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01',
+					                                           'usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01','usinsuv01',
+					                                           'usinsuv01','usinsuv01','usinsuv01']) AS "SOURCESCHEMA",  
+						                                    UNNEST(ARRAY[5,21,22,23,24,25,27,31,32,33,34,35,36,37,40,41,42,59,68,71,75,77,91,99]) AS "BRANCHCOM",
+							                                  UNNEST(ARRAY[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) as "RISKTYPEN")) RTR 
                                    	   ON  RTR."BRANCHCOM" = P.BRANCH 
                                    	   AND RTR."RISKTYPEN" = 1 
-                                   	   AND RTR."SOURCESCHEMA" = 'usinsug01'
+                                   	   AND RTR."SOURCESCHEMA" = 'usinsuv01'
                                    	   WHERE P.CERTYPE = '2'
                                           AND P.STATUS_POL NOT IN ('2','3') 
                                           AND ( (P.POLITYPE = '1' -- INDIVIDUAL 
