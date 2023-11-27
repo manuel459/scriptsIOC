@@ -324,7 +324,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                                 AND P.POLICY = C.POLICY*/
                                  || '-' ||  COALESCE(C.POLICY, 0)|| '-' || COALESCE(C.CERTIF, 0)  AS KABAPOL,
                                  '' AS KABUNRIS,
-                                 COALESCE((SELECT COALESCE(CAST(GLC.COVERGEN AS VARCHAR), '0') FROM /*USBI01.IFRS170_V_GEN_LIFE_COVER_INXLPV*/
+                                 COALESCE((SELECT COALESCE(CAST(GLC.COVERGEN AS VARCHAR), '0') || '-' || COALESCE(GLC.CURRENCY, 0)  FROM /*USBI01.IFRS170_V_GEN_LIFE_COVER_INXLPV*/
                                            (SELECT GC.USERCOMP,
 										                        GC.COMPANY,
 										                        GC.BRANCH,
@@ -656,7 +656,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                   SELECT 
                                   COALESCE(CAST(CAST(C."DEFFECDATE" AS DATE) AS VARCHAR),'') AS TIOCFRM,
                                   C."NBRANCH" ||'-'|| C."NPRODUCT" ||'-'|| C."NPOLICY" ||'-'|| C."NCERTIF" AS KABAPOL,
-                                  COALESCE((SELECT CAST(GLC."NCOVERGEN" AS VARCHAR) || '-' || GLC."NCURRENCY" 
+                                  COALESCE((SELECT CAST(GLC."NCOVERGEN" AS VARCHAR) || '-' || COALESCE(GLC."NCURRENCY", 0)
                                             FROM /*USBI01.IFRS170_V_GEN_LIFE_COVER_VTIMELPG*/
                                             (SELECT GC."NBRANCH",
                                             GC."NPRODUCT",
