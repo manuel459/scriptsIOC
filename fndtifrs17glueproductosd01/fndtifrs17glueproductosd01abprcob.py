@@ -270,7 +270,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              'LPV' AS DCOMPA,
                              '' AS DMARCA,
                              COALESCE(P."NBRANCH", 0) || '-' || COALESCE(P."NPRODUCT", 0) AS KABPRODT,
-                             COALESCE(CAST(LC."NCOVERGEN" AS VARCHAR), '') || COALESCE(LC."NCURRENCY", 0) AS KGCTPCBT,
+                             COALESCE(CAST(LC."NCOVERGEN" AS VARCHAR), '') || '-' || COALESCE(LC."NCURRENCY", 0) AS KGCTPCBT,
                              '' AS KACINDOPS,
                              '' AS KACTIPCB,
                              '' AS KACTCOMP,
