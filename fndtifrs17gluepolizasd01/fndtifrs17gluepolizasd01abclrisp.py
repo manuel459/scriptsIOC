@@ -36,7 +36,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                     AND   C.CERTIF     = PC.CERTIF  
                                                     AND   C.EFFECDATE <= PC.EFFECDATE
                                                     AND  (C.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE)
-                                                    AND  C.COVER = 1) 
+                                                    AND  C.COVER = 1 LIMIT 1) 
                              ELSE   ( SELECT COALESCE(GC.COVERGEN, 0) ||'-'|| GC.CURRENCY
                                                     FROM USINSUG01.GEN_COVER GC 
                                                     JOIN USINSUG01.COVER C  
@@ -48,7 +48,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                     AND GC.CURRENCY = C.CURRENCY
                                                     AND GC.MODULEC =  C.MODULEC
                                                     AND GC.COVER   =  C.COVER
-                                                    AND GC.EFFECDATE <= PC.EFFECDATE
+                                                    AND GC.EFFECDATE <= PC.EFFECDATE_CERT
                              	            	    AND (GC.NULLDATE IS NULL OR GC.NULLDATE > PC.EFFECDATE_CERT)		       		   
                                                     WHERE C.USERCOMP   = PC.USERCOMP 
                                                     AND   C.COMPANY    = PC.COMPANY 
@@ -56,9 +56,9 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                                                     AND   C.BRANCH     = PC.BRANCH 
                                                     AND   C.POLICY     = PC.POLICY
                                                     AND   C.CERTIF     = PC.CERTIF  
-                                                    AND   C.EFFECDATE <= PC.EFFECDATE
+                                                    AND   C.EFFECDATE <= PC.EFFECDATE_CERT
                                                     AND  (C.NULLDATE IS NULL OR C.NULLDATE > PC.EFFECDATE_CERT)
-                                                    AND  C.COVER = 1
+                                                    AND  C.COVER = 1 LIMIT 1
                                           )
                              END AS KGCTPCBT,
                              ROW_NUMBER () OVER (PARTITION  BY PC.BRANCH, COALESCE (PC.PRODUCT, 0), PC.POLICY, PC.CERTIF ORDER BY R.CLIENT) AS DNPESEG,
