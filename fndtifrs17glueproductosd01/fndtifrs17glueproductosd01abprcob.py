@@ -28,7 +28,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                               ELSE ''
                               END KACFMCAL,
                               '' AS KACTPDPRIS,    
-                              '' AS KGCTPCBT_SUP, 
+                              GC."MODULEC" AS KGCTPCBT_SUP, 
                               '' AS DINDANOS,      
                               '' AS KSCTPDAN,      
                               '' AS KACGPRIS,      
@@ -204,7 +204,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                             ELSE ''
                             END KACFMCAL,
                             '' AS KACTPDPRIS,
-                            '' AS KGCTPCBT_SUP,
+                            GC."NMODULEC" AS KGCTPCBT_SUP,
                             '' AS DINDANOS,
                             '' AS KSCTPDAN,
                             '' AS KACGPRIS,
@@ -281,7 +281,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                              ELSE ''
                              END KACFMCAL,
                              '' AS KACTPDPRIS,
-                             '' AS KGCTPCBT_SUP,
+                             LC."NMODULEC" AS KGCTPCBT_SUP,
                              '' AS DINDANOS,
                              '' AS KSCTPDAN,
                              '' AS KACGPRIS,
@@ -362,7 +362,7 @@ def getData(GLUE_CONTEXT, CONNECTION, P_FECHA_INICIO, P_FECHA_FIN):
                     CAST(CAST(CNC."IV_RULE" AS INT) AS TEXT) AS KACSOCAP,
                     '' AS KACFMCAL,
                     '' AS KACTPDPRIS, 
-                    '' AS KGCTPCBT_SUP,
+                    TRUNC(CNC."OBJECT_LINK_ID", 0) AS KGCTPCBT_SUP,
                     '' AS DINDANOS,
                     '' AS KSCTPDAN,
                     '' AS KACGPRIS,
