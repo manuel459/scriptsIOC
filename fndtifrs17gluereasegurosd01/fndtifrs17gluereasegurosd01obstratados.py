@@ -8,7 +8,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              '' as PK,
                              '' as DTPREG,
                              '' as TIOCPROC,
-                             '' as TIOCFRM,
+                             coalesce(cast(C.effecdate as VARCHAR),'') as TIOCFRM,
                              '' as TIOCTO,
                              'PIG' as KGIORIGM,
                              cast(c."number" as varchar) ||'-'|| c.branch  as DCDINTTRA,
@@ -51,7 +51,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                              '' as PK,
                              '' as DTPREG,
                              '' as TIOCPROC,
-                             '' as TIOCFRM,
+                             coalesce(cast(C.effecdate as VARCHAR),'') as TIOCFRM,
                              '' as TIOCTO,
                              'PIV' as KGIORIGM,
                              cast(c."number" as varchar) ||'-'|| c.branch ||'-'|| c.currency ||'-'|| c."type" as DCDINTTRA,
@@ -103,7 +103,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' as PK,
                             '' as DTPREG,
                             '' as TIOCPROC,
-                            '' as TIOCFRM,
+                            cast(C."DEFFECDATE" as DATE)  as TIOCFRM,
                             '' as TIOCTO,
                             'PVV' as KGIORIGM,
                             cast(c."NNUMBER" as varchar) ||'-'|| c."NBRANCH"  ||'-'|| c."NTYPE"  as DCDINTTRA,
@@ -146,7 +146,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                             '' as PK,
                             '' as DTPREG,
                             '' as TIOCPROC,
-                            '' as TIOCFRM,
+                            cast(C."DEFFECDATE" as DATE)  as TIOCFRM,
                             '' as TIOCTO,
                             'PVG' as KGIORIGM,
                             cast(c."NNUMBER" as varchar) ||'-'|| c."NBRANCH"  ||'-'|| c."NTYPE"  as DCDINTTRA,
@@ -191,7 +191,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
     
     L_OBSTRATADOS_INSIS = f'''
                             (
-                            ( select 
+                            (select 
                             'D' as INDDETREC,
                             'OBTRATADOS' as TABLAIFRS17,
                             '' as PK,

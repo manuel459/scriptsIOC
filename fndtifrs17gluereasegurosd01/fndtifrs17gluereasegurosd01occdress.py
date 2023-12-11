@@ -1,4 +1,4 @@
-def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
+def get_data(glue_context, connection, p_fecha_inicio, p_fecha_fin):
     L_OCCDRESS_INSUNIX = f'''
                                    (
                                    (select
@@ -7,7 +7,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as PK,
                                    '' as DTPREG,
                                    '' as TIOCPROC,
-                                   '' as TIOCFRM,
+                                   coalesce(cast(c.effecdate as varchar) ,'') as TIOCFRM,
                                    '' as TIOCTO,
                                    'PIG' as KGIORIGM,
                                    coalesce((
@@ -17,7 +17,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as DDESC,
                                    '' as KOICDRESS
                                    from usinsug01.company c 
-                                   where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                                   where c.compdate between '{p_fecha_inicio}' and '{p_fecha_fin}'
                                    )
                                    union all
                                    --1994-02-16 - 2023-08-04
@@ -28,7 +28,7 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as PK,
                                    '' as DTPREG,
                                    '' as TIOCPROC,
-                                   '' as TIOCFRM,
+                                   coalesce(cast(c.effecdate as varchar) ,'') as TIOCFRM,
                                    '' as TIOCTO,
                                    'PIV' as KGIORIGM,
                                    coalesce((
@@ -38,14 +38,14 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as DDESC,
                                    '' as KOICDRESS
                                    from usinsug01.company c 
-                                   where c.compdate between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                                   where c.compdate between '{p_fecha_inicio}' and '{p_fecha_fin}'
                                    )
                                    --1994-02-16 - 2023-08-04
                                    ) AS TMP         
                           '''
     #EJECUTAR CONSULTA
     print("1-TERMINO TABLA OCCDRESS_IN")
-    L_DF_OCCDRESS_INSUNIX = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_OCCDRESS_INSUNIX).load()
+    L_DF_OCCDRESS_INSUNIX = glue_context.read.format('jdbc').options(**connection).option("dbtable",L_OCCDRESS_INSUNIX).load()
     print("2-TERMINO TABLA OCCDRESS_IN")
     
     L_OCCDRESS_VTIME = f'''
@@ -60,14 +60,14 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as PK,
                                    '' as DTPREG,
                                    '' as TIOCPROC,
-                                   '' as TIOCFRM,
+                                   cast(c."DCOMPDATE" as date ) as TIOCFRM,
                                    '' as TIOCTO,
                                    'PVG' as KGIORIGM,
                                    coalesce(c."SCLIENT",'')  as DCODIGO,
                                    '' as DDESC,
                                    '' as KOICDRESS
                                    from usvtimg01."COMPANY" c
-                                   where c."DCOMPDATE"  between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                                   where cast(c."DCOMPDATE" as date )  between '{p_fecha_inicio}' and '{p_fecha_fin}'
                                    )
                                    union all 
                                    --2007-12-03 - 2023-08-04 
@@ -79,21 +79,21 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as PK,
                                    '' as DTPREG,
                                    '' as TIOCPROC,
-                                   '' as TIOCFRM,
+                                   cast(c."DCOMPDATE" as date ) as TIOCFRM,
                                    '' as TIOCTO,
                                    'PVV' as KGIORIGM,
                                    coalesce(c."SCLIENT",'')  as DCODIGO,
                                    '' as DDESC,
                                    '' as KOICDRESS
                                    from usvtimg01."COMPANY" c
-                                   where c."DCOMPDATE"  between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}'
+                                   where cast(c."DCOMPDATE" as date )  between '{p_fecha_inicio}' and '{p_fecha_fin}'
                                    )
                                    --2007-12-03 - 2023-08-04 
                                    ) AS TMP
                         '''
     #EJECUTAR CONSULTA
     print("1-TERMINO TABLA OCCDRESS_VT")
-    L_DF_OCCDRESS_VTIME = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_OCCDRESS_VTIME).load()
+    L_DF_OCCDRESS_VTIME = glue_context.read.format('jdbc').options(**connection).option("dbtable",L_OCCDRESS_VTIME).load()
     print("2-TERMINO TABLA OCCDRESS_VT")
 
     L_OCCDRESS_INSIS = f'''
@@ -104,29 +104,23 @@ def getData(glueContext,connection,L_FECHA_INICIO,L_FECHA_FIN):
                                    '' as PK,
                                    '' as DTPREG,
                                    '' as TIOCPROC,
-                                   '' as TIOCFRM,
+                                   cast(pin.fecha_replicacion_positiva  as date) as TIOCFRM,
                                    '' as TIOCTO,
                                    'PNV' as KGIORIGM,
                                    pin."MAN_ID" as DCODIGO,
                                    '' as DDESC,
                                    '' as KOICDRESS
                                    from usinsiv01."P_INSURERS" pin --2023-11-06 - 2023-11-06 
-                                   where cast(pin.fecha_replicacion_positiva  as date)  between '{L_FECHA_INICIO}' and '{L_FECHA_FIN}' --LA TABLA ORIGINAL NO TIENE FECHAS 
+                                   where cast(pin.fecha_replicacion_positiva  as date)  between '{p_fecha_inicio}' and '{p_fecha_fin}' --LA TABLA ORIGINAL NO TIENE FECHAS 
                                    )
                                    ) AS TMP
                         '''
     #EJECUTAR CONSULTA
     print("1-TERMINO TABLA OCCDRESS_INS")
-    L_DF_OCCDRESS_INSIS = glueContext.read.format('jdbc').options(**connection).option("dbtable",L_OCCDRESS_INSIS).load()
+    L_DF_OCCDRESS_INSIS = glue_context.read.format('jdbc').options(**connection).option("dbtable",L_OCCDRESS_INSIS).load()
     print("2-TERMINO TABLA OCCDRESS_INS")
     
     #PERFORM THE UNION OPERATION
     L_DF_OCCDRESS = L_DF_OCCDRESS_INSUNIX.union(L_DF_OCCDRESS_VTIME).union(L_DF_OCCDRESS_INSIS)
 
-    return L_DF_OCCDRESS
-
-
-    
-    #PERFORM THE UNION OPERATION
-    L_DF_OCCDRESS = L_DF_OCCDRESS_INSUNIX.union(L_DF_OCCDRESS_VTIME)
     return L_DF_OCCDRESS
